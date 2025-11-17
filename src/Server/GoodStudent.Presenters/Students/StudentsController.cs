@@ -1,9 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using GoodStudent.Contracts.Students;
+using GoodStudent.Domain.Students;
+using Microsoft.AspNetCore.Mvc;
+using System.Text.Json;
 
 namespace GoodStudent.Presenters.Students
 {
@@ -12,9 +10,28 @@ namespace GoodStudent.Presenters.Students
     public class StudentsController : ControllerBase
     {
         [HttpPost]
-        public async Task <IActionResult> New([FromBody] string ok = "Ok")
+        public async Task <IActionResult> New([FromBody] NewStudentDto request)
         {
-            return Ok(ok);
+            Student student = new Student()
+            {
+                Name = request.Name,
+
+                Surname = request.Surname,
+
+                Patronymic = request.Patronymic,
+
+                BirthDate = request.BirthDate,
+
+                StartYear = request.StartYear,
+
+                EducationType = request.EducationType,
+
+                Status = request.Status
+            };
+
+            student.Id = Guid.NewGuid();
+
+            return Ok(JsonSerializer.Serialize(student));
         }
     }
 }

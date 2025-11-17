@@ -1,11 +1,14 @@
 ﻿using GoodStudent.Domain.People;
 using GoodStudent.Domain.Students.Enums;
+using System.Text.Json.Serialization;
 
 namespace GoodStudent.Domain.Students
 {
     public class Student : Person
     {
         private EducationType _educationType;
+
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public EducationType EducationType
         {
             get { return _educationType; }
@@ -28,9 +31,10 @@ namespace GoodStudent.Domain.Students
             }
         }
 
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public StudentStatus Status { get; set; } = StudentStatus.Study;
 
-        public int StartYear { get; set; } = DateTime.Now.Year;
-        public int EndYear { get; set; }
+        public int StartYear { get; set; }
+        public int EndYear { get; private set; }
     }
 }
