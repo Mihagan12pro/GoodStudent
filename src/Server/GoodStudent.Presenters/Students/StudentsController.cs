@@ -15,7 +15,7 @@ namespace GoodStudent.Presenters.Students
     public class StudentsController : ControllerBase
     {
         [HttpPost]
-        public async Task<IActionResult> New([FromBody] NewStudentDto request)
+        public async Task<IActionResult> New([FromBody] NewStudentDto request, CancellationToken cancellationToken)
         {
             Student student = new Student()
             {
@@ -40,16 +40,9 @@ namespace GoodStudent.Presenters.Students
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetById([FromRoute] Guid id)
+        public async Task<IActionResult> GetById([FromRoute] Guid id, CancellationToken cancellationToken)
         {
             return Ok(id);
         }
-
-
-        //[HttpGet("{groupId:guid}/{Id:guid}")]
-        //public async Task<IActionResult>GetByGroup()
-        //{
-
-        //}
     }
 }

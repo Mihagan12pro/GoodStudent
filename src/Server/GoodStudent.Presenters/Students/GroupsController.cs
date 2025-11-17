@@ -10,7 +10,7 @@ namespace GoodStudent.Presenters.Students
     public class GroupsController : ControllerBase
     {
         [HttpPost]
-        public async Task<IActionResult> New([FromBody] NewGroupDto request)
+        public async Task<IActionResult> New([FromBody] NewGroupDto request, CancellationToken cancellationToken)
         {
             Group group = new Group()
             {
@@ -23,19 +23,13 @@ namespace GoodStudent.Presenters.Students
         }
 
         [HttpPatch("{groupId:guid}/{studentId:guid}")]
-        public async Task<IActionResult> Add([FromRoute]Guid groupId, [FromRoute]Guid studentId)
+        public async Task<IActionResult> Add([FromRoute]Guid groupId, [FromRoute]Guid studentId, CancellationToken cancellationToken)
         {
             return Ok();
         }
 
         [HttpGet("{groupId:guid}")]
-        public async Task<IActionResult> Students([FromRoute] Guid groupId)
-        {
-            return Ok();
-        }
-
-        [HttpGet("{groupId:guid}/{studentId:guid}")]
-        public async Task<IActionResult> StudentById([FromRoute] Guid groupId, [FromRoute] Guid studentId)
+        public async Task<IActionResult> Students([FromRoute] Guid groupId, CancellationToken cancellationToken)
         {
             return Ok();
         }
