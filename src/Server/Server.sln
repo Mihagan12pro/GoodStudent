@@ -12,6 +12,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{02EA681E-C7D
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GoodStudent.Web", "GoodStudent.Web\GoodStudent.Web.csproj", "{A78F2140-B9A3-42AC-8F74-CA720CA484D3}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GoodStudent.Domain", "GoodStudent.Domain\GoodStudent.Domain.csproj", "{FB888442-8188-4D5C-A926-1ADC80E6BBA1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -22,12 +24,17 @@ Global
 		{A78F2140-B9A3-42AC-8F74-CA720CA484D3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A78F2140-B9A3-42AC-8F74-CA720CA484D3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A78F2140-B9A3-42AC-8F74-CA720CA484D3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FB888442-8188-4D5C-A926-1ADC80E6BBA1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FB888442-8188-4D5C-A926-1ADC80E6BBA1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FB888442-8188-4D5C-A926-1ADC80E6BBA1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FB888442-8188-4D5C-A926-1ADC80E6BBA1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{A78F2140-B9A3-42AC-8F74-CA720CA484D3} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{FB888442-8188-4D5C-A926-1ADC80E6BBA1} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B2DE0BAB-E216-4642-9533-604321E111E8}
