@@ -20,7 +20,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GoodStudent.Contracts", "Go
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GoodStudent.Application", "GoodStudent.Application\GoodStudent.Application.csproj", "{105AAA86-6EEC-420A-89D2-B5A8F7711ECD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GoodStudent.Infrastructure.Postgre", "GoodStudent.Infrastructure.Postgre\GoodStudent.Infrastructure.Postgre.csproj", "{E7F052EC-E3AA-49F1-AB6A-B4A11217FB3C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GoodStudent.Infrastracture.Postgres", "GoodStudent.Infrastructure.Postgre\GoodStudent.Infrastracture.Postgres.csproj", "{E7F052EC-E3AA-49F1-AB6A-B4A11217FB3C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
