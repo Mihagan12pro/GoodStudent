@@ -9,5 +9,7 @@ namespace GoodStudent.Domain.Students
     public class StudentGroup : Domain
     {
         public List<Student> Students { get; } = new List<Student>();
+
+        public Profession? Profession { get; set; }
     }
 }

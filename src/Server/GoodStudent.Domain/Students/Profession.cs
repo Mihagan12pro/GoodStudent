@@ -13,5 +13,7 @@ namespace GoodStudent.Domain.Students
         public required string Name { get; set; }
 
         public string? Profile { get; set; } = null;
+
+        public required Guid FacultyId { get; set; }
     }
 }
