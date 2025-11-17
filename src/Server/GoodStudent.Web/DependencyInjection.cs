@@ -1,10 +1,13 @@
-﻿namespace GoodStudent.Web
+﻿using GoodStudent.Application;
+
+namespace GoodStudent.Web
 {
     public static class DependencyInjection
     {
         public static IServiceCollection AddProgramDependencies(this IServiceCollection services)
         {
-            services.AddWebDependencies();
+            services.AddWebDependencies().
+                AddApplication();
 
             return services;
         }
