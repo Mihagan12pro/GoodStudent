@@ -1,4 +1,5 @@
 ﻿using GoodStudent.Application;
+using GoodStudent.Infrastracture.Postgres;
 
 namespace GoodStudent.Web
 {
@@ -7,7 +8,8 @@ namespace GoodStudent.Web
         public static IServiceCollection AddProgramDependencies(this IServiceCollection services)
         {
             services.AddWebDependencies().
-                AddApplication();
+                AddApplication().
+                    AddPostgresInfrastructure();
 
             return services;
         }

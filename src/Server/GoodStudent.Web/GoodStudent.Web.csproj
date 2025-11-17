@@ -13,6 +13,7 @@
   <ItemGroup>
     <ProjectReference Include="..\GoodStudent.Application\GoodStudent.Application.csproj" />
     <ProjectReference Include="..\GoodStudent.Domain\GoodStudent.Domain.csproj" />
+    <ProjectReference Include="..\GoodStudent.Infrastructure.Postgre\GoodStudent.Infrastracture.Postgres.csproj" />
     <ProjectReference Include="..\GoodStudent.Presenters\GoodStudent.Presenters.csproj" />
   </ItemGroup>
 

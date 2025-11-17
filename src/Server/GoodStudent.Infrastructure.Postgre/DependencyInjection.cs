@@ -1,4 +1,6 @@
 ﻿using GoodStudent.Application;
+using GoodStudent.Application.Students;
+using GoodStudent.Infrastracture.Postgres.Students;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
@@ -13,7 +15,7 @@ namespace GoodStudent.Infrastracture.Postgres
         public static IServiceCollection AddPostgresInfrastructure(this IServiceCollection services)
         {
             services.AddSingleton<ISqlConnectionFactory, SqlConnectionFactory>();
-            //services.AddScoped<I>
+            services.AddScoped<IStudentsRepository, StudentsRepository>();
 
             return services;
         }

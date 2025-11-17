@@ -1,4 +1,5 @@
-﻿using GoodStudent.Contracts.Students;
+﻿using GoodStudent.Application.Students;
+using GoodStudent.Contracts.Students;
 using GoodStudent.Domain.Students;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -14,35 +15,23 @@ namespace GoodStudent.Presenters.Students
     [Route("api/[controller]")]
     public class StudentsController : ControllerBase
     {
+        private readonly IStudentService _studentService;
+
         [HttpPost]
         public async Task<IActionResult> New([FromBody] NewStudentDto request, CancellationToken cancellationToken)
         {
-            Student student = new Student()
-            {
-                Name = request.Name,
-
-                Surname = request.Surname,
-
-                Patronymic = request.Patronymic,
-
-                BirthDate = request.BirthDate,
-
-                //StartYear = request.StartYear,
-
-                //EducationType = request.EducationType,
-
-                Status = request.Status
-            };
-
-            student.Id = Guid.NewGuid();
-
-            return Ok(JsonSerializer.Serialize(student));
+            return Ok(_studentService.AddNew(request, cancellationToken));
         }
 
         [HttpGet]
         public async Task<IActionResult> GetById([FromRoute] Guid id, CancellationToken cancellationToken)
         {
             return Ok(id);
+        }
+
+        public StudentsController(IStudentService studentService)
+        {
+            _studentService = studentService;
         }
     }
 }
