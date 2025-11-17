@@ -27,9 +27,9 @@ namespace GoodStudent.Presenters.Students
 
                 BirthDate = request.BirthDate,
 
-                StartYear = request.StartYear,
+                //StartYear = request.StartYear,
 
-                EducationType = request.EducationType,
+                //EducationType = request.EducationType,
 
                 Status = request.Status
             };

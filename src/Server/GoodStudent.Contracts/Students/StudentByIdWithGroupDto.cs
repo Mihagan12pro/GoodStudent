@@ -6,5 +6,5 @@ using System.Threading.Tasks;
 
 namespace GoodStudent.Contracts.Students
 {
-    public record StudentByIdDto(string Name, string Surname, string GroupCode, string? Patronymic = null);
+    public record StudentByIdWithGroupDto(string Name, string Surname, string GroupCode, string? Patronymic = null);
 }

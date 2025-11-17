@@ -7,7 +7,7 @@ namespace GoodStudent.Contracts.Students
         string Surname,
         int StartYear,
         DateOnly BirthDate, 
-        EducationType EducationType,
+        //EducationType EducationType,
         string? Patronymic = null,
         StudentStatus Status = StudentStatus.Study);
 }
