@@ -6,10 +6,12 @@ using System.Threading.Tasks;
 
 namespace GoodStudent.Domain.Students
 {
-    public class StudentGroup : Domain
+    public class Group : Domain
     {
+        public required string Code { get; set; }
+
         public List<Student> Students { get; } = new List<Student>();
 
-        public Profession? Profession { get; set; }
+        public required Guid FacultyId { get; set; }
     }
 }

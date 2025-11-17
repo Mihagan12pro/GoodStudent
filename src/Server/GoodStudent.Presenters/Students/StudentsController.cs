@@ -1,7 +1,12 @@
 ﻿using GoodStudent.Contracts.Students;
 using GoodStudent.Domain.Students;
 using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace GoodStudent.Presenters.Students
 {
@@ -10,7 +15,7 @@ namespace GoodStudent.Presenters.Students
     public class StudentsController : ControllerBase
     {
         [HttpPost]
-        public async Task <IActionResult> New([FromBody] NewStudentDto request)
+        public async Task<IActionResult> New([FromBody] NewStudentDto request)
         {
             Student student = new Student()
             {
@@ -33,5 +38,18 @@ namespace GoodStudent.Presenters.Students
 
             return Ok(JsonSerializer.Serialize(student));
         }
+
+        [HttpGet]
+        public async Task<IActionResult> GetById([FromRoute] Guid id)
+        {
+            return Ok(id);
+        }
+
+
+        //[HttpGet("{groupId:guid}/{Id:guid}")]
+        //public async Task<IActionResult>GetByGroup()
+        //{
+
+        //}
     }
 }
