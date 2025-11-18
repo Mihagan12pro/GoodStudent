@@ -1,4 +1,5 @@
-﻿using System;
+﻿using GoodStudent.Domain.People;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -18,7 +19,15 @@ namespace GoodStudent.Infrastracture.Postgres.People
 
         public string? Patronymic { get; set; }
 
-        [Required(), Column("birth_date")]
-        public DateOnly BirthDate { get; set; }
+
+        public PersonEntity()
+        {
+            
+        }
+
+        public PersonEntity(Person person)
+        {
+            
+        }
     }
 }

@@ -17,8 +17,6 @@ namespace GoodStudent.Application.Students
 
                 Patronymic = newStudentDto.Patronymic,
 
-                BirthDate = newStudentDto.BirthDate,
-
                 Status = newStudentDto.Status,
 
                 Group = newStudentDto.Group,

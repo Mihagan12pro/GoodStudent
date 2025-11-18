@@ -10,14 +10,25 @@ namespace GoodStudent.Infrastracture.Postgres.Students
 {
     internal class StudentsEFRepository : IStudentsRepository
     {
-        public Task<Guid> AddAsync(Student student, CancellationToken cancellationToken)
+        private readonly StudentsContext _studentsContext;
+
+        public async Task<Guid> AddAsync(Student student, CancellationToken cancellationToken)
+        {
+            StudentEntity studentEntity = new StudentEntity(student);
+
+            _studentsContext.Add(studentEntity);
+
+            return student.Id;
+        }
+
+        public async Task<Group> GetGroupByStudentAsync(Guid studentId)
         {
             throw new NotImplementedException();
         }
 
-        public Task<Group> GetGroupByStudentAsync(Guid studentId)
+        public StudentsEFRepository(StudentsContext studentsContext)
         {
-            throw new NotImplementedException();
+            _studentsContext = studentsContext;
         }
     }
 }
