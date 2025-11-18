@@ -33,7 +33,7 @@ namespace GoodStudent.Domain.Students
         [JsonConverter(typeof(JsonStringEnumConverter))]
         public StudentStatus Status { get; set; } = StudentStatus.Study;
 
-        public Guid? GroupId { get; set; }
+        public Group? Group { get; set; }
 
         //public int StartYear { get; set; }
         //public int EndYear { get; private set; }

@@ -21,7 +21,7 @@ namespace GoodStudent.Application.Students
 
                 Status = newStudentDto.Status,
 
-                GroupId = newStudentDto.GroupId,
+                Group = newStudentDto.Group,
 
                 Id = Guid.NewGuid()
             };

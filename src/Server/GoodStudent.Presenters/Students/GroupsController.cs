@@ -16,7 +16,7 @@ namespace GoodStudent.Presenters.Students
             {
                 Code = request.Code,
 
-                FacultyId = request.FacultyId
+                ProfessionId = request.FacultyId
             };
 
             return Ok(JsonSerializer.Serialize(group));
