@@ -15,7 +15,7 @@ namespace GoodStudent.Presenters.Students
     [Route("api/[controller]")]
     public class StudentsController : ControllerBase
     {
-        private readonly IStudentService _studentService;
+        private readonly IStudentsService _studentService;
 
         [HttpPost]
         public async Task<IActionResult> New([FromBody] NewStudentDto request, CancellationToken cancellationToken)
@@ -29,7 +29,7 @@ namespace GoodStudent.Presenters.Students
         //    return Ok(id);
         //}
 
-        public StudentsController(IStudentService studentService)
+        public StudentsController(IStudentsService studentService)
         {
             _studentService = studentService;
         }

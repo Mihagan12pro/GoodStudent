@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace GoodStudent.Infrastracture.Postgres
 {
-    internal abstract class Entity
+    internal abstract class DbEntity
     {
         [Key]
         public Guid Id { get; set; }

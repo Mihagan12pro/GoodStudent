@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace GoodStudent.Application.Students
 {
-    public interface IStudentService
+    public interface IStudentsService
     {
         Task<Guid> AddNew(NewStudentDto newStudentDto, CancellationToken cancellationToken);
 

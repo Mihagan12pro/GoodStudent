@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace GoodStudent.Infrastracture.Postgres.Students
 {
     [Table("groups")]
-    internal class GroupEntity : Entity
+    internal class GroupEntity : DbEntity
     {
         [Required(), Column("number")]
         public string? Number { get; set; }

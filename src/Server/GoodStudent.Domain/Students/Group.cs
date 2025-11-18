@@ -8,7 +8,7 @@ namespace GoodStudent.Domain.Students
 {
     public class Group : Domain
     {
-        public required string Code { get; set; }
+        public required string Number { get; set; }
 
         public required Guid ProfessionId { get; set; }
     }

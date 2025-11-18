@@ -14,22 +14,5 @@ namespace GoodStudent.Infrastracture.Postgres.Students
     {
         [Column("group_id")]
         public Guid GroupId { get; set; }
-
-        public StudentEntity(Student student) : base(student)
-        {
-            Name = student.Name;
-
-            SurName = student.Surname;
-
-            Patronymic = student.Patronymic;
-
-            if (student.Group != null)
-                GroupId = student.Group.Id;
-        }
-
-        public StudentEntity()
-        {
-            
-        }
     }
 }

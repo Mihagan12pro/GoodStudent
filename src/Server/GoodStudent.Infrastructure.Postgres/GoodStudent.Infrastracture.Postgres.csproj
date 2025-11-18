@@ -16,8 +16,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="postgresConfig.json">
+    <None Update="Configurations\postgresConfig.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Configurations\studentsConfig.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
 

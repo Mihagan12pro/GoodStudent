@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace GoodStudent.Infrastracture.Postgres.People
 {
-    internal class PersonEntity : Entity
+    internal class PersonEntity : DbEntity
     {
         [Required()]
         public string? Name { get; set; }
@@ -18,16 +18,5 @@ namespace GoodStudent.Infrastracture.Postgres.People
         public string? SurName { get; set; }
 
         public string? Patronymic { get; set; }
-
-
-        public PersonEntity()
-        {
-            
-        }
-
-        public PersonEntity(Person person)
-        {
-            
-        }
     }
 }

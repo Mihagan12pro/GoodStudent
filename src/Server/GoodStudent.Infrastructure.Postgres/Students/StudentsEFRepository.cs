@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 namespace GoodStudent.Infrastracture.Postgres.Students
 {
@@ -14,9 +15,15 @@ namespace GoodStudent.Infrastracture.Postgres.Students
 
         public async Task<Guid> AddAsync(Student student, CancellationToken cancellationToken)
         {
-            StudentEntity studentEntity = new StudentEntity(student);
+            StudentEntity studentEntity = new StudentEntity();
+            studentEntity.Name = student.Name;
 
-            _studentsContext.Add(studentEntity);
+            studentEntity.SurName = student.Surname;
+
+            studentEntity.Patronymic = student.Patronymic;
+
+            await _studentsContext.Students.AddAsync(studentEntity);
+            await _studentsContext.SaveChangesAsync();
 
             return student.Id;
         }

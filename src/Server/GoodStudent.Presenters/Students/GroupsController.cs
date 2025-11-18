@@ -14,9 +14,9 @@ namespace GoodStudent.Presenters.Students
         {
             Group group = new Group()
             {
-                Code = request.Code,
+                Number = request.Number,
 
-                ProfessionId = request.FacultyId
+                ProfessionId = request.ProfessionId
             };
 
             return Ok(JsonSerializer.Serialize(group));

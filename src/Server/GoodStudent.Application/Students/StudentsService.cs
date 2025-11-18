@@ -3,7 +3,7 @@ using GoodStudent.Domain.Students;
 
 namespace GoodStudent.Application.Students
 {
-    public class StudentService : IStudentService
+    public class StudentsService : IStudentsService
     {
         private readonly IStudentsRepository _studentsRepository;
 
@@ -38,7 +38,7 @@ namespace GoodStudent.Application.Students
         //    return new StudentByIdWithGroupDto(student.Name, student.Surname, group.Code, student.Patronymic);
         //}
 
-        public StudentService(IStudentsRepository studentsRepository)
+        public StudentsService(IStudentsRepository studentsRepository)
         {
              _studentsRepository = studentsRepository;   
         }
