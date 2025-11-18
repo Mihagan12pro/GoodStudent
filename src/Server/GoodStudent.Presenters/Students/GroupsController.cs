@@ -22,16 +22,16 @@ namespace GoodStudent.Presenters.Students
             return Ok(JsonSerializer.Serialize(group));
         }
 
-        [HttpPatch("{groupId:guid}/{studentId:guid}")]
-        public async Task<IActionResult> Add([FromRoute]Guid groupId, [FromRoute]Guid studentId, CancellationToken cancellationToken)
-        {
-            return Ok();
-        }
+        //[HttpPatch("{groupId:guid}/{studentId:guid}")]
+        //public async Task<IActionResult> Add([FromRoute]Guid groupId, [FromRoute]Guid studentId, CancellationToken cancellationToken)
+        //{
+        //    return Ok();
+        //}
 
-        [HttpGet("{groupId:guid}")]
-        public async Task<IActionResult> Students([FromRoute] Guid groupId, CancellationToken cancellationToken)
-        {
-            return Ok();
-        }
+        //[HttpGet("{groupId:guid}")]
+        //public async Task<IActionResult> Students([FromRoute] Guid groupId, CancellationToken cancellationToken)
+        //{
+        //    return Ok();
+        //}
     }
 }

@@ -21,6 +21,8 @@ namespace GoodStudent.Application.Students
 
                 Status = newStudentDto.Status,
 
+                GroupId = newStudentDto.GroupId,
+
                 Id = Guid.NewGuid()
             };
 
@@ -29,14 +31,14 @@ namespace GoodStudent.Application.Students
             return student.Id;
         }
 
-        public async Task<StudentByIdWithGroupDto> GetByIdWithGroup(Guid id)
-        {
-            Group group = await _studentsRepository.GetGroupByStudentAsync(id);
+        //public async Task<StudentByIdWithGroupDto> GetByIdWithGroup(Guid id)
+        //{
+        //    Group group = await _studentsRepository.GetGroupByStudentAsync(id);
 
-            Student student = group.Students.Where(s => s.Id == id).First();
+        //    Student student = group.Students.Where(s => s.Id == id).First();
 
-            return new StudentByIdWithGroupDto(student.Name, student.Surname, group.Code, student.Patronymic);
-        }
+        //    return new StudentByIdWithGroupDto(student.Name, student.Surname, group.Code, student.Patronymic);
+        //}
 
         public StudentService(IStudentsRepository studentsRepository)
         {

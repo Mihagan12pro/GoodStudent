@@ -23,11 +23,11 @@ namespace GoodStudent.Presenters.Students
             return Ok(_studentService.AddNew(request, cancellationToken));
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetById([FromRoute] Guid id, CancellationToken cancellationToken)
-        {
-            return Ok(id);
-        }
+        //[HttpGet]
+        //public async Task<IActionResult> GetById([FromRoute] Guid id, CancellationToken cancellationToken)
+        //{
+        //    return Ok(id);
+        //}
 
         public StudentsController(IStudentService studentService)
         {

@@ -10,8 +10,6 @@ namespace GoodStudent.Domain.Students
     {
         public required string Code { get; set; }
 
-        public List<Student> Students { get; } = new List<Student>();
-
         public required Guid FacultyId { get; set; }
     }
 }

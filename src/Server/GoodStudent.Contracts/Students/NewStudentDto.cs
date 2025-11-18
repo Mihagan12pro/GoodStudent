@@ -9,5 +9,6 @@ namespace GoodStudent.Contracts.Students
         DateOnly BirthDate, 
         //EducationType EducationType,
         string? Patronymic = null,
+        Guid? GroupId = null,
         StudentStatus Status = StudentStatus.Study);
 }

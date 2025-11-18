@@ -11,4 +11,10 @@
     <ProjectReference Include="..\GoodStudent.Domain\GoodStudent.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="postgresConfig.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

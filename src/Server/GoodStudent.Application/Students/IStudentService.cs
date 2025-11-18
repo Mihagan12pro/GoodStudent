@@ -11,6 +11,6 @@ namespace GoodStudent.Application.Students
     {
         Task<Guid> AddNew(NewStudentDto newStudentDto, CancellationToken cancellationToken);
 
-        Task<StudentByIdWithGroupDto> GetByIdWithGroup(Guid id);
+        //Task<StudentByIdWithGroupDto> GetByIdWithGroup(Guid id);
     }
 }
