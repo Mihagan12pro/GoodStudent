@@ -13,6 +13,6 @@ namespace GoodStudent.Infrastracture.Postgres.Students
     internal class StudentEntity : PersonEntity
     {
         [Column("group_id")]
-        public Guid GroupId { get; set; }
+        public Guid? GroupId { get; set; }
     }
 }

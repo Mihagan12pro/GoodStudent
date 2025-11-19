@@ -1,6 +1,7 @@
 ﻿using GoodStudent.Application.Students;
 using GoodStudent.Contracts.Students;
 using GoodStudent.Domain.Students;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -27,11 +28,20 @@ namespace GoodStudent.Infrastracture.Postgres.Students
             await _studentsContext.Students.AddAsync(studentEntity);
             await _studentsContext.SaveChangesAsync();
 
-            return student.Id;
+            return studentEntity.Id;
         }
 
-        public Task<GetStudentByIdDto> GetByIdAsync(Guid id, CancellationToken cancellationToken)
+        public async Task<GetStudentByIdDto> GetByIdAsync(Guid id, CancellationToken cancellationToken)
         {
+            Console.WriteLine(id);
+
+            var student = await (from s in _studentsContext.Students where s.Id == id select s).FirstOrDefaultAsync();
+
+
+            //string? name = student.Name;
+            Console.WriteLine(student);
+            //return new GetStudentByIdDto(student.Name, student.SurName, student.Patronymic, student.gr);
+
             throw new NotImplementedException();
         }
 

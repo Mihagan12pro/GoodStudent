@@ -19,14 +19,12 @@ namespace GoodStudent.Application.Students
 
                 Status = newStudentDto.Status,
 
-                Group = newStudentDto.Group,
-
-                Id = Guid.NewGuid()
+                Group = newStudentDto.Group
             };
 
-            await _studentsRepository.AddAsync(student, cancellationToken);
+            Guid id = await _studentsRepository.AddAsync(student, cancellationToken);
 
-            return student.Id;
+            return id;
         }
 
         public async Task<GetStudentByIdDto> GetById(Guid id, CancellationToken cancellationToken)

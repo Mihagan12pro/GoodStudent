@@ -1,13 +1,6 @@
 ﻿using GoodStudent.Application.Students;
 using GoodStudent.Contracts.Students;
-using GoodStudent.Domain.Students;
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace GoodStudent.Presenters.Students
 {
@@ -25,7 +18,7 @@ namespace GoodStudent.Presenters.Students
             return Ok(result);
         }
 
-        [HttpGet]
+        [HttpGet("{id}")]
         public async Task<IActionResult> GetById([FromRoute] Guid id, CancellationToken cancellationToken)
         {
             return Ok(await _studentService.GetById(id, cancellationToken));
