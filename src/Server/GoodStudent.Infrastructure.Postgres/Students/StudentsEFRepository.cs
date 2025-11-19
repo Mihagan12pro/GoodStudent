@@ -1,4 +1,5 @@
 ﻿using GoodStudent.Application.Students;
+using GoodStudent.Contracts.Students;
 using GoodStudent.Domain.Students;
 using System;
 using System.Collections.Generic;
@@ -17,10 +18,11 @@ namespace GoodStudent.Infrastracture.Postgres.Students
         {
             StudentEntity studentEntity = new StudentEntity();
             studentEntity.Name = student.Name;
-
             studentEntity.SurName = student.Surname;
-
             studentEntity.Patronymic = student.Patronymic;
+
+            if (student.Group != null)
+                studentEntity.GroupId = student.Group.Id;
 
             await _studentsContext.Students.AddAsync(studentEntity);
             await _studentsContext.SaveChangesAsync();
@@ -28,7 +30,12 @@ namespace GoodStudent.Infrastracture.Postgres.Students
             return student.Id;
         }
 
-        public async Task<Group> GetGroupByStudentAsync(Guid studentId)
+        public Task<GetStudentByIdDto> GetByIdAsync(Guid id, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<Group> GetGroupByStudentAsync(Guid studentId, CancellationToken cancellationToken)
         {
             throw new NotImplementedException();
         }

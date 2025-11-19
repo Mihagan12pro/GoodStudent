@@ -16,7 +16,7 @@ namespace GoodStudent.Presenters.Students
         [HttpPost]
         public async Task<IActionResult> New([FromBody] NewGroupDto request, CancellationToken cancellationToken)
         {
-            return Ok(_groupsService.AddAsync(request));
+            return Ok(await _groupsService.AddAsync(request));
         }
 
         public GroupsController(IGroupsService groupsService)

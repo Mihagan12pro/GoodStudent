@@ -20,14 +20,16 @@ namespace GoodStudent.Presenters.Students
         [HttpPost]
         public async Task<IActionResult> New([FromBody] NewStudentDto request, CancellationToken cancellationToken)
         {
-            return Ok(_studentService.AddNew(request, cancellationToken));
+            var result = await _studentService.AddNew(request, cancellationToken);
+
+            return Ok(result);
         }
 
-        //[HttpGet]
-        //public async Task<IActionResult> GetById([FromRoute] Guid id, CancellationToken cancellationToken)
-        //{
-        //    return Ok(id);
-        //}
+        [HttpGet]
+        public async Task<IActionResult> GetById([FromRoute] Guid id, CancellationToken cancellationToken)
+        {
+            return Ok(await _studentService.GetById(id, cancellationToken));
+        }
 
         public StudentsController(IStudentsService studentService)
         {
