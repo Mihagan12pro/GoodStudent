@@ -3,7 +3,7 @@ using GoodStudent.Domain.Students;
 
 namespace GoodStudent.Application.Students
 {
-    public class StudentService : IStudentService
+    public class StudentsService : IStudentsService
     {
         private readonly IStudentsRepository _studentsRepository;
 
@@ -17,18 +17,21 @@ namespace GoodStudent.Application.Students
 
                 Patronymic = newStudentDto.Patronymic,
 
-                BirthDate = newStudentDto.BirthDate,
-
                 Status = newStudentDto.Status,
 
-                GroupId = newStudentDto.GroupId,
-
-                Id = Guid.NewGuid()
+                Group = newStudentDto.Group
             };
 
-            await _studentsRepository.AddAsync(student, cancellationToken);
+            Guid id = await _studentsRepository.AddAsync(student, cancellationToken);
 
-            return student.Id;
+            return id;
+        }
+
+        public async Task<GetStudentByIdDto> GetById(Guid id, CancellationToken cancellationToken)
+        {
+            GetStudentByIdDto student = await _studentsRepository.GetByIdAsync(id, cancellationToken);
+
+            return student;
         }
 
         //public async Task<StudentByIdWithGroupDto> GetByIdWithGroup(Guid id)
@@ -40,7 +43,7 @@ namespace GoodStudent.Application.Students
         //    return new StudentByIdWithGroupDto(student.Name, student.Surname, group.Code, student.Patronymic);
         //}
 
-        public StudentService(IStudentsRepository studentsRepository)
+        public StudentsService(IStudentsRepository studentsRepository)
         {
              _studentsRepository = studentsRepository;   
         }

@@ -1,4 +1,6 @@
-﻿using GoodStudent.Domain.Students.Enums;
+﻿using GoodStudent.Domain.Students;
+using GoodStudent.Domain.Students.Enums;
+
 
 namespace GoodStudent.Contracts.Students
 {
@@ -6,9 +8,7 @@ namespace GoodStudent.Contracts.Students
         string Name, 
         string Surname,
         int StartYear,
-        DateOnly BirthDate, 
-        //EducationType EducationType,
         string? Patronymic = null,
-        Guid? GroupId = null,
+        Group? Group = null,
         StudentStatus Status = StudentStatus.Study);
 }

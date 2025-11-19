@@ -14,8 +14,10 @@ namespace GoodStudent.Infrastracture.Postgres
     {
         public static IServiceCollection AddPostgresInfrastructure(this IServiceCollection services)
         {
-            services.AddSingleton<ISqlConnectionFactory, SqlConnectionFactory>();
-            services.AddScoped<IStudentsRepository, StudentsRepository>();
+            services.AddDbContext<StudentsContext>();
+
+            services.AddScoped<IGroupsRepository, GroupsEFRepository>();
+            services.AddScoped<IStudentsRepository, StudentsEFRepository>();
 
             return services;
         }

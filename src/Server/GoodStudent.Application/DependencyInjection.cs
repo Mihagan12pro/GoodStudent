@@ -7,7 +7,8 @@ namespace GoodStudent.Application
     {
         public static IServiceCollection AddApplication(this IServiceCollection services)
         {
-            services.AddScoped<IStudentService, StudentService>();
+            services.AddScoped<IStudentsService, StudentsService>();
+            services.AddScoped<IGroupsService, GroupsService>();
 
             return services;
         }

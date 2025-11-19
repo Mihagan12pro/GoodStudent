@@ -13,7 +13,5 @@ namespace GoodStudent.Domain.People
         public required string Surname { get; set; }
 
         public string? Patronymic { get; set; } 
-        
-        public DateOnly BirthDate { get; set; }
     }
 }

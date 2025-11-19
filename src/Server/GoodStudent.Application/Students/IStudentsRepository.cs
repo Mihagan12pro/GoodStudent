@@ -1,4 +1,5 @@
-﻿using GoodStudent.Domain.Students;
+﻿using GoodStudent.Contracts.Students;
+using GoodStudent.Domain.Students;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,6 +12,8 @@ namespace GoodStudent.Application.Students
     {
         Task<Guid> AddAsync(Student student, CancellationToken cancellationToken);
 
-        Task<Group> GetGroupByStudentAsync(Guid studentId);
+        Task<GetStudentByIdDto> GetByIdAsync(Guid id, CancellationToken cancellationToken);
+
+        Task<Group> GetGroupByStudentAsync(Guid studentId, CancellationToken cancellationToken);
     }
 }
