@@ -10,14 +10,27 @@ namespace GoodStudent.Application.Students
 {
     internal class GroupsService : IGroupsService
     {
-        public Task<Guid> AddAsync(NewGroupDto newGroup)
+        private readonly IGroupsRepository _groupsRepository;
+
+        public async Task<Guid> AddAsync(NewGroupDto newGroup)
+        {
+            Group group = new Group() { Number = newGroup.Number, ProfessionId = newGroup.ProfessionId };
+
+            await _groupsRepository.AddAsync(group);
+
+            Guid id = Guid.NewGuid();
+
+            return id;
+        }
+
+        public async Task<GetStudentsByGroup> GetStudentsAsync(Guid groupId)
         {
             throw new NotImplementedException();
         }
 
-        public Task<GetStudentsByGroup> GetStudentsAsync(Guid groupId)
+        public GroupsService(IGroupsRepository groupsRepository)
         {
-            throw new NotImplementedException();
+            _groupsRepository = groupsRepository;
         }
     }
 }

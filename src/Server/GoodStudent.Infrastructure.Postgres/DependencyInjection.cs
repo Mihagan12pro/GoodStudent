@@ -16,6 +16,7 @@ namespace GoodStudent.Infrastracture.Postgres
         {
             services.AddDbContext<StudentsContext>();
 
+            services.AddScoped<IGroupsRepository, GroupsEFRepository>();
             services.AddScoped<IStudentsRepository, StudentsEFRepository>();
 
             return services;

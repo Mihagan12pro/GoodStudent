@@ -2,6 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using GoodStudent.Domain.Students;
 using System.Text.Json;
+using GoodStudent.Application.Students;
+using Microsoft.AspNetCore.Authorization.Infrastructure;
 
 namespace GoodStudent.Presenters.Students
 {
@@ -9,29 +11,17 @@ namespace GoodStudent.Presenters.Students
     [Route("api/[controller]")]
     public class GroupsController : ControllerBase
     {
+        private readonly IGroupsService _groupsService;
+
         [HttpPost]
         public async Task<IActionResult> New([FromBody] NewGroupDto request, CancellationToken cancellationToken)
         {
-            Group group = new Group()
-            {
-                Number = request.Number,
-
-                ProfessionId = request.ProfessionId
-            };
-
-            return Ok(JsonSerializer.Serialize(group));
+            return Ok(_groupsService.AddAsync(request));
         }
 
-        //[HttpPatch("{groupId:guid}/{studentId:guid}")]
-        //public async Task<IActionResult> Add([FromRoute]Guid groupId, [FromRoute]Guid studentId, CancellationToken cancellationToken)
-        //{
-        //    return Ok();
-        //}
-
-        //[HttpGet("{groupId:guid}")]
-        //public async Task<IActionResult> Students([FromRoute] Guid groupId, CancellationToken cancellationToken)
-        //{
-        //    return Ok();
-        //}
+        public GroupsController(IGroupsService groupsService)
+        {
+            _groupsService = groupsService;
+        }
     }
 }
