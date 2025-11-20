@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace GoodStudent.Infrastracture.Postgres.Migrations
 {
     [DbContext(typeof(StudentsContext))]
-    [Migration("20251120092850_InitialMifration")]
-    partial class InitialMifration
+    [Migration("20251120102013_Checkgroup1")]
+    partial class Checkgroup1
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -57,22 +57,43 @@ namespace GoodStudent.Infrastracture.Postgres.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("name");
 
                     b.Property<string>("Patronymic")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("patronymic");
 
                     b.Property<int>("Student")
                         .HasColumnType("integer")
-                        .HasColumnName("Status");
+                        .HasColumnName("status");
 
                     b.Property<string>("Surname")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("surname");
+
+                    b.Property<Guid?>("group_id")
+                        .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
-                    b.ToTable("students");
+                    b.HasIndex("group_id");
+
+                    b.ToTable("students", t =>
+                        {
+                            t.Property("group_id")
+                                .HasColumnName("group_id1");
+                        });
+                });
+
+            modelBuilder.Entity("GoodStudent.Infrastracture.Postgres.Students.StudentEntity", b =>
+                {
+                    b.HasOne("GoodStudent.Infrastracture.Postgres.Students.GroupEntity", "Group")
+                        .WithMany()
+                        .HasForeignKey("group_id");
+
+                    b.Navigation("Group");
                 });
 #pragma warning restore 612, 618
         }

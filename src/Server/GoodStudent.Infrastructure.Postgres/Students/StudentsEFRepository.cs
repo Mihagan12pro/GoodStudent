@@ -19,11 +19,11 @@ namespace GoodStudent.Infrastracture.Postgres.Students
         {
             StudentEntity studentEntity = new StudentEntity();
             studentEntity.Name = student.Name;
-            studentEntity.SurName = student.Surname;
+            studentEntity.Surname = student.Surname;
             studentEntity.Patronymic = student.Patronymic;
 
             if (student.Group != null)
-                studentEntity.GroupId = student.Group.Id;
+                studentEntity.Group = new GroupEntity() { Id = student.Group.Id, Number = student.Group.Number, ProfessionId = student.Group.ProfessionId};
 
             await _studentsContext.Students.AddAsync(studentEntity);
             await _studentsContext.SaveChangesAsync();
@@ -31,18 +31,25 @@ namespace GoodStudent.Infrastracture.Postgres.Students
             return studentEntity.Id;
         }
 
-        public async Task<GetStudentByIdDto> GetByIdAsync(Guid id, CancellationToken cancellationToken)
+        public async Task<Student> GetByIdAsync(Guid id, CancellationToken cancellationToken)
         {
-            Console.WriteLine(id);
+            StudentEntity? studentEntity = await _studentsContext.Students.Where(s => s.Id == id).FirstOrDefaultAsync();
 
-            var student = await (from s in _studentsContext.Students where s.Id == id select s).FirstOrDefaultAsync();
+            if (studentEntity == null)
+                return null!;
 
+            Student student = new Student()
+            {
+                Name = studentEntity.Name!,
 
-            //string? name = student.Name;
-            Console.WriteLine(student);
-            //return new GetStudentByIdDto(student.Name, student.SurName, student.Patronymic, student.gr);
+                Surname = studentEntity.Surname!,
 
-            throw new NotImplementedException();
+                Patronymic = studentEntity.Patronymic,
+
+                Group = new Group() { Number = studentEntity.Group!.Number! , ProfessionId = studentEntity.Group.ProfessionId}
+            };
+
+            return student;
         }
 
         public Task<Group> GetGroupByStudentAsync(Guid studentId, CancellationToken cancellationToken)

@@ -29,9 +29,14 @@ namespace GoodStudent.Application.Students
 
         public async Task<GetStudentByIdDto> GetById(Guid id, CancellationToken cancellationToken)
         {
-            GetStudentByIdDto student = await _studentsRepository.GetByIdAsync(id, cancellationToken);
+            Student student = await _studentsRepository.GetByIdAsync(id, cancellationToken);
 
-            return student;
+            if (student == null)
+                throw new NullReferenceException();
+
+            GetStudentByIdDto response = new GetStudentByIdDto(student.Name, student.Surname, student.Patronymic!, student.Group!.Number);
+
+            return response;
         }
 
         //public async Task<StudentByIdWithGroupDto> GetByIdWithGroup(Guid id)

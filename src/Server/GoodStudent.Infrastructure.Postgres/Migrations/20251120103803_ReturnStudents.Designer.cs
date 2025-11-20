@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace GoodStudent.Infrastracture.Postgres.Migrations
 {
     [DbContext(typeof(StudentsContext))]
-    [Migration("20251120092850_InitialMifration")]
-    partial class InitialMifration
+    [Migration("20251120103803_ReturnStudents")]
+    partial class ReturnStudents
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -52,27 +52,40 @@ namespace GoodStudent.Infrastracture.Postgres.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<Guid?>("GroupId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("group_id");
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("name");
 
                     b.Property<string>("Patronymic")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("patronymic");
 
                     b.Property<int>("Student")
                         .HasColumnType("integer")
-                        .HasColumnName("Status");
+                        .HasColumnName("status");
 
                     b.Property<string>("Surname")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("surname");
 
                     b.HasKey("Id");
 
+                    b.HasIndex("GroupId");
+
                     b.ToTable("students");
+                });
+
+            modelBuilder.Entity("GoodStudent.Infrastracture.Postgres.Students.StudentEntity", b =>
+                {
+                    b.HasOne("GoodStudent.Infrastracture.Postgres.Students.GroupEntity", "Group")
+                        .WithMany()
+                        .HasForeignKey("GroupId");
+
+                    b.Navigation("Group");
                 });
 #pragma warning restore 612, 618
         }

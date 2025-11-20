@@ -12,10 +12,13 @@ namespace GoodStudent.Infrastracture.Postgres.Students
     [Table("students")]
     internal class StudentEntity : PersonEntity
     {
-        [Column("group_id")]
-        public Guid? GroupId { get; set; }
+        //[Column("group_id")]
+        //public Guid? GroupId { get; set; }
 
-        [Column("Status")]
+        //[ForeignKey("group_id")]
+        public GroupEntity? Group { get; set; }
+
+        [Column("status")]
         public StudentStatus Student { get; set; } = StudentStatus.Study;
     }
 }

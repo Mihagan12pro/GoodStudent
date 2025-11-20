@@ -11,12 +11,13 @@ namespace GoodStudent.Infrastracture.Postgres.People
 {
     internal class PersonEntity : DbEntity
     {
-        [Required()]
+        [Required(), Column("name")]
         public string? Name { get; set; }
 
-        [Required()]
-        public string? SurName { get; set; }
+        [Required(), Column("surname")]
+        public string? Surname { get; set; }
 
+        [Column("patronymic")]
         public string? Patronymic { get; set; }
     }
 }

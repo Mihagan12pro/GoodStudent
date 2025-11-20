@@ -12,7 +12,7 @@ namespace GoodStudent.Application.Students
     {
         Task<Guid> AddAsync(Student student, CancellationToken cancellationToken);
 
-        Task<GetStudentByIdDto> GetByIdAsync(Guid id, CancellationToken cancellationToken);
+        Task<Student> GetByIdAsync(Guid id, CancellationToken cancellationToken);
 
         Task<Group> GetGroupByStudentAsync(Guid studentId, CancellationToken cancellationToken);
     }

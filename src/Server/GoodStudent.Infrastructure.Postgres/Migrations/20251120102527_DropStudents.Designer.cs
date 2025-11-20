@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace GoodStudent.Infrastracture.Postgres.Migrations
 {
     [DbContext(typeof(StudentsContext))]
-    [Migration("20251120092850_InitialMifration")]
-    partial class InitialMifration
+    [Migration("20251120102527_DropStudents")]
+    partial class DropStudents
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -43,36 +43,6 @@ namespace GoodStudent.Infrastracture.Postgres.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("groups");
-                });
-
-            modelBuilder.Entity("GoodStudent.Infrastracture.Postgres.Students.StudentEntity", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid?>("GroupId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("group_id");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Patronymic")
-                        .HasColumnType("text");
-
-                    b.Property<int>("Student")
-                        .HasColumnType("integer")
-                        .HasColumnName("Status");
-
-                    b.Property<string>("Surname")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("students");
                 });
 #pragma warning restore 612, 618
         }
