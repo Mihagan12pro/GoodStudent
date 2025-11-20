@@ -1,6 +1,6 @@
 class ApiClient {
     constructor() {
-        this.baseUrl = 'https://localhost:48758/api'; 
+        this.baseUrl = 'https://localhost:5000/api'; 
         this.token = localStorage.getItem('authToken');
     }
     async request(endpoint, options = {}) {

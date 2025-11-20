@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', function() {
         name: 'Преподаватель',
         email: email
     }));
-    window.location.href = 'index.html';
+    window.location.href = '/main';
     });
     document.getElementById('registerForm').addEventListener('submit', function(e) {
         e.preventDefault();
@@ -54,5 +54,6 @@ document.addEventListener('DOMContentLoaded', function() {
             userTypeText: userType === 'student' ? 'Студент' : 'Преподаватель'
         });        
         alert(`Регистрация успешна!\nEmail: ${email}\nТип аккаунта: ${userType === 'student' ? 'Студент' : 'Преподаватель'}`);
+        showLoginForm();
     });
 });
