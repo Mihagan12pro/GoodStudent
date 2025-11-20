@@ -34,7 +34,12 @@ namespace GoodStudent.Application.Students
             if (student == null)
                 throw new NullReferenceException();
 
-            GetStudentByIdDto response = new GetStudentByIdDto(student.Name, student.Surname, student.Patronymic!, student.Group!.Number);
+            string? number = null;
+
+            if (student.Group != null)
+                number = student.Group.Number;  
+
+            GetStudentByIdDto response = new GetStudentByIdDto(student.Name, student.Surname, student.Patronymic, number);
 
             return response;
         }

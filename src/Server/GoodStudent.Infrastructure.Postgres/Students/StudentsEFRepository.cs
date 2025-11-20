@@ -33,7 +33,9 @@ namespace GoodStudent.Infrastracture.Postgres.Students
 
         public async Task<Student> GetByIdAsync(Guid id, CancellationToken cancellationToken)
         {
-            StudentEntity? studentEntity = await _studentsContext.Students.Where(s => s.Id == id).FirstOrDefaultAsync();
+            StudentEntity? studentEntity = await _studentsContext.Students.
+                Include(s => s.Group).
+                    FirstOrDefaultAsync(s => s.Id == id);/*Students.Where(s => s.Id == id).FirstOrDefaultAsync();*/
 
             if (studentEntity == null)
                 return null!;
@@ -45,9 +47,14 @@ namespace GoodStudent.Infrastracture.Postgres.Students
                 Surname = studentEntity.Surname!,
 
                 Patronymic = studentEntity.Patronymic,
-
-                Group = new Group() { Number = studentEntity.Group!.Number! , ProfessionId = studentEntity.Group.ProfessionId}
             };
+
+            Group? group = null;
+
+            if (studentEntity.Group != null)
+                group = new Group() { Number = studentEntity.Group.Number, ProfessionId = studentEntity.Group.ProfessionId, Id = studentEntity.Group.Id };
+
+            student.Group = group;
 
             return student;
         }
