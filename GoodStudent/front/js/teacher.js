@@ -221,7 +221,8 @@ class TeacherApp {
                 </div>
                 <div class="qr-actions">
                     <button class="btn-primary" onclick="teacherApp.generateQRCode()">Сгенерировать QR код</button>
-                </div>
+                    <button class="btn-secondary" id="share-qr-btn" disabled>Поделиться QR</button>
+                    </div>
             </div>
         `;
     }
@@ -254,7 +255,7 @@ class TeacherApp {
         if (logoutBtn) {
             logoutBtn.addEventListener('click', () => {
                 localStorage.removeItem('authToken');
-                window.location.href = '/GoodStudent/front/login.html';
+                window.location.href = 'form.html';
             });
         }
         const markBtn = document.querySelector('.btn-mark-attendance');
@@ -280,8 +281,65 @@ class TeacherApp {
         }
     }
     generateQRCode() {
-        alert('Генерация QR кода...');
+        if (typeof QRCode === 'undefined') {
+            console.error('Библиотека QRCode не загружена');
+            alert('Библиотека QRCode не загружена');
+            return;
+        }
+        const qrContainer = document.getElementById('qrcode');
+        if (!qrContainer) return;
+        qrContainer.innerHTML = '';
+        const qrData = {
+        lessonId: this.getCurrentLessonId(),
+        groupId: this.currentGroupId,
+        timestamp: new Date().getTime(),
+        type: 'attendance'
+        };
+        const qrString = JSON.stringify(qrData); 
+        const qrcode = new QRCode(qrContainer, {
+        text: qrString,
+        width: 200,
+        height: 200,
+        colorDark: "#000000",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H
+        });
+        if (shareBtn) {
+        shareBtn.disabled = false;
+        shareBtn.onclick = () => this.shareQRCode();
     }
+        console.log('QR код сгенерирован:', qrData);
+    }
+    async shareQRCode() {
+    const qrContainer = document.getElementById('qrcode');
+    if (!qrContainer || qrContainer.innerHTML.includes('QR код появится здесь')) {
+        alert('Сначала сгенерируйте QR код');
+        return;
+    }
+    try {
+        if (navigator.share) {
+            const qrData = {
+                lessonId: this.getCurrentLessonId(),
+                groupId: this.currentGroupId,
+                timestamp: new Date().getTime(),
+                type: 'attendance'
+            };
+            
+            await navigator.share({
+                title: 'QR код для отметки посещаемости',
+                text: `Отсканируйте QR код для отметки на паре. Группа: ${this.currentGroupId}`,
+                url: window.location.href
+            });
+        } else {
+            const qrText = `QR код для группы ${this.currentGroupId}. Откройте приложение для сканирования.`;
+            await navigator.clipboard.writeText(qrText);
+            alert('Информация о QR коде скопирована в буфер обмена!');
+        }
+    } catch (error) {
+        console.error('Ошибка при попытке поделиться:', error);
+        alert('Не удалось поделиться QR кодом');
+    }
+}
     getCurrentLessonId() {
         return 1; 
     }
@@ -299,5 +357,6 @@ class TeacherApp {
             { id: 3, name: "Сидоров Дмитрий", email: "sidorov@edu.ru", present: false }
         ];
     }
+    
 }
 const teacherApp = new TeacherApp();
