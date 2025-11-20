@@ -30,6 +30,9 @@ class ApiClient {
             }            
         } catch (error) {
             console.error('API Error:', error);
+            if (error.message.includes('Failed to fetch') || error.message.includes('CORS')) {
+            throw new Error('CORS ошибка: запрос с этого домена не разрешён');
+        }
             throw new Error(`Ошибка соединения: ${error.message}`);
         }
     }
@@ -43,8 +46,35 @@ class ApiClient {
         return await this.request('/students');
     }
     async getGroupStudents(groupId) {
-        const allStudents = await this.getStudents();
-        return allStudents.filter(student => student.groupId === groupId);
+        try {
+            return await this.request(`/groups/${groupId}/students`);
+        }
+        catch (error) {
+            const allStudents = await this.getStudents();
+            return allStudents.filter(student => student.groupId === groupId);
+        }
+    }
+    async getLessonAttendance(lessonId) {
+        return await this.request(`/attendance/lesson/${lessonId}`);
+    }
+    async getQRAttendance(lessonId) {
+        return await this.request(`/attendance/qr-status/${lessonId}`);
+    }
+    async generateQRCode(lessonId, duration = 600000) {
+        return await this.request('/qr/generate', {
+            method: 'POST',
+            body: { lessonId, duration }
+        });
+    }
+    async getSchedule(date = null) {
+        const query = date ? `?date=${date}` : '';
+        return await this.request(`/schedule${query}`);
+    }
+    async markManualAttendance(attendanceData) {
+        return await this.request('/attendance/manual', {
+            method: 'POST',
+            body: attendanceData
+        });
     }
     async markAttendance(attendanceData) {
         return await this.request('/attendance', {
