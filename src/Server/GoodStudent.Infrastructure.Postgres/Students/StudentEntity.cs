@@ -1,4 +1,4 @@
-﻿using GoodStudent.Domain.Students;
+﻿using GoodStudent.Domain.Students.Enums;
 using GoodStudent.Infrastracture.Postgres.People;
 using System;
 using System.Collections.Generic;
@@ -14,5 +14,8 @@ namespace GoodStudent.Infrastracture.Postgres.Students
     {
         [Column("group_id")]
         public Guid? GroupId { get; set; }
+
+        [Column("Status")]
+        public StudentStatus Student { get; set; } = StudentStatus.Study;
     }
 }
