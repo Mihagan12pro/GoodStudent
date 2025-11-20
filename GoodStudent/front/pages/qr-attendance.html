@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR код - GoodStudent</title>
+    <link rel="stylesheet" href="/GoodStudent/front/css/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <header class="header">
+            <button class="btn-back" onclick="goBack()">← Назад</button>
+            <div class="logo">
+                <h2>QR код для отметки</h2>
+            </div>
+            <div class="header-actions">
+                <button class="btn-share" id="share-qr">Поделиться</button>
+            </div>
+        </header>
+        <main class="main-content">
+            <div class="subject-info">
+                <h3 id="qr-subject-name">Информатика - Группа П-401</h3>
+                <p>Студенты могут отсканировать QR код для автоматической отметки</p>
+            </div>
+            <div class="qr-container">
+                <div class="qr-code" id="qr-code">
+                    <canvas id="qr-canvas"></canvas>
+                </div>
+                <div class="qr-info">
+                    <p><strong>Действителен до:</strong> <span id="qr-expiry">20 ноября 2025, 11:30</span></p>
+                    <p class="students-scanned"><strong>Отметилось студентов:</strong> <span id="scanned-count">0</span></p>
+                </div>
+            </div>
+            <div class="qr-actions">
+                <button class="btn-secondary" id="refresh-qr">Обновить QR код</button>
+                <button class="btn-secondary" id="view-scanned">Просмотреть отметившихся</button>
+            </div>
+        </main>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.3/qrcode.min.js"></script>
+    <script src="/GoodStudent/front/js/qr.js"></script>
+</body>
+</html>
