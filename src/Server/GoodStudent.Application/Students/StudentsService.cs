@@ -1,4 +1,4 @@
-﻿using GoodStudent.Contracts.Students;
+﻿using GoodStudent.Contracts.Students.StudentsContracts;
 using GoodStudent.Domain.Students;
 
 namespace GoodStudent.Application.Students
@@ -43,15 +43,6 @@ namespace GoodStudent.Application.Students
 
             return response;
         }
-
-        //public async Task<StudentByIdWithGroupDto> GetByIdWithGroup(Guid id)
-        //{
-        //    Group group = await _studentsRepository.GetGroupByStudentAsync(id);
-
-        //    Student student = group.Students.Where(s => s.Id == id).First();
-
-        //    return new StudentByIdWithGroupDto(student.Name, student.Surname, group.Code, student.Patronymic);
-        //}
 
         public StudentsService(IStudentsRepository studentsRepository)
         {

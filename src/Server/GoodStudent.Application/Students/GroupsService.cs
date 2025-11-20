@@ -1,4 +1,5 @@
-﻿using GoodStudent.Contracts.Students;
+﻿using GoodStudent.Contracts.Students.GroupsContracts;
+using GoodStudent.Contracts.Students.StudentsContracts;
 using GoodStudent.Domain.Students;
 using System;
 using System.Collections.Generic;
@@ -23,7 +24,7 @@ namespace GoodStudent.Application.Students
             return id;
         }
 
-        public async Task<GetStudentsByGroup> GetStudentsAsync(Guid groupId)
+        public async Task<GetStudentsByGroupDto> GetStudentsAsync(Guid groupId)
         {
             throw new NotImplementedException();
         }

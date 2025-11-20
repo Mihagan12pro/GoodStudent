@@ -1,4 +1,5 @@
-﻿using GoodStudent.Contracts.Students;
+﻿using GoodStudent.Contracts.Students.GroupsContracts;
+using GoodStudent.Contracts.Students.StudentsContracts;
 using GoodStudent.Domain.Students;
 using Group = GoodStudent.Domain.Students.Group;
 
@@ -8,6 +9,6 @@ namespace GoodStudent.Application.Students
     {
         Task<Guid> AddAsync(NewGroupDto newGroup);
 
-        Task<GetStudentsByGroup> GetStudentsAsync(Guid groupId);
+        Task<GetStudentsByGroupDto> GetStudentsAsync(Guid groupId);
     }
 }

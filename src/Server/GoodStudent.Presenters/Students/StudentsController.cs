@@ -1,5 +1,5 @@
 ﻿using GoodStudent.Application.Students;
-using GoodStudent.Contracts.Students;
+using GoodStudent.Contracts.Students.StudentsContracts;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GoodStudent.Presenters.Students
@@ -23,6 +23,8 @@ namespace GoodStudent.Presenters.Students
         {
             return Ok(await _studentService.GetById(id, cancellationToken));
         }
+
+
 
         public StudentsController(IStudentsService studentService)
         {

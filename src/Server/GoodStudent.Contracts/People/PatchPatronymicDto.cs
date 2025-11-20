@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace GoodStudent.Contracts.Students
+namespace GoodStudent.Contracts.People
 {
-    public record NewGroupDto(string Number, Guid ProfessionId);
+    public record PatchPatronymicDto(Guid Id, string Patronymic);
 }

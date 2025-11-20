@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace GoodStudent.Contracts.Students
+namespace GoodStudent.Contracts.Students.StudentsContracts
 {
     public record GetStudentByIdDto(string Name, string Surname, string? Patronymic, string? GroupNumber);
 }

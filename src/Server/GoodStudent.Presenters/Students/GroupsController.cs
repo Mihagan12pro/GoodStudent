@@ -1,9 +1,9 @@
-﻿using GoodStudent.Contracts.Students;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using GoodStudent.Domain.Students;
 using System.Text.Json;
 using GoodStudent.Application.Students;
 using Microsoft.AspNetCore.Authorization.Infrastructure;
+using GoodStudent.Contracts.Students.GroupsContracts;
 
 namespace GoodStudent.Presenters.Students
 {

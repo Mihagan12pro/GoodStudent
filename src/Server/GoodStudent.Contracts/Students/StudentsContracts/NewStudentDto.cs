@@ -2,7 +2,7 @@
 using GoodStudent.Domain.Students.Enums;
 
 
-namespace GoodStudent.Contracts.Students
+namespace GoodStudent.Contracts.Students.StudentsContracts
 {
     public record NewStudentDto(
         string Name, 
