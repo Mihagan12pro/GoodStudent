@@ -30,7 +30,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const email = document.getElementById('login-email').value;
         const password = document.getElementById('login-password').value;        
         console.log('Вход:', { email, password });
-        alert('Форма входа отправлена!');
+        localStorage.setItem('teacherToken', 'demo-token');
+    localStorage.setItem('user', JSON.stringify({
+        name: 'Преподаватель',
+        email: email
+    }));
+    window.location.href = 'index.html';
     });
     document.getElementById('registerForm').addEventListener('submit', function(e) {
         e.preventDefault();

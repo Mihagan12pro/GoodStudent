@@ -1,5 +1,9 @@
 class TeacherApp {
     constructor() {
+        if (!localStorage.getItem('teacherToken')) {
+            window.location.href = 'form.html';
+            return;
+        }
         this.currentView = 'manual';
         this.students = [];
         this.groups = [];
