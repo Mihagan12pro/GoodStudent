@@ -21,6 +21,10 @@ app.use('/js', express.static(path.join(__dirname, 'js')));
 app.use('/images', express.static(path.join(__dirname, 'images')));
 app.use('/pages', express.static(path.join(__dirname, 'pages')));
 app.use(express.static(__dirname));
+app.get('/', (req, res) => {
+  console.log('Serving auth form (form.html)');
+  res.sendFile(path.join(__dirname, 'pages', 'form.html'));
+});
 app.use('/api/csharp', async (req, res) => {
   try {
     const originalUrl = req.originalUrl.replace('/api/csharp', '/api');
@@ -45,17 +49,9 @@ app.use('/api/csharp', async (req, res) => {
     res.status(500).json({ error: 'Connection to backend failed' });
   }
 });
-app.get('/', (req, res) => {
-  console.log('Serving auth form (form.html)');
-  res.sendFile(path.join(__dirname, 'pages', 'form.html'));
-});
 app.get('/main', (req, res) => {
   console.log('Serving main page (index.html)');
   res.sendFile(path.join(__dirname, 'pages', 'index.html'));
-});
-app.get('/', (req, res) => {
-  console.log('Serving auth form (form.html)');
-  res.sendFile(path.join(__dirname, 'pages', 'form.html')); 
 });
 app.get('/dashboard.html', (req, res) => {
   console.log('Serving dashboard.html');
@@ -187,16 +183,16 @@ app.get('/api/groups', (req, res) => {
 app.get('/index.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'pages', 'index.html'));
 });
-app.get('/GoodStudent/front/script.js', (req, res) => {
-  res.sendFile(path.join(__dirname, 'script.js'));
-});
+// app.get('/GoodStudent/front/script.js', (req, res) => {
+//   res.sendFile(path.join(__dirname, 'script.js'));
+// });
 app.get('/admin-dashboard.html', (req, res) => {
-<<<<<<< HEAD
-  console.log('Serving admin dashboard');
-=======
   console.log('Serving admin dashboard page');
->>>>>>> 9cf9f44 (refactor:script.js и  добавлена панель администратора и доступ на основе ролей)
   res.sendFile(path.join(__dirname, 'pages', 'admin-dashboard.html'));
+});
+app.get('/form.html', (req, res) => {
+  console.log('Serving form.html');
+  res.sendFile(path.join(__dirname, 'pages', 'form.html'));
 });
 app.listen(PORT, () => {
   console.log('=' .repeat(50));

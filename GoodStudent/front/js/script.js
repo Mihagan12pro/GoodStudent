@@ -30,28 +30,27 @@ document.addEventListener('DOMContentLoaded', function() {
         const email = document.getElementById('login-email').value;
         const password = document.getElementById('login-password').value;        
         console.log('Вход:', { email, password });
-<<<<<<< HEAD
         const adminEmails = [
         'kopylov@mospolytech.ru',
         'zav.kafedry@mospolytech.ru', 
         'kopylov.admin@edu.ru',
         'department.head@mospolytech.ru'
         ];
-=======
-        // const adminEmails = [
-        // 'kopylov@mospolytech.ru',
-        // 'zav.kafedry@mospolytech.ru', 
-        // 'kopylov.admin@edu.ru',
-        // 'department.head@mospolytech.ru'
-        // ];
->>>>>>> 9cf9f44 (refactor:script.js и  добавлена панель администратора и доступ на основе ролей)
-        const isAdminEmail = email.includes('admin') || email.includes('зав');
+        console.log('Отладка работает');
+        console.log('Email:', email);
+        console.log('Массив adminEmails:', adminEmails);
+        const isAdminEmail = adminEmails.includes(email.toLowerCase());
         const userRole =isAdminEmail ? 'admin' : 'teacher'; //localStorage.getItem('userRole') || 'teacher';
+        console.log('Email:', email.toLowerCase());
+        console.log('isAdminEmail:', isAdminEmail);
+        console.log('userRole:', userRole);
+        console.log('Редирект на:', userRole === 'admin' ? '/admin-dashboard.html' : '/index.html');
+        console.log('КОНЕЦ ОТЛАДКИ');
         localStorage.setItem('teacherToken', 'demo-token');
         localStorage.setItem('user', JSON.stringify({
-        name: userRole === 'admin' ? 'Заведующий кафедрой' : 'Преподаватель',
-        email: email,
-        role: userRole
+            name: userRole === 'admin' ? 'Заведующий кафедрой' : 'Преподаватель',
+            email: email,
+            role: userRole
         }));
         if (userRole === 'admin') {
         window.location.href = '/admin-dashboard.html';
