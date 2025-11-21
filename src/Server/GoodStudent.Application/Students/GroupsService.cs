@@ -1,12 +1,6 @@
 ﻿using GoodStudent.Contracts.Students.GroupsContracts;
 using GoodStudent.Contracts.Students.StudentsContracts;
 using GoodStudent.Domain.Students;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace GoodStudent.Application.Students
 {

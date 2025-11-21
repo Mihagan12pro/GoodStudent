@@ -6,7 +6,6 @@ namespace GoodStudent.Domain.Instructors
 {
     public class Instructor : Person
     {
-        public ScienceDegree? Degree { get; set; }
 
         [JsonConverter(typeof(JsonStringEnumConverter))]
         public InstructorStatus Status { get; set; } = InstructorStatus.Teaching;

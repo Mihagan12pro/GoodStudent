@@ -1,8 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using GoodStudent.Domain.Students;
-using System.Text.Json;
 using GoodStudent.Application.Students;
-using Microsoft.AspNetCore.Authorization.Infrastructure;
 using GoodStudent.Contracts.Students.GroupsContracts;
 
 namespace GoodStudent.Presenters.Students
@@ -35,6 +32,7 @@ namespace GoodStudent.Presenters.Students
             return Ok(result);
         }
 
+   
         public GroupsController(IGroupsService groupsService)
         {
             _groupsService = groupsService;
