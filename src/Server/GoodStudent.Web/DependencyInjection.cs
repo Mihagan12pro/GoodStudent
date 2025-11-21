@@ -1,10 +1,15 @@
-﻿namespace GoodStudent.Web
+﻿using GoodStudent.Application;
+using GoodStudent.Infrastracture.Postgres;
+
+namespace GoodStudent.Web
 {
     public static class DependencyInjection
     {
         public static IServiceCollection AddProgramDependencies(this IServiceCollection services)
         {
-            services.AddWebDependencies();
+            services.AddWebDependencies().
+                AddApplication().
+                    AddPostgresInfrastructure();
 
             return services;
         }

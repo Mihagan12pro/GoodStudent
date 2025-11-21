@@ -1,12 +1,6 @@
-﻿using GoodStudent.Contracts.Students;
-using GoodStudent.Domain.Students;
+﻿using GoodStudent.Application.Students;
+using GoodStudent.Contracts.Students.StudentsContracts;
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace GoodStudent.Presenters.Students
 {
@@ -14,42 +8,31 @@ namespace GoodStudent.Presenters.Students
     [Route("api/[controller]")]
     public class StudentsController : ControllerBase
     {
+        private readonly IStudentsService _studentService;
+
         [HttpPost]
-        public async Task<IActionResult> New([FromBody] NewStudentDto request)
+        public async Task<IActionResult> New([FromBody] NewStudentDto request, CancellationToken cancellationToken)
         {
-            Student student = new Student()
-            {
-                Name = request.Name,
+            var result = await _studentService.AddNew(request, cancellationToken);
 
-                Surname = request.Surname,
+            return Ok(result);
+        }
 
-                Patronymic = request.Patronymic,
-
-                BirthDate = request.BirthDate,
-
-                StartYear = request.StartYear,
-
-                EducationType = request.EducationType,
-
-                Status = request.Status
-            };
-
-            student.Id = Guid.NewGuid();
-
-            return Ok(JsonSerializer.Serialize(student));
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById([FromRoute] Guid id, CancellationToken cancellationToken)
+        {
+            return Ok(await _studentService.GetById(id, cancellationToken));
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetById([FromRoute] Guid id)
+        public async Task<IActionResult> GetStudentId([FromBody] GetStudentsIdDto request, CancellationToken cancellationToken)
         {
-            return Ok(id);
+            return Ok();
         }
 
-
-        //[HttpGet("{groupId:guid}/{Id:guid}")]
-        //public async Task<IActionResult>GetByGroup()
-        //{
-
-        //}
+        public StudentsController(IStudentsService studentService)
+        {
+            _studentService = studentService;
+        }
     }
 }

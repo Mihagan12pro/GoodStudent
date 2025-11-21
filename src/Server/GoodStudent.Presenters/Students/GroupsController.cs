@@ -1,7 +1,9 @@
-﻿using GoodStudent.Contracts.Students;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using GoodStudent.Domain.Students;
 using System.Text.Json;
+using GoodStudent.Application.Students;
+using Microsoft.AspNetCore.Authorization.Infrastructure;
+using GoodStudent.Contracts.Students.GroupsContracts;
 
 namespace GoodStudent.Presenters.Students
 {
@@ -9,35 +11,25 @@ namespace GoodStudent.Presenters.Students
     [Route("api/[controller]")]
     public class GroupsController : ControllerBase
     {
+        private readonly IGroupsService _groupsService;
+
         [HttpPost]
-        public async Task<IActionResult> New([FromBody] NewGroupDto request)
+        public async Task<IActionResult> New([FromBody] NewGroupDto request, CancellationToken cancellationToken)
         {
-            Group group = new Group()
-            {
-                Code = request.Code,
-
-                FacultyId = request.FacultyId
-            };
-
-            return Ok(JsonSerializer.Serialize(group));
+            return Ok(await _groupsService.Add(request));
         }
 
-        [HttpPatch("{groupId:guid}/{studentId:guid}")]
-        public async Task<IActionResult> Add([FromRoute]Guid groupId, [FromRoute]Guid studentId)
+        [HttpGet]
+        public async Task<IActionResult> GetById([FromRoute] Guid Id)
         {
-            return Ok();
+            var result = await _groupsService.GetGroupById(Id);
+
+            return Ok(result);
         }
 
-        [HttpGet("{groupId:guid}")]
-        public async Task<IActionResult> Students([FromRoute] Guid groupId)
+        public GroupsController(IGroupsService groupsService)
         {
-            return Ok();
-        }
-
-        [HttpGet("{groupId:guid}/{studentId:guid}")]
-        public async Task<IActionResult> StudentById([FromRoute] Guid groupId, [FromRoute] Guid studentId)
-        {
-            return Ok();
+            _groupsService = groupsService;
         }
     }
 }
