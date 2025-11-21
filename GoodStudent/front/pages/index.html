@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GoodStudent - Расписание</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <header class="header">
+            <div class="header-left">
+                <div class="logo">
+                    <div class="logo-icon"></div>
+                    <h1 class="logo-text">GoodStudent</h1>
+                </div>
+                <div class="group-selector">
+                    <select id="group-select">
+                        <option value="231-324">231-324</option>
+                        <option value="231-325">231-325</option>
+                        <option value="231-326">231-326</option>
+                    </select>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="user-info">
+                    <span>Преподаватель</span>
+                    <button class="btn-logout">Выйти</button>
+                </div>
+            </div>
+        </header>
+        <main class="main-content">     
+            <aside class="schedule-sidebar">
+                <div class="schedule-header">
+                    <h2>Расписание</h2>
+                </div>
+                <div class="schedule-periods">
+                    <div class="period active">Семестр</div>
+                    <div class="period">Сессия</div>
+                    <div class="period">Пересдачи</div>
+                </div>
+                <div class="schedule-items">
+                    <div class="schedule-item current">
+                        <div class="item-time">
+                            <span class="time-icon"></span>
+                            <span class="time-range">12:20 - 13:50</span>
+                        </div>
+                        <div class="item-details">
+                            <div class="item-room">[Пр/06]</div>
+                            <div class="item-title">Системы инженерного анализа (Лаб. работа)</div>
+                            <div class="item-teachers">Зубарев А.В. - Ковалева А.В.</div>
+                            <div class="item-dates">01 Сен - 31 Дек</div>
+                        </div>
+                        <button class="btn-mark-attendance" onclick="teacherApp.openAttendanceModal()">
+                            Отметить студентов
+                        </button>
+                    </div>
+                    <div class="schedule-item">
+                        <div class="item-time">
+                            <span class="time-icon"></span>
+                            <span class="time-range">14:00 - 15:30</span>
+                        </div>
+                        <div class="item-details">
+                            <div class="item-room">[Пр/01]</div>
+                            <div class="item-title">Нормативное регулирование внедрения и эксплуатации информационных систем (Лаб. работа)</div>
+                            <div class="item-teachers">Филатова И.В. - Смирнова Ю.В.</div>
+                            <div class="item-dates">22 Окт - 31 Дек</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="schedule-footer">
+                    <div class="view-selector">
+                        <button class="view-btn active">День</button>
+                        <button class="view-btn">Неделя</button>
+                    </div>
+                </div>
+            </aside>
+            <section class="attendance-main">
+                <div class="attendance-header">
+                    <h3>Посещаемость за сегодня</h3>
+                    <div class="date-info" id="current-date"></div>
+                </div>
+                <div class="content-area" id="content-area">
+                    <div class="manual-attendance-view">
+                        <div class="students-list-container">
+                            <div class="students-header">
+                                <h4>Список студентов группы 231-324</h4>
+                                <div class="attendance-stats">
+                                    <span>Присутствуют: <strong id="present-count">0</strong>/<strong id="total-count">0</strong></span>
+                                </div>
+                            </div>                            
+                            <div class="students-list" id="students-list">
+                            </div>
+                        </div>
+                        <div class="attendance-actions" style="padding: 20px; text-align: center;">
+                            <button class="btn-primary" id="save-attendance-btn" 
+                            style="padding: 12px 24px; font-size: 16px;">Сохранить посещаемость
+                            </button>
+                        </div>
+                        <div class="attendance-calendar">
+                            <div class="calendar-header">
+                                <h4>Отметка посещаемости</h4>
+                                <div class="calendar-nav">
+                                    <button class="nav-btn">←</button>
+                                    <span class="current-month">Ноябрь 2025</span>
+                                    <button class="nav-btn">→</button>
+                                </div>
+                            </div>
+                            <div class="calendar-days">
+                            </div>
+                            <div class="today-marker">
+                                <div class="today-indicator"></div>
+                                <span>Сегодня</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+<nav class="bottom-nav">
+    <button class="nav-item active" data-view="manual">
+        <img src="/images/чекбокс.jpg" alt="Ручная" class="nav-icon">
+        <span class="nav-label">Ручная</span>
+    </button>
+    <button class="nav-item" data-view="qr">
+        <img src="/images/qr.png" alt="QR" class="nav-icon">
+        <span class="nav-label">QR</span>
+    </button>
+    <button class="nav-item" data-view="ai">
+        <img src="/images/camera-outline.svg" alt="AI" class="nav-icon">
+        <span class="nav-label">AI</span>
+    </button>
+    <button class="nav-item" data-view="history">
+        <img src="/images/история.png" alt="История" class="nav-icon">
+        <span class="nav-label">История</span>
+    </button>
+</nav>
+    </div>
+    <div class="modal hidden" id="camera-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Умная камера</h3>
+                <p>Автоматическая отметка</p>
+                <button class="modal-close" id="camera-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="camera-container">
+                    <div class="camera-preview" id="camera-preview">
+                        <div class="camera-placeholder">
+                            <span class="camera-icon"></span>
+                        </div>
+                    </div>
+                    <div class="camera-info">
+                        <p>Описание: Система автоматически определит студентов в аудитории и отметит их присутствие</p>
+                        <button class="btn-primary" id="start-camera">Запустить камеру</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+<script src="/js/api.js"></script>
+<script src="/js/teacher.js"></script>
+</body>
+</html>

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Главная - МосПолитех</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="manifest" href="manifest.json">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">
+            <img src="images/logo.png" alt="МосПолитех" class="logo">
+            <span>Учет посещаемости</span>
+        </div>
+        <div class="nav-controls">
+            <select id="group-selector" class="group-selector">
+                <option value="">Выберите группу</option>
+            </select>
+            <div class="user-menu">
+                <span id="user-name">Преподаватель</span>
+                <button id="logout-btn" class="logout-btn">Выйти</button>
+            </div>
+        </div>
+    </nav>
+    <main class="main-content">
+        <div class="dashboard-header">
+            <h1>Расписание на сегодня</h1>
+            <div class="date-display" id="current-date"></div>
+        </div>
+        <div class="schedule-container" id="schedule-container">
+        </div>
+    </main>
+    <nav class="bottom-nav">
+        <button class="nav-btn active" onclick="app.showPage('dashboard')">
+            <span class="nav-icon"></span>
+            <span class="nav-text">Расписание</span>
+        </button>
+        <button class="nav-btn" onclick="app.showPage('history')">
+            <span class="nav-icon"></span>
+            <span class="nav-text">История</span>
+        </button>
+        <button class="nav-btn" onclick="app.showPage('profile')">
+            <span class="nav-icon"></span>
+            <span class="nav-text">Профиль</span>
+        </button>
+    </nav>
+    <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
