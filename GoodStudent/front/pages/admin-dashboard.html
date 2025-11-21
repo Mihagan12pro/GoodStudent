@@ -23,21 +23,18 @@
                 </div>
             </div>
         </header>
-
         <main class="main-content">
             <div class="admin-dashboard">
                 <div class="dashboard-header">
                     <h2>Управление расписанием и студентами</h2>
                     <p>Загрузите Excel файл с расписанием для распределения студентов по группам</p>
                 </div>
-
-                <!-- Блок загрузки Excel -->
                 <div class="upload-section">
                     <div class="upload-card">
-                        <h3>📊 Загрузка расписания</h3>
+                        <h3>Загрузка расписания</h3>
                         <div class="upload-area" id="upload-area">
                             <div class="upload-placeholder">
-                                <div class="upload-icon">📁</div>
+                                <div class="upload-icon"></div>
                                 <p>Перетащите Excel файл сюда или нажмите для выбора</p>
                                 <small>Поддерживаются файлы .xlsx, .xls</small>
                             </div>
@@ -48,22 +45,17 @@
                         </button>
                     </div>
                 </div>
-
-                <!-- Предпросмотр данных -->
                 <div class="preview-section hidden" id="preview-section">
                     <div class="preview-card">
-                        <h3>📋 Предпросмотр данных</h3>
+                        <h3>Предпросмотр данных</h3>
                         <div class="preview-controls">
                             <button class="btn-secondary" id="edit-data">Редактировать</button>
                             <button class="btn-primary" id="save-data">Сохранить в систему</button>
                         </div>
                         <div class="data-preview" id="data-preview">
-                            <!-- Данные будут загружены через JavaScript -->
                         </div>
                     </div>
                 </div>
-
-                <!-- Статистика -->
                 <div class="stats-section">
                     <div class="stats-grid">
                         <div class="stat-card">
@@ -82,8 +74,6 @@
                 </div>
             </div>
         </main>
-
-        <!-- Модальное окно редактирования -->
         <div class="modal hidden" id="edit-modal">
             <div class="modal-content large">
                 <div class="modal-header">
@@ -101,7 +91,6 @@
             </div>
         </div>
     </div>
-
     <script src="/js/api.js"></script>
     <script src="/js/admin.js"></script>
 </body>
