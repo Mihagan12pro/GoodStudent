@@ -1,7 +1,9 @@
 class TeacherApp {
     constructor() {
-        if (!localStorage.getItem('authToken')) {
-            window.location.href = 'index.html';
+        const token = localStorage.getItem('teacherToken');
+        if (!token) {
+            console.log('No auth token, redirecting to login');
+            window.location.href = '/form.html';
             return;
         }
         this.currentView = 'manual';
@@ -18,6 +20,13 @@ class TeacherApp {
         this.setupEventListeners();
         this.displayCurrentDate();
         this.generateCalendar();
+        this.setupAttendanceButton();
+    }
+    setupAttendanceButton() {
+        const saveButton = document.getElementById('save-attendance-btn');
+        if (!saveButton) {
+            this.createSaveButton();
+        }
     }
     displayCurrentDate() {
         const now = new Date();

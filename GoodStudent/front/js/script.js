@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', function() {
         name: 'Преподаватель',
         email: email
     }));
-    window.location.href = '/main';
+    window.location.href = '/index.html';
     });
     document.getElementById('registerForm').addEventListener('submit', function(e) {
         e.preventDefault();

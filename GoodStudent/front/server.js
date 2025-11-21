@@ -11,28 +11,33 @@ const app = express();
 const PORT = 5000;
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use((req, res, next) => {
     console.log(`${req.method} ${req.url}`);
     next();
 });
-app.use('/GoodStudent/front/css', express.static(path.join(__dirname, 'css')));
-app.use('/GoodStudent/front/js', express.static(path.join(__dirname, 'js')));
-app.use('/GoodStudent/front/images', express.static(path.join(__dirname, 'images')));
-app.use('/GoodStudent/front/pages', express.static(path.join(__dirname, 'pages')));
+app.use('/css', express.static(path.join(__dirname, 'css')));
+app.use('/js', express.static(path.join(__dirname, 'js')));
+app.use('/images', express.static(path.join(__dirname, 'images')));
+app.use('/pages', express.static(path.join(__dirname, 'pages')));
 app.use(express.static(__dirname));
-app.use('/api/csharp/*', async (req, res) => {
+app.use('/api/csharp', async (req, res) => {
   try {
-    const originalUrl = req.originalUrl.replace('/api/csharp/', '/api/');
+    const originalUrl = req.originalUrl.replace('/api/csharp', '/api');
     const targetUrl = `${C_SHARP_BACKEND_URL}${originalUrl}`;    
-    console.log(`Proxying to C# backend: ${req.method} ${targetUrl}`);    
-    const response = await fetch(targetUrl, {
+    console.log(`Proxying to C# backend: ${req.method} ${targetUrl}`); 
+
+    const fetchOptions =  {
       method: req.method,
       headers: {
         'Content-Type': 'application/json',
         ...(req.headers.authorization && { 'Authorization': req.headers.authorization })
-      },
-      ...(req.method !== 'GET' && req.body && { body: JSON.stringify(req.body) })
-    });    
+              }
+      };
+      if (req.method !== 'GET' && req.body && Object.keys(req.body).length > 0) {
+      fetchOptions.body = JSON.stringify(req.body);
+    }    
+    const response = await fetch(targetUrl, fetchOptions);    
     const data = await response.json();
     res.status(response.status).json(data);
   } catch (error) {
@@ -123,6 +128,9 @@ app.get('/api/groups/:groupId/students', (req, res) => {
 app.post('/api/attendance', async (req, res) => {
   try {
     const { attendanceData } = req.body;
+    if (!C_SHARP_BACKEND_URL) {
+      throw new Error('C# backend URL not configured');
+    }
     const csharpPayload = attendanceData.map(item => ({
       studentId: item.studentData.id,
       present: item.present,
@@ -175,9 +183,6 @@ app.get('/api/groups', (req, res) => {
     { id: 3, name: "231-326", number: "231-326" }
   ];
   res.json(groups);
-});
-app.get('/GoodStudent/front/script.js', (req, res) => {
-  res.sendFile(path.join(__dirname, 'script.js'));
 });
 app.get('/index.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'pages', 'index.html'));
