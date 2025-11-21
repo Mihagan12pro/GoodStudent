@@ -27,7 +27,7 @@ namespace GoodStudent.Application.Students
             return id;
         }
 
-        public async Task<GetStudentByIdDto> GetById(Guid id, CancellationToken cancellationToken)
+        public async Task<GetStudentGroupDto> GetById(Guid id, CancellationToken cancellationToken)
         {
             Student student = await _studentsRepository.GetByIdAsync(id, cancellationToken);
 
@@ -39,7 +39,7 @@ namespace GoodStudent.Application.Students
             if (student.Group != null)
                 number = student.Group.Number;  
 
-            GetStudentByIdDto response = new GetStudentByIdDto(student.Name, student.Surname, student.Patronymic, number);
+            GetStudentGroupDto response = new GetStudentGroupDto(student.Name, student.Surname, student.Patronymic, number);
 
             return response;
         }

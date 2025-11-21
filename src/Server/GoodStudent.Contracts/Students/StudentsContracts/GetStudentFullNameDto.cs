@@ -6,5 +6,5 @@ using System.Threading.Tasks;
 
 namespace GoodStudent.Contracts.Students.StudentsContracts
 {
-    public record GetStudentsByGroupDto(string Number, IEnumerable<GetStudentFullNameDto> Students);
+    public record GetStudentFullNameDto(string Name, string Surname, string? Patronymic);
 }

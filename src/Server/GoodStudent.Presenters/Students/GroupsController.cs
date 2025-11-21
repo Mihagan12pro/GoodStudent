@@ -27,7 +27,7 @@ namespace GoodStudent.Presenters.Students
             return Ok(result);
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("students/{id}")]
         public async Task<IActionResult> GetStudents([FromRoute] Guid id, CancellationToken cancellationToken)
         {
             var result = await _groupsService.GetStudents(id, cancellationToken);

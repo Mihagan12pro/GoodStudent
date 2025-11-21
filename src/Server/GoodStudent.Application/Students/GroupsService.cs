@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace GoodStudent.Application.Students
@@ -30,17 +31,13 @@ namespace GoodStudent.Application.Students
             if (groupStudents == null)
                 throw new NullReferenceException();
 
-            List<(string, string, string)> studentsNames = new List<(string, string, string)>();
+            var students = groupStudents.Value.Item2.Select(student =>
+                new GetStudentFullNameDto(student.Name, student.Surname, student.Patronymic)
+            );
 
-            IEnumerable<Student> students = groupStudents.Value.Item2;
             string groupNumber = groupStudents.Value.Item1.Number;
 
-            foreach (Student student in students)
-            {
-                studentsNames.Add((student.Name!, student.Surname!, student.Patronymic!));
-            }
-
-            return new GetStudentsByGroupDto(groupNumber, studentsNames!);
+            return new GetStudentsByGroupDto(groupNumber, students);
         }
 
         public async Task<GetGroupByIdDto> GetGroupById(Guid Id, CancellationToken cancellationToken)
