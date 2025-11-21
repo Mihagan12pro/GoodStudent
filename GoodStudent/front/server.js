@@ -3,6 +3,7 @@ import cors from 'cors';
 import multer from 'multer';
 import XLSX from 'xlsx';
 import path from 'path';
+const C_SHARP_BACKEND_URL = 'https://localhost:7298';
 import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -19,6 +20,26 @@ app.use('/GoodStudent/front/js', express.static(path.join(__dirname, 'js')));
 app.use('/GoodStudent/front/images', express.static(path.join(__dirname, 'images')));
 app.use('/GoodStudent/front/pages', express.static(path.join(__dirname, 'pages')));
 app.use(express.static(__dirname));
+app.use('/api/csharp/*', async (req, res) => {
+  try {
+    const originalUrl = req.originalUrl.replace('/api/csharp/', '/api/');
+    const targetUrl = `${C_SHARP_BACKEND_URL}${originalUrl}`;    
+    console.log(`Proxying to C# backend: ${req.method} ${targetUrl}`);    
+    const response = await fetch(targetUrl, {
+      method: req.method,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(req.headers.authorization && { 'Authorization': req.headers.authorization })
+      },
+      ...(req.method !== 'GET' && req.body && { body: JSON.stringify(req.body) })
+    });    
+    const data = await response.json();
+    res.status(response.status).json(data);
+  } catch (error) {
+    console.error('C# backend proxy error:', error);
+    res.status(500).json({ error: 'Connection to backend failed' });
+  }
+});
 app.get('/', (req, res) => {
   console.log('Serving auth form (form.html)');
   res.sendFile(path.join(__dirname, 'pages', 'form.html'));
@@ -80,9 +101,18 @@ let students = [
   { id: 5, name: "Николаев Петр", group: "231-324", email: "nikolaev@edu.ru" }
 ];
 let attendanceRecords = [];
-app.get('/api/students', (req, res) => {
-  console.log('GET /api/students');
-  res.json(students);
+app.get('/api/students', async (req, res) => {
+  try {
+    const response = await fetch(`${C_SHARP_BACKEND_URL}/api/students`);
+    const students = await response.json();
+    res.json(students);
+  } catch (error) {
+    console.error('Error fetching students from C# backend:', error);
+    res.json([
+      { id: 1, name: "Иванов Алексей", group: "231-324", email: "ivanov@edu.ru" },
+      { id: 2, name: "Петрова Мария", group: "231-324", email: "petrova@edu.ru" }
+    ]);
+  }
 });
 app.get('/api/groups/:groupId/students', (req, res) => {
   const groupId = req.params.groupId;
@@ -90,18 +120,32 @@ app.get('/api/groups/:groupId/students', (req, res) => {
   const groupStudents = students.filter(student => student.group === groupId);
   res.json(groupStudents);
 });
-app.post('/api/attendance', (req, res) => {
-  const { attendanceData } = req.body;
-  console.log('POST /api/attendance - получены отметки для', attendanceData.length, 'студентов');  
-  attendanceRecords.push({
-    date: new Date().toISOString(),
-    records: attendanceData
-  });
-  
-  res.json({ 
-    success: true, 
-    message: `Посещаемость сохранена! Отмечено ${attendanceData.length} студентов`
-  });
+app.post('/api/attendance', async (req, res) => {
+  try {
+    const { attendanceData } = req.body;
+    const csharpPayload = attendanceData.map(item => ({
+      studentId: item.studentData.id,
+      present: item.present,
+      date: new Date().toISOString()
+    }));   
+    const response = await fetch(`${C_SHARP_BACKEND_URL}/api/attendance`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(csharpPayload)
+    });    
+    if (response.ok) {
+      res.json({ success: true, message: 'Посещаемость сохранена в C# бэкенде' });
+    } else {
+      throw new Error('C# backend error');
+    }
+  } catch (error) {
+    console.error('Error saving to C# backend:', error);
+    attendanceRecords.push({
+      date: new Date().toISOString(),
+      records: req.body.attendanceData
+    });
+    res.json({ success: true, message: 'Посещаемость сохранена локально' });
+  }
 });
 app.get('/api/schedule', (req, res) => {
   console.log('GET /api/schedule');

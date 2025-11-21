@@ -1,7 +1,11 @@
 class ApiClient {
     constructor() {
         this.baseUrl = 'http://localhost:5000/api'; 
+        this.csharpBaseUrl = 'http://localhost:5000/api/csharp';
         this.token = localStorage.getItem('authToken');
+    }
+    async csharpRequest(endpoint, options = {}) {
+        return await this.request(endpoint,{...options, baseUrl: this.csharpBaseUrl});
     }
     async request(endpoint, options = {}) {
         const url = `${this.baseUrl}${endpoint}`;        
@@ -42,7 +46,24 @@ class ApiClient {
         localStorage.removeItem('user');
     }
     async getStudents() {
-        return await this.request('/students');
+        try {
+            return await this.csharpRequest('/students');
+        } catch (error) {
+            console.error('C# backend unavailable, using Node.js fallback');
+            return await this.request('/students');
+        }
+    }
+    async createStudent(studentData) {
+        return await this.csharpRequest('/students', {
+            method: 'POST',
+            body: studentData
+        });
+    }
+    async createGroup(groupData) {
+        return await this.csharpRequest('/groups', {
+            method: 'POST',
+            body: groupData
+        });
     }
     async getGroups() {
         return await this.request('/groups');
@@ -50,7 +71,6 @@ class ApiClient {
     async getGroup(groupId) {
         return await this.request(`/groups/${groupId}/students`);
     }
-
     async getGroupStudents(groupId) {
         try {
             return await this.request(`/groups/${groupId}/students`);

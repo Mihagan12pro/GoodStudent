@@ -88,7 +88,10 @@ class TeacherApp {
         }      
         try {
             console.log('Загрузка студентов для группы:', this.currentGroupId);
-            this.students = await apiClient.getGroupStudents(this.currentGroupId);
+            const allStudents = await apiClient.getStudents();
+            this.students = allStudents.filter(student => 
+                student.group === this.currentGroupId || student.groupId === this.currentGroupId
+            );
             console.log('Студенты загружены:', this.students);
             this.renderStudents();
             this.updateStats();
@@ -97,6 +100,47 @@ class TeacherApp {
             this.students = this.getMockStudents();
             this.renderStudents();
             this.updateStats();
+        }
+    }
+    async saveAttendance() {
+        const attendanceData = {
+            attendanceData: this.students.map(student => ({
+                studentData: {
+                    id: student.id,
+                    name: student.name,
+                    group: student.group || this.currentGroupId
+                },
+                present: student.present || false
+            }))
+        };
+        try {
+            const result = await apiClient.markAttendance(attendanceData);
+            alert(result.message || 'Посещаемость успешно сохранена!');
+            const presentCount = this.students.filter(s => s.present).length;
+            const totalCount = this.students.length;
+            alert(`Отмечено присутствующих: ${presentCount} из ${totalCount}`);            
+        } catch (error) {
+            console.error('Ошибка сохранения посещаемости:', error);
+            alert('Ошибка при сохранении посещаемости');
+        }
+    }
+    setupAttendanceButton() {
+        const saveButton = document.getElementById('save-attendance-btn');
+        if (saveButton) {
+            saveButton.addEventListener('click', () => this.saveAttendance());
+        }
+        if (!saveButton) {
+            const studentsContainer = document.getElementById('students-list');
+            if (studentsContainer) {
+                const saveBtn = document.createElement('button');
+                saveBtn.id = 'save-attendance-btn';
+                saveBtn.className = 'btn-primary';
+                saveBtn.textContent = 'Сохранить посещаемость';
+                saveBtn.style.margin = '20px';
+                saveBtn.style.padding = '10px 20px';
+                studentsContainer.parentNode.appendChild(saveBtn);
+                saveBtn.addEventListener('click', () => this.saveAttendance());
+            }
         }
     }
     renderStudents() {
