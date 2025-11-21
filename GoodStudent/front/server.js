@@ -53,9 +53,9 @@ app.get('/main', (req, res) => {
   console.log('Serving main page (index.html)');
   res.sendFile(path.join(__dirname, 'pages', 'index.html'));
 });
-app.get('/form.html', (req, res) => {
-  console.log('Serving form.html');
-  res.sendFile(path.join(__dirname, 'pages', 'form.html'));
+app.get('/', (req, res) => {
+  console.log('Serving auth form (form.html)');
+  res.sendFile(path.join(__dirname, 'pages', 'form.html')); 
 });
 app.get('/dashboard.html', (req, res) => {
   console.log('Serving dashboard.html');
@@ -191,7 +191,11 @@ app.get('/GoodStudent/front/script.js', (req, res) => {
   res.sendFile(path.join(__dirname, 'script.js'));
 });
 app.get('/admin-dashboard.html', (req, res) => {
+<<<<<<< HEAD
   console.log('Serving admin dashboard');
+=======
+  console.log('Serving admin dashboard page');
+>>>>>>> 9cf9f44 (refactor:script.js и  добавлена панель администратора и доступ на основе ролей)
   res.sendFile(path.join(__dirname, 'pages', 'admin-dashboard.html'));
 });
 app.listen(PORT, () => {

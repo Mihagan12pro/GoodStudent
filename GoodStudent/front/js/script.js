@@ -30,12 +30,21 @@ document.addEventListener('DOMContentLoaded', function() {
         const email = document.getElementById('login-email').value;
         const password = document.getElementById('login-password').value;        
         console.log('Вход:', { email, password });
+<<<<<<< HEAD
         const adminEmails = [
         'kopylov@mospolytech.ru',
         'zav.kafedry@mospolytech.ru', 
         'kopylov.admin@edu.ru',
         'department.head@mospolytech.ru'
         ];
+=======
+        // const adminEmails = [
+        // 'kopylov@mospolytech.ru',
+        // 'zav.kafedry@mospolytech.ru', 
+        // 'kopylov.admin@edu.ru',
+        // 'department.head@mospolytech.ru'
+        // ];
+>>>>>>> 9cf9f44 (refactor:script.js и  добавлена панель администратора и доступ на основе ролей)
         const isAdminEmail = email.includes('admin') || email.includes('зав');
         const userRole =isAdminEmail ? 'admin' : 'teacher'; //localStorage.getItem('userRole') || 'teacher';
         localStorage.setItem('teacherToken', 'demo-token');
