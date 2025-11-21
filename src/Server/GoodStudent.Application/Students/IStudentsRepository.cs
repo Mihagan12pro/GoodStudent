@@ -14,6 +14,8 @@ namespace GoodStudent.Application.Students
 
         Task<Student> GetByIdAsync(Guid id, CancellationToken cancellationToken);
 
+        Task<Guid> GetStudentIdAsync(Student student);
+
         Task<Group> GetGroupByStudentAsync(Guid studentId, CancellationToken cancellationToken);
     }
 }

@@ -1,5 +1,6 @@
 ﻿using GoodStudent.Application.Students;
 using GoodStudent.Domain.Students;
+using Microsoft.EntityFrameworkCore;
 
 namespace GoodStudent.Infrastracture.Postgres.Students
 {
@@ -20,9 +21,28 @@ namespace GoodStudent.Infrastracture.Postgres.Students
             return group.Id;
         }
 
-        public Task<(Group, IEnumerable<Student>)> GetStudentsAsync(Guid groupId)
+        public async Task<(Group, IEnumerable<Student>)> GetStudentsAsync(Guid groupId)
         {
             throw new NotImplementedException();
+        }
+
+        public async Task<Group> GetByIdAsync(Guid Id)
+        {
+            GroupEntity? groupEntity = await _studentsContext.Groups.FirstOrDefaultAsync(g => g.Id == Id);
+
+            if (groupEntity == null)
+                return null!;
+
+            Group group = new Group()
+            {
+                Number = groupEntity.Number!,
+
+                Id = Id,
+
+                ProfessionId = groupEntity.ProfessionId
+            };
+
+            return group;
         }
 
         public GroupsEFRepository(StudentsContext studentsContext)

@@ -24,7 +24,11 @@ namespace GoodStudent.Presenters.Students
             return Ok(await _studentService.GetById(id, cancellationToken));
         }
 
-
+        [HttpGet]
+        public async Task<IActionResult> GetStudentId([FromBody] GetStudentsIdDto request, CancellationToken cancellationToken)
+        {
+            return Ok();
+        }
 
         public StudentsController(IStudentsService studentService)
         {

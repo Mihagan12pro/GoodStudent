@@ -10,4 +10,8 @@
     <ProjectReference Include="..\GoodStudent.Domain\GoodStudent.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="People\" />
+  </ItemGroup>
+
 </Project>

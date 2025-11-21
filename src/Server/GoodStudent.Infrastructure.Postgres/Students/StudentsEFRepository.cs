@@ -64,6 +64,11 @@ namespace GoodStudent.Infrastracture.Postgres.Students
             throw new NotImplementedException();
         }
 
+        public Task<Guid> GetStudentIdAsync(Student student)
+        {
+            throw new NotImplementedException();
+        }
+
         public StudentsEFRepository(StudentsContext studentsContext)
         {
             _studentsContext = studentsContext;

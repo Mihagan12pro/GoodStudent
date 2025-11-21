@@ -7,8 +7,10 @@ namespace GoodStudent.Application.Students
 {
     public interface IGroupsService
     {
-        Task<Guid> AddAsync(NewGroupDto newGroup);
+        Task<Guid> Add(NewGroupDto newGroup);
 
-        Task<GetStudentsByGroupDto> GetStudentsAsync(Guid groupId);
+        Task<GetStudentsByGroupDto> GetStudents(Guid groupId);
+
+        Task<GetGroupByIdDto> GetGroupById(Guid Id);
     }
 }

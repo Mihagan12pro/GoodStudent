@@ -13,7 +13,7 @@ namespace GoodStudent.Application.Students
     {
         private readonly IGroupsRepository _groupsRepository;
 
-        public async Task<Guid> AddAsync(NewGroupDto newGroup)
+        public async Task<Guid> Add(NewGroupDto newGroup)
         {
             Group group = new Group() { Number = newGroup.Number, ProfessionId = newGroup.ProfessionId };
 
@@ -24,9 +24,19 @@ namespace GoodStudent.Application.Students
             return id;
         }
 
-        public async Task<GetStudentsByGroupDto> GetStudentsAsync(Guid groupId)
+        public async Task<GetStudentsByGroupDto> GetStudents(Guid groupId)
         {
             throw new NotImplementedException();
+        }
+
+        public async Task<GetGroupByIdDto> GetGroupById(Guid Id)
+        {
+            Group group = await _groupsRepository.GetByIdAsync(Id);
+
+            if (group == null)
+                throw new NullReferenceException();
+
+            return new GetGroupByIdDto(group.Number, group.ProfessionId);
         }
 
         public GroupsService(IGroupsRepository groupsRepository)

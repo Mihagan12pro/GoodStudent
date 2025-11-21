@@ -13,6 +13,8 @@ namespace GoodStudent.Application.Students
     {
         Task<Guid> AddAsync(Group group);
 
+        Task<Group> GetByIdAsync(Guid Id);
+
         Task<(Group, IEnumerable<Student>)> GetStudentsAsync(Guid groupId);
     }
 }

@@ -16,7 +16,15 @@ namespace GoodStudent.Presenters.Students
         [HttpPost]
         public async Task<IActionResult> New([FromBody] NewGroupDto request, CancellationToken cancellationToken)
         {
-            return Ok(await _groupsService.AddAsync(request));
+            return Ok(await _groupsService.Add(request));
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetById([FromRoute] Guid Id)
+        {
+            var result = await _groupsService.GetGroupById(Id);
+
+            return Ok(result);
         }
 
         public GroupsController(IGroupsService groupsService)

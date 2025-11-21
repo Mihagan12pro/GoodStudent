@@ -44,6 +44,11 @@ namespace GoodStudent.Application.Students
             return response;
         }
 
+        public Task<Guid> GetStudentId(GetStudentsIdDto studentsIdDto, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
         public StudentsService(IStudentsRepository studentsRepository)
         {
              _studentsRepository = studentsRepository;   

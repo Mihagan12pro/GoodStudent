@@ -6,5 +6,5 @@ using System.Threading.Tasks;
 
 namespace GoodStudent.Contracts.Students.StudentsContracts
 {
-    public record PatchStudentGroupDto(Guid StudentId, Guid? GroupId);
+    public record GetStudentsIdDto(string Name, string Surname, string? Patronymic, Guid? GroupId);
 }
