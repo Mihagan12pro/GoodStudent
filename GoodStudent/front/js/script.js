@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('userRole:', userRole);
         console.log('Редирект на:', userRole === 'admin' ? '/admin-dashboard.html' : '/index.html');
         console.log('КОНЕЦ ОТЛАДКИ');
-        localStorage.setItem('teacherToken', 'demo-token');
+        localStorage.setItem('authToken', 'demo-token');
         localStorage.setItem('user', JSON.stringify({
             name: userRole === 'admin' ? 'Заведующий кафедрой' : 'Преподаватель',
             email: email,

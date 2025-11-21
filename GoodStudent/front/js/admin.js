@@ -1,6 +1,6 @@
 class AdminApp {
     constructor() {
-        if (!localStorage.getItem('authToken')) {
+        if (!localStorage.getItem('teacherToken')) {
             window.location.href = '/form.html';
             return;
         }       

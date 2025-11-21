@@ -1,8 +1,7 @@
 class TeacherApp {
     constructor() {
-        const token = localStorage.getItem('teacherToken');
+        const token = localStorage.getItem('authToken');
         if (!token) {
-            console.log('No auth token, redirecting to login');
             window.location.href = '/form.html';
             return;
         }
