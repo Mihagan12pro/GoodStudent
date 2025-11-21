@@ -30,12 +30,25 @@ document.addEventListener('DOMContentLoaded', function() {
         const email = document.getElementById('login-email').value;
         const password = document.getElementById('login-password').value;        
         console.log('Вход:', { email, password });
+        const adminEmails = [
+        'kopylov@mospolytech.ru',
+        'zav.kafedry@mospolytech.ru', 
+        'kopylov.admin@edu.ru',
+        'department.head@mospolytech.ru'
+        ];
+        const isAdminEmail = email.includes('admin') || email.includes('зав');
+        const userRole =isAdminEmail ? 'admin' : 'teacher'; //localStorage.getItem('userRole') || 'teacher';
         localStorage.setItem('teacherToken', 'demo-token');
-    localStorage.setItem('user', JSON.stringify({
-        name: 'Преподаватель',
-        email: email
-    }));
-    window.location.href = '/index.html';
+        localStorage.setItem('user', JSON.stringify({
+        name: userRole === 'admin' ? 'Заведующий кафедрой' : 'Преподаватель',
+        email: email,
+        role: userRole
+        }));
+        if (userRole === 'admin') {
+        window.location.href = '/admin-dashboard.html';
+        } else {
+        window.location.href = '/index.html';
+        }
     });
     document.getElementById('registerForm').addEventListener('submit', function(e) {
         e.preventDefault();
@@ -47,13 +60,18 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('Пароли не совпадают!');
             return;
         }        
-        console.log('Регистрация:', { 
-            email, 
-            password, 
-            userType,
-            userTypeText: userType === 'student' ? 'Студент' : 'Преподаватель'
-        });        
-        alert(`Регистрация успешна!\nEmail: ${email}\nТип аккаунта: ${userType === 'student' ? 'Студент' : 'Преподаватель'}`);
-        showLoginForm();
+        localStorage.setItem('userRole', userType);
+        localStorage.setItem('user', JSON.stringify({
+            name: userType === 'admin' ? 'Заведующий кафедрой' : 'Преподаватель',
+            email: email,
+            role: userType   
+        }));   
+        alert(`Регистрация успешна!\nEmail: ${email}\nТип аккаунта: ${userType === 'admin' ? 'Заведующий кафедрой' : 'Преподаватель'}`);
+        if (userType === 'admin') {
+            window.location.href = '/admin-dashboard.html';
+        } else {
+            window.location.href = '/index.html';
+        }
+        //showLoginForm();
     });
 });

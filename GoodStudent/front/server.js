@@ -190,6 +190,10 @@ app.get('/index.html', (req, res) => {
 app.get('/GoodStudent/front/script.js', (req, res) => {
   res.sendFile(path.join(__dirname, 'script.js'));
 });
+app.get('/admin-dashboard.html', (req, res) => {
+  console.log('Serving admin dashboard');
+  res.sendFile(path.join(__dirname, 'pages', 'admin-dashboard.html'));
+});
 app.listen(PORT, () => {
   console.log('=' .repeat(50));
   console.log(`Node.js сервер запущен на http://localhost:${PORT}`);
