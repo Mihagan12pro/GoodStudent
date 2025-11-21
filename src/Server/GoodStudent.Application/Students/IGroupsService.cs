@@ -7,10 +7,10 @@ namespace GoodStudent.Application.Students
 {
     public interface IGroupsService
     {
-        Task<Guid> Add(NewGroupDto newGroup);
+        Task<Guid> Add(NewGroupDto newGroup, CancellationToken cancellationToken);
 
-        Task<GetStudentsByGroupDto> GetStudents(Guid groupId);
+        Task<GetStudentsByGroupDto> GetStudents(Guid groupId, CancellationToken cancellationToken);
 
-        Task<GetGroupByIdDto> GetGroupById(Guid Id);
+        Task<GetGroupByIdDto> GetGroupById(Guid Id, CancellationToken cancellationToken);
     }
 }

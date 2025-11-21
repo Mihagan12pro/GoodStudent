@@ -44,9 +44,21 @@ namespace GoodStudent.Application.Students
             return response;
         }
 
-        public Task<Guid> GetStudentId(GetStudentsIdDto studentsIdDto, CancellationToken cancellationToken)
+        public async Task<Guid> GetStudentId(GetStudentsIdDto studentsIdDto, CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            Student student = new Student()
+            {
+                Name = studentsIdDto.Name, 
+                Surname = studentsIdDto.Surname, 
+                Patronymic = studentsIdDto.Patronymic
+            };
+
+            Guid id = await _studentsRepository.GetStudentIdAsync(student, studentsIdDto.GroupId);
+
+            if (id == Guid.Empty)
+                throw new NullReferenceException();
+
+            return id;
         }
 
         public StudentsService(IStudentsRepository studentsRepository)
