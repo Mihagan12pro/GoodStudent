@@ -5,6 +5,8 @@ import XLSX from 'xlsx';
 import path from 'path';
 const C_SHARP_BACKEND_URL = 'https://localhost:7298';
 import { fileURLToPath } from 'url';
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const app = express();
@@ -193,6 +195,72 @@ app.get('/admin-dashboard.html', (req, res) => {
 app.get('/form.html', (req, res) => {
   console.log('Serving form.html');
   res.sendFile(path.join(__dirname, 'pages', 'form.html'));
+});
+app.post('/api/upload-schedule', upload.single('excelFile'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'Файл не загружен' });
+    }
+    console.log('Загружен файл:', req.file.originalname);
+    const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+    const sheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[sheetName];
+    const jsonData = XLSX.utils.sheet_to_json(worksheet);
+    console.log('Данные из Excel:', jsonData);
+    const students = jsonData.map(row => {
+      const id = row['id'] || row['ID'] || row['Id'] || generateId();
+      const name = row['name'] || row['Name'] || row['ФИО'] || row['ФИО студента'] || 'Неизвестный';
+      const group = row['group'] || row['Group'] || row['Группа'] || 'Неизвестная группа';
+      return {
+        id: id,
+        name: name,
+        group: group
+      };
+    });
+    const uniqueGroups = [...new Set(students.map(s => s.group))].map(group => ({
+      name: group
+    }));
+    res.json({
+      success: true,
+      students: students,
+      groups: uniqueGroups,
+      message: `Найдено ${students.length} студентов в ${uniqueGroups.length} группах`
+    });
+  } catch (error) {
+    console.error('Ошибка парсинга Excel:', error);
+    res.status(500).json({ error: 'Ошибка обработки файла' });
+  }
+});
+function generateId() {
+  return 'temp-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+}
+app.post('/api/save-students', async (req, res) => {
+  try {
+    const { students, groups } = req.body;    
+    console.log('Сохранение данных:', { students, groups });
+    const groupPromises = groups.map(group => 
+      fetch(`${C_SHARP_BACKEND_URL}/api/groups`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(group)
+      })
+    );
+    const studentPromises = students.map(student =>
+      fetch(`${C_SHARP_BACKEND_URL}/api/students`, {
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(student)
+      })
+    );
+    await Promise.all([...groupPromises, ...studentPromises]);
+    res.json({
+      success: true,
+      message: `Сохранено ${students.length} студентов и ${groups.length} групп`
+    });
+  } catch (error) {
+    console.error('Ошибка сохранения:', error);
+    res.status(500).json({ error: 'Ошибка сохранения данных' });
+  }
 });
 app.listen(PORT, () => {
   console.log('=' .repeat(50));
