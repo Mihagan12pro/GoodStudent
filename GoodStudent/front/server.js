@@ -1,3 +1,4 @@
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 import express from 'express';
 import cors from 'cors';
 import multer from 'multer';
@@ -261,6 +262,15 @@ app.post('/api/save-students', async (req, res) => {
     console.error('Ошибка сохранения:', error);
     res.status(500).json({ error: 'Ошибка сохранения данных' });
   }
+});
+app.get('/test-backend', async (req, res) => {
+    try {
+        const r = await fetch('https://localhost:7298/weatherforecast');
+        const data = await r.json();
+        res.json(data);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 app.listen(PORT, () => {
   console.log('=' .repeat(50));
