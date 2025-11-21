@@ -1,7 +1,7 @@
 class TeacherApp {
     constructor() {
-        if (!localStorage.getItem('teacherToken')) {
-            window.location.href = 'form.html';
+        if (!localStorage.getItem('authToken')) {
+            window.location.href = 'index.html';
             return;
         }
         this.currentView = 'manual';
@@ -48,8 +48,12 @@ class TeacherApp {
         container.innerHTML = calendarHTML;
     }
     async loadGroups() {
+        if (!this.currentGroupId) {
+            console.log('Группа не выбрана');
+            return;
+        }
         try {
-            console.log('Загрузка групп...');
+            console.log('Загрузка групп');
             this.groups = await apiClient.getGroups();
             console.log('Группы загружены:', this.groups);
             this.populateGroupSelector();
@@ -146,6 +150,7 @@ class TeacherApp {
                 console.log('Посещаемость сохранена:', attendanceData);
             } catch (error) {
                 console.error('Ошибка сохранения посещаемости:', error);
+                this.saveAttendanceLocally(studentId, isPresent);
             }
         }
     }

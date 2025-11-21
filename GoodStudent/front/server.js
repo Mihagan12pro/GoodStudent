@@ -133,20 +133,18 @@ app.get('/api/groups', (req, res) => {
   res.json(groups);
 });
 app.get('/GoodStudent/front/script.js', (req, res) => {
-  console.log('Serving script.js from root');
   res.sendFile(path.join(__dirname, 'script.js'));
 });
 app.get('/index.html', (req, res) => {
-  console.log('Serving index.html from direct link');
   res.sendFile(path.join(__dirname, 'pages', 'index.html'));
+});
+app.get('/GoodStudent/front/script.js', (req, res) => {
+  res.sendFile(path.join(__dirname, 'script.js'));
 });
 app.listen(PORT, () => {
   console.log('=' .repeat(50));
   console.log(`Node.js сервер запущен на http://localhost:${PORT}`);
   console.log('=' .repeat(50));
-  console.log(`Обслуживает пути: /GoodStudent/front/...`);
-  console.log('');
-  console.log('ДЕМО-АВТОРИЗАЦИЯ:');
   console.log(`Логин: любой email`);
   console.log(`Пароль: любой пароль`);
   console.log('');

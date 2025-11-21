@@ -1,6 +1,6 @@
 class ApiClient {
     constructor() {
-        this.baseUrl = 'https://localhost:5000/api'; 
+        this.baseUrl = 'http://localhost:5000/api'; 
         this.token = localStorage.getItem('authToken');
     }
     async request(endpoint, options = {}) {
@@ -36,15 +36,21 @@ class ApiClient {
             throw new Error(`Ошибка соединения: ${error.message}`);
         }
     }
-    async getGroups() {
-        return await this.request('/groups');
-    }
-    async getGroup(id) {
-        return await this.request(`/groups/${id}`);
+    logout() {
+        this.token = null;
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('user');
     }
     async getStudents() {
         return await this.request('/students');
     }
+    async getGroups() {
+        return await this.request('/groups');
+    }
+    async getGroup(groupId) {
+        return await this.request(`/groups/${groupId}/students`);
+    }
+
     async getGroupStudents(groupId) {
         try {
             return await this.request(`/groups/${groupId}/students`);
@@ -66,25 +72,25 @@ class ApiClient {
             body: { lessonId, duration }
         });
     }
-    async getSchedule(date = null) {
-        const query = date ? `?date=${date}` : '';
-        return await this.request(`/schedule${query}`);
-    }
-    async markManualAttendance(attendanceData) {
-        return await this.request('/attendance/manual', {
-            method: 'POST',
-            body: attendanceData
-        });
-    }
+    // async getSchedule(date = null) {
+    //     const query = date ? `?date=${date}` : '';
+    //     return await this.request(`/schedule${query}`);
+    // }
+    // async markManualAttendance(attendanceData) {
+    //     return await this.request('/attendance/manual', {
+    //         method: 'POST',
+    //         body: attendanceData
+    //     });
+    // }
     async markAttendance(attendanceData) {
         return await this.request('/attendance', {
             method: 'POST',
             body: attendanceData
         });
     }
-    async getAttendance() {
-        return await this.request('/attendance');
-    }
+    // async getAttendance() {
+    //     return await this.request('/attendance');
+    // }
     async login(email, password) {
         const data = await this.request('/auth/login', {
             method: 'POST',
@@ -93,6 +99,7 @@ class ApiClient {
         if (data.token) {
             this.token = data.token;
             localStorage.setItem('authToken', data.token);
+            localStorage.setItem('user', JSON.stringify(data.user));
         }        
         return data;
     }
