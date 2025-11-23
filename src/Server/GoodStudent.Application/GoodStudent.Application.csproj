@@ -23,6 +23,7 @@
 
   <ItemGroup>
     <Folder Include="Instructors\" />
+    <Folder Include="Sections\Departments\" />
   </ItemGroup>
 
 </Project>

@@ -1,6 +1,6 @@
 ﻿using GoodStudent.Domain.Instructors.Enums;
 using GoodStudent.Domain.People;
-using GoodStudent.Domain.UniversityDepartments;
+using GoodStudent.Domain.Sections;
 using System.Text.Json.Serialization;
 
 namespace GoodStudent.Domain.Instructors
