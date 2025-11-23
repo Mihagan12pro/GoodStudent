@@ -9,7 +9,7 @@ namespace GoodStudent.Presenters.Instructors
 {
     [ApiController()]
     [Route("api/[controller]")]
-    internal class InstructorsController : ControllerBase
+    public class InstructorsController : ControllerBase
     {
         //[HttpPost]
         //public async Task<IActionResult> New()

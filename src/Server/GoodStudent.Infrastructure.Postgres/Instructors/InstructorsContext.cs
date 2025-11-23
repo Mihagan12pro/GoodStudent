@@ -4,10 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace GoodStudent.Domain.Instructors
+namespace GoodStudent.Infrastracture.Postgres.Instructors
 {
-    public class Grade : Domain
+    internal class InstructorsContext : BaseContext
     {
-        public required string Tittle { get; set; }
     }
 }

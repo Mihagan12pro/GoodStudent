@@ -10,6 +10,7 @@ namespace GoodStudent.Application
             services.AddScoped<IStudentsService, StudentsService>();
             services.AddScoped<IGroupsService, GroupsService>();
 
+          
             return services;
         }
     }

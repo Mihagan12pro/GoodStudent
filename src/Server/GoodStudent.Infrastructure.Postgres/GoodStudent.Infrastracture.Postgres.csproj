@@ -19,13 +19,4 @@
     <ProjectReference Include="..\GoodStudent.Domain\GoodStudent.Domain.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <None Update="Configurations\postgresConfig.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Configurations\studentsConfig.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-
 </Project>
