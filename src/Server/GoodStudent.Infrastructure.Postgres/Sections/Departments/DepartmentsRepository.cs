@@ -12,12 +12,6 @@ namespace GoodStudent.Infrastracture.Postgres.Sections.Departments
 
         public async Task<Guid> AddAsync(Department department, CancellationToken cancellationToken)
         {
-            //FacultyEntity facultyEntity = new Faculties.FacultyEntity()
-            //{
-            //    Tittle = department.Faculty.Tittle,
-            //    Description = department.Faculty.Description
-            //};
-
             DepartmentEntity departmentEntity = new DepartmentEntity()
             { 
                 Tittle = department.Tittle, 
