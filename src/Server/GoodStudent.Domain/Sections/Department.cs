@@ -8,7 +8,9 @@ namespace GoodStudent.Domain.Sections
 {
     public class Department : Domain
     {
-        public required Faculty Faculty { get; set; }
+        public Faculty? Faculty { get; set; }
+
+        public required Guid FacultyId { get; set; }
 
         public required string Tittle { get; set; } 
 

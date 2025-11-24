@@ -22,9 +22,9 @@ namespace GoodStudent.Infrastracture.Postgres.Students
             studentEntity.Surname = student.Surname;
             studentEntity.Patronymic = student.Patronymic;
 
-            if (student.Group != null)
+            if (student.GroupId != null)
             {
-                studentEntity.Group = await _studentsContext.Groups.FirstOrDefaultAsync(g => g.Id == student.Group.Id);
+                studentEntity.Group = await _studentsContext.Groups.FirstOrDefaultAsync(g => g.Id == student.GroupId);
 
                 //studentEntity.Group = new GroupEntity() { Id = student.Group.Id, Number = student.Group.Number, ProfessionId = student.Group.ProfessionId };
             }

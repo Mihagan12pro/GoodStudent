@@ -9,6 +9,6 @@ namespace GoodStudent.Contracts.Students.StudentsContracts
         string Surname,
         int StartYear,
         string? Patronymic = null,
-        Group? Group = null,
+        Guid? GroupId = null,
         StudentStatus Status = StudentStatus.Study);
 }

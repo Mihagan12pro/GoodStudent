@@ -10,5 +10,7 @@ namespace GoodStudent.Domain.Students
         public StudentStatus Status { get; set; } = StudentStatus.Study;
 
         public Group? Group { get; set; }
+
+        public Guid? GroupId { get; set; }   
     }
 }
