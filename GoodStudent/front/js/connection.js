@@ -3,11 +3,11 @@ async function testBackendConnection() {
         const response = await fetch('https://localhost:7298/api/students');
         if (response.ok) {
             const students = await response.json();
-            console.log('C# бэкенд подключен успешно! Студенты:', students);
+            console.log('бэкенд подключен! Студенты:', students);
             return true;
         }
     } catch (error) {
-        console.log('C# бэкенд недоступен, используем Node.js fallback');
+        console.log('бэкенд недоступен, используем Node.js fallback');
         return false;
     }
 }

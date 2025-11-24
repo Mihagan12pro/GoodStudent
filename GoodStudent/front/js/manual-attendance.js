@@ -34,8 +34,7 @@ class ManualAttendance {
         }
     }
     renderStudents() {
-        const container = document.getElementById('students-list');
-        
+        const container = document.getElementById('students-list');        
         container.innerHTML = this.students.map(student => `
             <div class="student-item">
                 <div class="student-info">

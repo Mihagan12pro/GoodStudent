@@ -8,15 +8,12 @@ class AdminApp {
         this.uploadedData = null;
         this.init();
     }
-
     async saveDataToBackend() {
         if (!this.uploadedData) {
             alert('Нет данных для сохранения');
             return;
-        }
-        
+        }        
         try {
-            // Сначала создаем группы
             const uniqueGroups = [...new Set(this.uploadedData.map(s => s.group))];
             const groupPromises = uniqueGroups.map(groupName => 
                 apiClient.createGroup({
@@ -24,8 +21,6 @@ class AdminApp {
                     professionId: '3fa85f64-5717-4562-b3fc-2c963f66afa6'
                 })
             );
-
-            // Затем создаем студентов
             const studentPromises = this.uploadedData.map(student => {
                 const nameParts = student.name.split(' ');
                 return apiClient.createStudent({
@@ -40,15 +35,12 @@ class AdminApp {
                     status: 0
                 });
             });
-
             await Promise.all([...groupPromises, ...studentPromises]);
-            alert(`Данные успешно сохранены! Студентов: ${this.uploadedData.length}`);
-            
+            alert(`Данные успешно сохранены! Студентов: ${this.uploadedData.length}`);            
         } catch (error) {
             console.error('Ошибка сохранения:', error);
             alert('Ошибка при сохранении данных в бэкенд');
         }
     }
-
     // ... остальные методы без изменений
 }
