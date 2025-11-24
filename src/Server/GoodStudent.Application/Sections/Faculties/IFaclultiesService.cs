@@ -15,5 +15,7 @@ namespace GoodStudent.Application.Sections.Faculties
         Task<GetFacultyDto> GetById(Guid id, CancellationToken cancellationToken);
 
         Task<IEnumerable<GetFacultyDto>> GetAll(CancellationToken cancellationToken);
+
+        Task<Guid> GetId(string tittle, CancellationToken cancellationToken);
     }
 }

@@ -56,6 +56,16 @@ namespace GoodStudent.Infrastracture.Postgres.Sections.Faculties
             return faculty;
         }
 
+        public async Task<Guid> GetIdAsync(string tittle, CancellationToken cancellationToken)
+        {
+            FacultyEntity? facultyEntity = await _sectionsContext.Faculties.FirstOrDefaultAsync(s => s.Tittle == tittle);
+
+            if (facultyEntity == null)
+                return Guid.Empty;
+
+            return facultyEntity.Id;
+        }
+
         public FacultiesRepository(SectionsContext sectionsContext)
         {
             _sectionsContext = sectionsContext;

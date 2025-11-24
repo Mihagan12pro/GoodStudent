@@ -43,6 +43,16 @@ namespace GoodStudent.Application.Sections.Faculties
             return response;
         }
 
+        public async Task<Guid> GetId(string tittle, CancellationToken cancellationToken)
+        {
+            Guid id = await _faultiesRepository.GetIdAsync(tittle, cancellationToken);
+
+            if (id == Guid.Empty)
+                throw new NullReferenceException();
+
+            return id;
+        }
+
         public FacultiesService(IFacultiesRepository facultiesRepository)
         {
             _faultiesRepository = facultiesRepository;

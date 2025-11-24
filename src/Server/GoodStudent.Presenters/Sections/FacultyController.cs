@@ -1,12 +1,6 @@
 ﻿using GoodStudent.Application.Sections.Faculties;
 using GoodStudent.Contracts.Sections.Faculties;
-using GoodStudent.Contracts.Students.StudentsContracts;
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GoodStudent.Presenters.Sections
 {
@@ -32,6 +26,14 @@ namespace GoodStudent.Presenters.Sections
             return Ok(result);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GetId([FromQuery]string tittle, CancellationToken cancellationToken)
+        {
+            var result = await _facultiesService.GetId(tittle, cancellationToken);
+
+            return Ok(result);
+        }
+
         [HttpGet("/All")]
         public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
         {
@@ -39,6 +41,12 @@ namespace GoodStudent.Presenters.Sections
 
             return Ok(result);
         }
+
+        //[HttpGet]
+        //public async Task<IActionResult> GetAllDepartments([FromQuery] Guid id, CancellationToken cancellationToken)
+        //{
+        //    return Ok();
+        //}
 
         public FacultyController(IFacultiesService facultiesService)
         {
