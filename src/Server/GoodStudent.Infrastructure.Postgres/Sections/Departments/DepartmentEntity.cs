@@ -16,5 +16,7 @@ namespace GoodStudent.Infrastracture.Postgres.Sections.Departments
 
         [ForeignKey(nameof(FacultyId))]
         public FacultyEntity? Faculty { get; set; }
+
+        public string? Description { get; set; }
     }
 }

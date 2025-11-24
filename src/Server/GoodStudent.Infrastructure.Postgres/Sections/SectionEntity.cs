@@ -6,10 +6,8 @@ using System.Threading.Tasks;
 
 namespace GoodStudent.Infrastracture.Postgres.Sections
 {
-    internal class SectionEntity : DbEntity
+    internal abstract class SectionEntity : DbEntity
     {
         public required string Tittle { get; set; }
-
-        public string? Description { get; set; }
     }
 }

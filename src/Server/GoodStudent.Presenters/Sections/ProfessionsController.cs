@@ -1,4 +1,5 @@
-﻿using GoodStudent.Contracts.Sections.Professions;
+﻿using GoodStudent.Application.Sections.Professions;
+using GoodStudent.Contracts.Sections.Professions;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GoodStudent.Presenters.Sections
@@ -7,16 +8,27 @@ namespace GoodStudent.Presenters.Sections
     [Route("api/sections/[controller]")]
     public class ProfessionsController : ControllerBase
     {
+        private readonly IProfessionService _professionService; 
+
         [HttpPost]
         public async Task<IActionResult> New([FromBody] NewProfessionDto request, CancellationToken cancellationToken)
         {
-            return Ok();
+            var result = await _professionService.AddNew(request, cancellationToken);
+
+            return Ok(result);
         }
 
         [HttpGet]
         public async Task<IActionResult> GetById([FromRoute] Guid id, CancellationToken cancellationToken)
         {
-            return Ok();
+            var result = await _professionService.GetById(id, cancellationToken);
+
+            return Ok(result);
+        }
+
+        public ProfessionsController(IProfessionService professionService)
+        {
+            _professionService = professionService;
         }
     }
 }

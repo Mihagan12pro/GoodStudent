@@ -3,6 +3,7 @@ using System;
 using GoodStudent.Infrastracture.Postgres.Sections;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace GoodStudent.Infrastracture.Postgres.Migrations.Sections
 {
     [DbContext(typeof(SectionsContext))]
-    partial class SectionsContextModelSnapshot : ModelSnapshot
+    [Migration("20251124153221_AddProfessions")]
+    partial class AddProfessions
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
