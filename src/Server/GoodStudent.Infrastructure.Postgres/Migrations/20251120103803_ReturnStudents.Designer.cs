@@ -54,7 +54,7 @@ namespace GoodStudent.Infrastracture.Postgres.Migrations
                     b.Property<Guid?>("GroupId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("Name")
+                    b.Property<string>("Tittle")
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("name");

@@ -1,5 +1,4 @@
 ﻿using GoodStudent.Application.Sections.Departments;
-using GoodStudent.Domain.Profession;
 using GoodStudent.Domain.Sections;
 using GoodStudent.Infrastracture.Postgres.Sections.Faculties;
 using Microsoft.EntityFrameworkCore;
