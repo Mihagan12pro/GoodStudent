@@ -42,7 +42,7 @@ namespace GoodStudent.Presenters.Sections
             return Ok(result);
         }
 
-        [HttpGet]
+        [HttpGet("/Departments")]
         public async Task<IActionResult> GetAllDepartments([FromQuery] Guid id, CancellationToken cancellationToken)
         {
             var result = await _facultiesService.GetDepartments(id, cancellationToken);

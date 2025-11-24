@@ -8,9 +8,16 @@ namespace GoodStudent.Infrastracture.Postgres.Sections.Departments
     {
         private readonly SectionsContext _sectionsContext;
 
-        public Task<Guid> AddAsync(Department department, CancellationToken cancellationToken)
+        public async Task<Guid> AddAsync(Department department, CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            DepartmentEntity departmentEntity = new DepartmentEntity()
+            { Tittle = department.Tittle, Description = department.Description, FacultyId = department.Faculty.Id};
+
+            await _sectionsContext.Departments.AddAsync(departmentEntity, cancellationToken);
+
+            Guid id = departmentEntity.Id;
+
+            return id;
         }
 
         public Task<Department> GetByIdAsync(Guid id, CancellationToken cancellationToken)
