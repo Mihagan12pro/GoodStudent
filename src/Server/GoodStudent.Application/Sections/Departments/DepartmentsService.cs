@@ -1,5 +1,5 @@
-﻿using GoodStudent.Contracts.Professions;
-using GoodStudent.Contracts.Sections.Departments;
+﻿using GoodStudent.Contracts.Sections.Departments;
+using GoodStudent.Contracts.Sections.Professions;
 using GoodStudent.Domain.Sections;
 
 namespace GoodStudent.Application.Sections.Departments
