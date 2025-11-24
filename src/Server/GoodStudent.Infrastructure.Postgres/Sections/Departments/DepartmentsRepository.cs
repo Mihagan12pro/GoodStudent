@@ -1,6 +1,8 @@
 ﻿using GoodStudent.Application.Sections.Departments;
 using GoodStudent.Domain.Profession;
 using GoodStudent.Domain.Sections;
+using GoodStudent.Infrastracture.Postgres.Sections.Faculties;
+using Microsoft.EntityFrameworkCore;
 
 namespace GoodStudent.Infrastracture.Postgres.Sections.Departments
 {
@@ -10,27 +12,61 @@ namespace GoodStudent.Infrastracture.Postgres.Sections.Departments
 
         public async Task<Guid> AddAsync(Department department, CancellationToken cancellationToken)
         {
+            FacultyEntity facultyEntity = new Faculties.FacultyEntity()
+            {
+                Tittle = department.Faculty.Tittle,
+                Description = department.Faculty.Description
+            };
+
             DepartmentEntity departmentEntity = new DepartmentEntity()
-            { Tittle = department.Tittle, Description = department.Description, FacultyId = department.Faculty.Id};
+            { 
+                Tittle = department.Tittle, 
+
+                Description = department.Description, 
+
+                Faculty = facultyEntity
+            };
 
             await _sectionsContext.Departments.AddAsync(departmentEntity, cancellationToken);
+            await _sectionsContext.SaveChangesAsync();
 
             Guid id = departmentEntity.Id;
 
             return id;
         }
 
-        public Task<Department> GetByIdAsync(Guid id, CancellationToken cancellationToken)
+        public async Task<Department?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            DepartmentEntity? departmentEntity = await _sectionsContext.Departments.FirstOrDefaultAsync(d => d.Id == id);
+            if (departmentEntity == null)
+                return null;
+
+            FacultyEntity facultyEntity = await _sectionsContext.Faculties.FirstAsync(f => f.Id == departmentEntity.FacultyId);
+
+            Department department = new Department()
+            { 
+                Faculty = new Faculty() { Tittle = facultyEntity.Tittle, Id = facultyEntity.Id, Description = facultyEntity.Description },
+
+                Tittle = departmentEntity.Tittle, 
+
+                Description = departmentEntity.Description 
+            };
+
+            return department;
         }
 
-        public Task<Guid> GetIdAsync(string tittle, CancellationToken cancellationToken)
+        public async Task<Guid> GetIdAsync(string tittle, CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            DepartmentEntity? departmentEntity = await _sectionsContext.Departments.
+                FirstOrDefaultAsync(d => d.Tittle == tittle);
+
+            if (departmentEntity == null)
+                return Guid.Empty;
+
+            return departmentEntity.Id;
         }
 
-        public Task<IEnumerable<Profession>> GetProfessionsAsync(Guid id, CancellationToken cancellationToken)
+        public async Task<IEnumerable<Profession>> GetProfessionsAsync(Guid id, CancellationToken cancellationToken)
         {
             throw new NotImplementedException();
         }

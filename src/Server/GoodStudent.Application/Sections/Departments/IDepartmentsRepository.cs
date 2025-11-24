@@ -11,6 +11,6 @@ namespace GoodStudent.Application.Sections.Departments
 
         Task<Guid> GetIdAsync(string tittle, CancellationToken cancellationToken);
 
-        Task<Department> GetByIdAsync(Guid id, CancellationToken cancellationToken);
+        Task<Department?> GetByIdAsync(Guid id, CancellationToken cancellationToken);
     }
 }
