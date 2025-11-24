@@ -18,7 +18,7 @@ namespace GoodStudent.Presenters.Sections
             return Ok(result);
         }
 
-        [HttpGet]
+        [HttpGet("{id}")]
         public async Task<IActionResult> GetById([FromRoute] Guid id, CancellationToken cancellationToken)
         {
             var result = await _professionService.GetById(id, cancellationToken);

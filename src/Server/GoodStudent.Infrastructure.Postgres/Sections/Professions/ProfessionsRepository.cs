@@ -1,5 +1,6 @@
 ﻿using GoodStudent.Application.Sections.Professions;
 using GoodStudent.Domain.Sections;
+using Microsoft.EntityFrameworkCore;
 
 namespace GoodStudent.Infrastracture.Postgres.Sections.Professions
 {
@@ -21,13 +22,31 @@ namespace GoodStudent.Infrastracture.Postgres.Sections.Professions
             };
 
             await _sectionsContext.Professions.AddAsync(professionEntity, cancellationToken);
+            await _sectionsContext.SaveChangesAsync();
 
             return professionEntity.Id;
         }
 
-        public Task<Profession> GeByIdAsync(Guid id, CancellationToken cancellationToken)
+        public async Task<Profession> GeByIdAsync(Guid id, CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            ProfessionEntity? professionEntity = await _sectionsContext.Professions.
+                FirstOrDefaultAsync(p => p.Id == id);
+
+            if (professionEntity == null)
+                return null!;
+
+            Profession profession = new Profession()
+            {
+                Tittle = professionEntity.Tittle,
+
+                Profile = professionEntity.Profile,
+
+                Code = professionEntity.Code,
+
+                DepartmentId = professionEntity.DepartmentId
+            };
+
+            return profession;
         }
 
         public ProfessionsRepository(SectionsContext sectionsContext)
