@@ -7,5 +7,5 @@ using System.Threading.Tasks;
 
 namespace GoodStudent.Contracts.Sections.Departments
 {
-    public record NewDepartmentDto(string Tittle, string? Description, Faculty Faculty);
+    public record NewDepartmentDto(string Tittle, string? Description, Guid FacultyId);
 }

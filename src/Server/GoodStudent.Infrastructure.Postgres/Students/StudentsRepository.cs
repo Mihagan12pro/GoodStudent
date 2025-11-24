@@ -11,7 +11,7 @@ using System.Xml.Linq;
 
 namespace GoodStudent.Infrastracture.Postgres.Students
 {
-    internal class StudentsEFRepository : IStudentsRepository
+    internal class StudentsRepository : IStudentsRepository
     {
         private readonly StudentsContext _studentsContext;
 
@@ -22,11 +22,9 @@ namespace GoodStudent.Infrastracture.Postgres.Students
             studentEntity.Surname = student.Surname;
             studentEntity.Patronymic = student.Patronymic;
 
-            if (student.Group != null)
+            if (student.GroupId != null)
             {
-                studentEntity.Group = await _studentsContext.Groups.FirstOrDefaultAsync(g => g.Id == student.Group.Id);
-
-                //studentEntity.Group = new GroupEntity() { Id = student.Group.Id, Number = student.Group.Number, ProfessionId = student.Group.ProfessionId };
+                studentEntity.Group = await _studentsContext.Groups.FirstOrDefaultAsync(g => g.Id == student.GroupId);
             }
 
             await _studentsContext.Students.AddAsync(studentEntity);
@@ -91,7 +89,7 @@ namespace GoodStudent.Infrastracture.Postgres.Students
         //    throw new NotImplementedException();
         //}
 
-        public StudentsEFRepository(StudentsContext studentsContext)
+        public StudentsRepository(StudentsContext studentsContext)
         {
             _studentsContext = studentsContext;
         }

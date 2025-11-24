@@ -12,11 +12,11 @@ namespace GoodStudent.Infrastracture.Postgres.Sections.Departments
 
         public async Task<Guid> AddAsync(Department department, CancellationToken cancellationToken)
         {
-            FacultyEntity facultyEntity = new Faculties.FacultyEntity()
-            {
-                Tittle = department.Faculty.Tittle,
-                Description = department.Faculty.Description
-            };
+            //FacultyEntity facultyEntity = new Faculties.FacultyEntity()
+            //{
+            //    Tittle = department.Faculty.Tittle,
+            //    Description = department.Faculty.Description
+            //};
 
             DepartmentEntity departmentEntity = new DepartmentEntity()
             { 
@@ -24,7 +24,7 @@ namespace GoodStudent.Infrastracture.Postgres.Sections.Departments
 
                 Description = department.Description, 
 
-                Faculty = facultyEntity
+                FacultyId = department.FacultyId
             };
 
             await _sectionsContext.Departments.AddAsync(departmentEntity, cancellationToken);
@@ -45,7 +45,7 @@ namespace GoodStudent.Infrastracture.Postgres.Sections.Departments
 
             Department department = new Department()
             { 
-                Faculty = new Faculty() { Tittle = facultyEntity.Tittle, Id = facultyEntity.Id, Description = facultyEntity.Description },
+                FacultyId = facultyEntity.Id,
 
                 Tittle = departmentEntity.Tittle, 
 

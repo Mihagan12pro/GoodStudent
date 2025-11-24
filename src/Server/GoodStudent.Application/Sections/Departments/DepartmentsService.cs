@@ -11,7 +11,7 @@ namespace GoodStudent.Application.Sections.Departments
         public async Task<Guid> AddNew(NewDepartmentDto request, CancellationToken cancellationToken)
         {
             Department department = new Department()
-            { Faculty = request.Faculty, Tittle = request.Tittle, Description = request.Description };
+            { FacultyId = request.FacultyId, Tittle = request.Tittle, Description = request.Description };
 
             Guid id = await _departmentsRepository.AddAsync(department, cancellationToken);
 

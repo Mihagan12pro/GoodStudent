@@ -6,7 +6,7 @@ using Group = GoodStudent.Domain.Students.Group;
 
 namespace GoodStudent.Infrastracture.Postgres.Students
 {
-    internal class GroupsEFRepository : IGroupsRepository
+    internal class GroupsRepository : IGroupsRepository
     {
         private readonly StudentsContext _studentsContext;
 
@@ -80,7 +80,7 @@ namespace GoodStudent.Infrastracture.Postgres.Students
             return group;
         }
 
-        public GroupsEFRepository(StudentsContext studentsContext)
+        public GroupsRepository(StudentsContext studentsContext)
         {
             _studentsContext = studentsContext;
         }
