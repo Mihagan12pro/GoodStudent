@@ -1,4 +1,8 @@
-GET https://localhost:5000/api/test
+# Проверка подключения к Node.js серверу и прокси на C# backend
+GET http://localhost:5000/test-backend
 Accept: application/json
 
 ###
+# Получение студентов группы 231-326 из локальной базы PostgreSQL
+GET http://localhost:5000/api/groups/231-326
+Accept: application/json
