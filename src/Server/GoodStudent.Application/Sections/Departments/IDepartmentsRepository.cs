@@ -1,5 +1,4 @@
-﻿using GoodStudent.Domain.Profession;
-using GoodStudent.Domain.Sections;
+﻿using GoodStudent.Domain.Sections;
 
 namespace GoodStudent.Application.Sections.Departments
 {

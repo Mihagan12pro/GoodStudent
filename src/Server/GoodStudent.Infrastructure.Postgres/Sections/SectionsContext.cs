@@ -1,12 +1,7 @@
-﻿using GoodStudent.Domain.Sections;
-using GoodStudent.Infrastracture.Postgres.Sections.Departments;
+﻿using GoodStudent.Infrastracture.Postgres.Sections.Departments;
 using GoodStudent.Infrastracture.Postgres.Sections.Faculties;
+using GoodStudent.Infrastracture.Postgres.Sections.Professions;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GoodStudent.Infrastracture.Postgres.Sections
 {
@@ -14,6 +9,13 @@ namespace GoodStudent.Infrastracture.Postgres.Sections
     {
         public DbSet<DepartmentEntity> Departments { get; set; } = null!;
         public DbSet<FacultyEntity> Faculties { get; set; } = null!;
+
+        public SectionsContext(DbSet<FacultyEntity> faculties)
+        {
+            Faculties = faculties;
+        }
+
+        public DbSet<ProfessionEntity> Professions { get; set; } = null!;
 
         public SectionsContext()
         {

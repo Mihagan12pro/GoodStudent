@@ -22,7 +22,7 @@ namespace GoodStudent.Infrastracture.Postgres.Migrations
                 newName: "patronymic");
 
             migrationBuilder.RenameColumn(
-                name: "Name",
+                name: "Tittle",
                 table: "students",
                 newName: "name");
 
@@ -73,7 +73,7 @@ namespace GoodStudent.Infrastracture.Postgres.Migrations
             migrationBuilder.RenameColumn(
                 name: "name",
                 table: "students",
-                newName: "Name");
+                newName: "Tittle");
         }
     }
 }

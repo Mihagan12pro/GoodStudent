@@ -1,5 +1,5 @@
-﻿using GoodStudent.Contracts.Professions;
-using GoodStudent.Contracts.Sections.Departments;
+﻿using GoodStudent.Contracts.Sections.Departments;
+using GoodStudent.Contracts.Sections.Professions;
 using GoodStudent.Domain.Sections;
 
 namespace GoodStudent.Application.Sections.Departments
@@ -11,7 +11,7 @@ namespace GoodStudent.Application.Sections.Departments
         public async Task<Guid> AddNew(NewDepartmentDto request, CancellationToken cancellationToken)
         {
             Department department = new Department()
-            { Faculty = request.Faculty, Tittle = request.Tittle, Description = request.Description };
+            { FacultyId = request.FacultyId, Tittle = request.Tittle, Description = request.Description };
 
             Guid id = await _departmentsRepository.AddAsync(department, cancellationToken);
 
@@ -20,7 +20,7 @@ namespace GoodStudent.Application.Sections.Departments
 
         public async Task<GetDepartmentDto> GetById(Guid id, CancellationToken cancellationToken)
         {
-            Department department = await _departmentsRepository.GetByIdAsync(id, cancellationToken);
+            Department? department = await _departmentsRepository.GetByIdAsync(id, cancellationToken);
 
             if (department == null)
                 throw new NullReferenceException();
@@ -40,9 +40,16 @@ namespace GoodStudent.Application.Sections.Departments
             return response;
         }
 
-        public Task<IEnumerable<GetProfessionDto>> GetProfessions(Guid id, CancellationToken cancellationToken)
+        public async Task<IEnumerable<GetProfessionDto>> GetProfessions(Guid id, CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            IEnumerable<Profession> professions = await _departmentsRepository.GetProfessionsAsync(id, cancellationToken);
+
+            if (professions == null)
+                throw new NullReferenceException();
+
+            IEnumerable<GetProfessionDto> response = professions.Select(p => new GetProfessionDto(p.Tittle, p.Code, p.Profile));
+
+            return response;
         }
 
         public DepartmentsService(IDepartmentsRepository departmentsRepository)
