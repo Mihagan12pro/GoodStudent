@@ -23,7 +23,11 @@ namespace GoodStudent.Infrastracture.Postgres.Students
             studentEntity.Patronymic = student.Patronymic;
 
             if (student.Group != null)
-                studentEntity.Group = new GroupEntity() { Id = student.Group.Id, Number = student.Group.Number, ProfessionId = student.Group.ProfessionId};
+            {
+                studentEntity.Group = await _studentsContext.Groups.FirstOrDefaultAsync(g => g.Id == student.Group.Id);
+
+                //studentEntity.Group = new GroupEntity() { Id = student.Group.Id, Number = student.Group.Number, ProfessionId = student.Group.ProfessionId };
+            }
 
             await _studentsContext.Students.AddAsync(studentEntity);
             await _studentsContext.SaveChangesAsync();
@@ -59,15 +63,33 @@ namespace GoodStudent.Infrastracture.Postgres.Students
             return student;
         }
 
-        public Task<Group> GetGroupByStudentAsync(Guid studentId, CancellationToken cancellationToken)
+        public async Task<Group> GetGroupByStudentAsync(Guid studentId, CancellationToken cancellationToken)
         {
             throw new NotImplementedException();
         }
 
-        public Task<Guid> GetStudentIdAsync(Student student)
+        public async Task<Guid> GetStudentIdAsync(Student student, Guid? groupId)
         {
-            throw new NotImplementedException();
+            StudentEntity? studentEntity = await _studentsContext.Students.FirstOrDefaultAsync(
+                s => s.Name == student.Name 
+                && 
+                s.Surname == student.Surname
+                && 
+                s.Patronymic == student.Patronymic
+                &&
+                s.GroupId == groupId
+            );
+
+            if (studentEntity == null)
+                return Guid.Empty;
+
+            return studentEntity.Id;
         }
+
+        //public Task<Guid?> GetStudentIdAsync(Student student, Guid? groupId)
+        //{
+        //    throw new NotImplementedException();
+        //}
 
         public StudentsEFRepository(StudentsContext studentsContext)
         {

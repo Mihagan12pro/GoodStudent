@@ -11,10 +11,10 @@ namespace GoodStudent.Application.Students
 {
     public interface IGroupsRepository
     {
-        Task<Guid> AddAsync(Group group);
+        Task<Guid> AddAsync(Group group, CancellationToken cancellationToken);
 
-        Task<Group> GetByIdAsync(Guid Id);
+        Task<Group> GetByIdAsync(Guid Id, CancellationToken cancellationToken);
 
-        Task<(Group, IEnumerable<Student>)> GetStudentsAsync(Guid groupId);
+        Task<(Group, IEnumerable<Student>)?> GetStudentsAsync(Guid groupId, CancellationToken cancellationToken);
     }
 }

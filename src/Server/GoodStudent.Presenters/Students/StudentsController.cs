@@ -24,10 +24,10 @@ namespace GoodStudent.Presenters.Students
             return Ok(await _studentService.GetById(id, cancellationToken));
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetStudentId([FromBody] GetStudentsIdDto request, CancellationToken cancellationToken)
+        [HttpGet()]
+        public async Task<IActionResult> GetStudentId([FromQuery] GetStudentsIdDto request, CancellationToken cancellationToken)
         {
-            return Ok();
+            return Ok(await _studentService.GetStudentId(request, cancellationToken));
         }
 
         public StudentsController(IStudentsService studentService)
