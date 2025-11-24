@@ -7,19 +7,19 @@ namespace GoodStudent.Application.Students
     {
         private readonly IStudentsRepository _studentsRepository;
 
-        public async Task<Guid> AddNew(NewStudentDto newStudentDto, CancellationToken cancellationToken)
+        public async Task<Guid> AddNew(NewStudentDto request, CancellationToken cancellationToken)
         {
             Student student = new Student()
             {
-                Name = newStudentDto.Name,
+                Name = request.Name,
 
-                Surname = newStudentDto.Surname,
+                Surname = request.Surname,
 
-                Patronymic = newStudentDto.Patronymic,
+                Patronymic = request.Patronymic,
 
-                Status = newStudentDto.Status,
+                Status = request.Status,
 
-                Group = newStudentDto.Group
+                GroupId = request.GroupId
             };
 
             Guid id = await _studentsRepository.AddAsync(student, cancellationToken);

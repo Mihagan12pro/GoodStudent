@@ -8,5 +8,6 @@ namespace GoodStudent.Infrastracture.Postgres.Sections.Faculties
 {
     internal class FacultyEntity : SectionEntity
     {
+        public string? Description { get; set; }
     }
 }

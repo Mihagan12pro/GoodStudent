@@ -1,7 +1,7 @@
 ﻿using GoodStudent.Application.Sections.Departments;
-using GoodStudent.Domain.Profession;
 using GoodStudent.Domain.Sections;
 using GoodStudent.Infrastracture.Postgres.Sections.Faculties;
+using GoodStudent.Infrastracture.Postgres.Sections.Professions;
 using Microsoft.EntityFrameworkCore;
 
 namespace GoodStudent.Infrastracture.Postgres.Sections.Departments
@@ -12,11 +12,11 @@ namespace GoodStudent.Infrastracture.Postgres.Sections.Departments
 
         public async Task<Guid> AddAsync(Department department, CancellationToken cancellationToken)
         {
-            FacultyEntity facultyEntity = new Faculties.FacultyEntity()
-            {
-                Tittle = department.Faculty.Tittle,
-                Description = department.Faculty.Description
-            };
+            //FacultyEntity facultyEntity = new Faculties.FacultyEntity()
+            //{
+            //    Tittle = department.Faculty.Tittle,
+            //    Description = department.Faculty.Description
+            //};
 
             DepartmentEntity departmentEntity = new DepartmentEntity()
             { 
@@ -24,7 +24,7 @@ namespace GoodStudent.Infrastracture.Postgres.Sections.Departments
 
                 Description = department.Description, 
 
-                Faculty = facultyEntity
+                FacultyId = department.FacultyId
             };
 
             await _sectionsContext.Departments.AddAsync(departmentEntity, cancellationToken);
@@ -45,7 +45,7 @@ namespace GoodStudent.Infrastracture.Postgres.Sections.Departments
 
             Department department = new Department()
             { 
-                Faculty = new Faculty() { Tittle = facultyEntity.Tittle, Id = facultyEntity.Id, Description = facultyEntity.Description },
+                FacultyId = facultyEntity.Id,
 
                 Tittle = departmentEntity.Tittle, 
 
@@ -68,7 +68,27 @@ namespace GoodStudent.Infrastracture.Postgres.Sections.Departments
 
         public async Task<IEnumerable<Profession>> GetProfessionsAsync(Guid id, CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            IEnumerable<ProfessionEntity> professionEntities = await _sectionsContext.Professions.Select(p => p).
+                Where(p => p.DepartmentId == id).
+                    ToListAsync();
+
+            if (professionEntities.Count() == 0)
+                return null!;
+
+            IEnumerable<Profession> professions = professionEntities.Select(
+                p => new Profession()
+                {
+                    Tittle = p.Tittle,
+
+                    Code = p.Code,
+
+                    Profile = p.Profile,
+
+                    DepartmentId = p.DepartmentId,
+                }
+            );
+
+            return professions;
         }
 
         public DepartmentsRepository(SectionsContext sectionsContext)
