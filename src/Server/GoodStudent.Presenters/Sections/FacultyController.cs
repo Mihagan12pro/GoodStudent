@@ -42,11 +42,13 @@ namespace GoodStudent.Presenters.Sections
             return Ok(result);
         }
 
-        //[HttpGet]
-        //public async Task<IActionResult> GetAllDepartments([FromQuery] Guid id, CancellationToken cancellationToken)
-        //{
-        //    return Ok();
-        //}
+        [HttpGet]
+        public async Task<IActionResult> GetAllDepartments([FromQuery] Guid id, CancellationToken cancellationToken)
+        {
+            var result = await _facultiesService.GetDepartments(id, cancellationToken);
+
+            return Ok(result);
+        }
 
         public FacultyController(IFacultiesService facultiesService)
         {

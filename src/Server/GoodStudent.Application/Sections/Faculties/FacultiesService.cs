@@ -1,4 +1,5 @@
-﻿using GoodStudent.Contracts.Sections.Faculties;
+﻿using GoodStudent.Contracts.Sections.Departments;
+using GoodStudent.Contracts.Sections.Faculties;
 using GoodStudent.Domain.Sections;
 using System;
 using System.Collections.Generic;
@@ -51,6 +52,18 @@ namespace GoodStudent.Application.Sections.Faculties
                 throw new NullReferenceException();
 
             return id;
+        }
+
+        public async Task<IEnumerable<GetDepartmentDto>> GetDepartments(Guid id, CancellationToken cancellationToken)
+        {
+            IEnumerable<Department> departments = await _faultiesRepository.GetDepartmentsAsync(id, cancellationToken);
+
+            if (departments == null)
+                throw new NullReferenceException();
+
+            IEnumerable<GetDepartmentDto> response = departments.Select(d => new GetDepartmentDto(d.Tittle, d.Description));
+
+            return response;
         }
 
         public FacultiesService(IFacultiesRepository facultiesRepository)

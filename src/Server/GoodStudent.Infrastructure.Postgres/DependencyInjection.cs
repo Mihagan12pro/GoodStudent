@@ -1,7 +1,8 @@
-﻿using GoodStudent.Application.Sections.Faculties;
+﻿using GoodStudent.Application.Sections.Departments;
+using GoodStudent.Application.Sections.Faculties;
 using GoodStudent.Application.Students;
-using GoodStudent.Infrastracture.Postgres.Instructors;
 using GoodStudent.Infrastracture.Postgres.Sections;
+using GoodStudent.Infrastracture.Postgres.Sections.Departments;
 using GoodStudent.Infrastracture.Postgres.Sections.Faculties;
 using GoodStudent.Infrastracture.Postgres.Students;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,6 +22,7 @@ namespace GoodStudent.Infrastracture.Postgres
             services.AddDbContext<SectionsContext>();
 
             services.AddScoped<IFacultiesRepository, FacultiesRepository>();
+            services.AddScoped<IDepartmentsRepository, DepartmentsRepository>();
 
             return services;
         }

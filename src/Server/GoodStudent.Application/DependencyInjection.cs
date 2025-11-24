@@ -1,4 +1,5 @@
-﻿using GoodStudent.Application.Sections.Faculties;
+﻿using GoodStudent.Application.Sections.Departments;
+using GoodStudent.Application.Sections.Faculties;
 using GoodStudent.Application.Students;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -12,6 +13,7 @@ namespace GoodStudent.Application
             services.AddScoped<IGroupsService, GroupsService>();
 
             services.AddScoped<IFacultiesService, FacultiesService>();
+            services.AddScoped<IDepartmentsService, DepartmentsService>();
           
             return services;
         }

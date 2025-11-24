@@ -16,5 +16,7 @@ namespace GoodStudent.Application.Sections.Faculties
         Task<IEnumerable<Faculty>> GetAdllAsync(CancellationToken cancellationToken);
 
         Task<Guid> GetIdAsync(string tittle, CancellationToken cancellationToken);
+
+        Task<IEnumerable<Department>> GetDepartmentsAsync(Guid id, CancellationToken cancellationToken);
     }
 }

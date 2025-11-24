@@ -66,6 +66,11 @@ namespace GoodStudent.Infrastracture.Postgres.Sections.Faculties
             return facultyEntity.Id;
         }
 
+        public async Task<IEnumerable<Department>> GetDepartmentsAsync(Guid id, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
         public FacultiesRepository(SectionsContext sectionsContext)
         {
             _sectionsContext = sectionsContext;
