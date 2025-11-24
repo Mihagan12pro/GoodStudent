@@ -33,7 +33,6 @@ namespace GoodStudent.Infrastracture.Postgres.Students
                 Select(s => s).
                     Where(s => s.GroupId == groupId).
                         ToListAsync();
-
             List<Student> students = new List<Student>();
 
             foreach (StudentEntity entity in studentEntities)
@@ -46,6 +45,8 @@ namespace GoodStudent.Infrastracture.Postgres.Students
 
                     Patronymic = entity.Patronymic
                 };
+
+                students.Add(student);
             }
 
             Group group = new Group()

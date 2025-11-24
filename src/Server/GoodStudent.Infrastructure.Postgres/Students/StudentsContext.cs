@@ -9,19 +9,16 @@ using System.Threading.Tasks;
 
 namespace GoodStudent.Infrastracture.Postgres.Students
 {
-    internal class StudentsContext : DbContext
+    internal class StudentsContext : BaseContext
     {
         public DbSet<StudentEntity> Students { get; set; } = null!;
 
         public DbSet<GroupEntity> Groups { get; set; } = null!;
 
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            optionsBuilder.UseNpgsql("Port=3306;Password=1234567890;Username=postgres;Host=localhost;Database=goodStudent_studentsDb");
-        }
-
         public StudentsContext()
         {
+            databaseName += "goodStudent_studentsDb";
+
             Database.EnsureCreated();
         }
     }

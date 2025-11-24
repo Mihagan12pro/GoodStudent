@@ -1,9 +1,0 @@
-{
-  "students": "goodStudent_studentsDb",
-
-  "tables" : {
-    "students": "students",
-
-    "groups": "groups"
-  }
-}

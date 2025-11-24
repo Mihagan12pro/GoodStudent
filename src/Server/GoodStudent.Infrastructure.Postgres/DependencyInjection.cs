@@ -1,12 +1,11 @@
-﻿using GoodStudent.Application;
+﻿using GoodStudent.Application.Sections.Departments;
+using GoodStudent.Application.Sections.Faculties;
 using GoodStudent.Application.Students;
+using GoodStudent.Infrastracture.Postgres.Sections;
+using GoodStudent.Infrastracture.Postgres.Sections.Departments;
+using GoodStudent.Infrastracture.Postgres.Sections.Faculties;
 using GoodStudent.Infrastracture.Postgres.Students;
 using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GoodStudent.Infrastracture.Postgres
 {
@@ -18,6 +17,12 @@ namespace GoodStudent.Infrastracture.Postgres
 
             services.AddScoped<IGroupsRepository, GroupsEFRepository>();
             services.AddScoped<IStudentsRepository, StudentsEFRepository>();
+
+
+            services.AddDbContext<SectionsContext>();
+
+            services.AddScoped<IFacultiesRepository, FacultiesRepository>();
+            services.AddScoped<IDepartmentsRepository, DepartmentsRepository>();
 
             return services;
         }

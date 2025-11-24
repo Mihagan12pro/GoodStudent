@@ -4,11 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace GoodStudent.Domain.UniversityDepartments
+namespace GoodStudent.Infrastracture.Postgres.Sections
 {
-    public class Faculty : Domain
+    internal class SectionEntity : DbEntity
     {
-        public required string Tittle { get; set; } 
+        public required string Tittle { get; set; }
 
         public string? Description { get; set; }
     }
