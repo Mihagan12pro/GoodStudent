@@ -20,7 +20,7 @@ namespace GoodStudent.Application.Sections.Departments
 
         public async Task<GetDepartmentDto> GetById(Guid id, CancellationToken cancellationToken)
         {
-            Department department = await _departmentsRepository.GetByIdAsync(id, cancellationToken);
+            Department? department = await _departmentsRepository.GetByIdAsync(id, cancellationToken);
 
             if (department == null)
                 throw new NullReferenceException();
@@ -40,9 +40,16 @@ namespace GoodStudent.Application.Sections.Departments
             return response;
         }
 
-        public Task<IEnumerable<GetProfessionDto>> GetProfessions(Guid id, CancellationToken cancellationToken)
+        public async Task<IEnumerable<GetProfessionDto>> GetProfessions(Guid id, CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            IEnumerable<Profession> professions = await _departmentsRepository.GetProfessionsAsync(id, cancellationToken);
+
+            if (professions == null)
+                throw new NullReferenceException();
+
+            IEnumerable<GetProfessionDto> response = professions.Select(p => new GetProfessionDto(p.Tittle, p.Code, p.Profile));
+
+            return response;
         }
 
         public DepartmentsService(IDepartmentsRepository departmentsRepository)

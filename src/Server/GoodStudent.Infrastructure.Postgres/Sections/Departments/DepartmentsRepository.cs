@@ -1,6 +1,7 @@
 ﻿using GoodStudent.Application.Sections.Departments;
 using GoodStudent.Domain.Sections;
 using GoodStudent.Infrastracture.Postgres.Sections.Faculties;
+using GoodStudent.Infrastracture.Postgres.Sections.Professions;
 using Microsoft.EntityFrameworkCore;
 
 namespace GoodStudent.Infrastracture.Postgres.Sections.Departments
@@ -67,7 +68,27 @@ namespace GoodStudent.Infrastracture.Postgres.Sections.Departments
 
         public async Task<IEnumerable<Profession>> GetProfessionsAsync(Guid id, CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            IEnumerable<ProfessionEntity> professionEntities = await _sectionsContext.Professions.Select(p => p).
+                Where(p => p.DepartmentId == id).
+                    ToListAsync();
+
+            if (professionEntities.Count() == 0)
+                return null!;
+
+            IEnumerable<Profession> professions = professionEntities.Select(
+                p => new Profession()
+                {
+                    Tittle = p.Tittle,
+
+                    Code = p.Code,
+
+                    Profile = p.Profile,
+
+                    DepartmentId = p.DepartmentId,
+                }
+            );
+
+            return professions;
         }
 
         public DepartmentsRepository(SectionsContext sectionsContext)
