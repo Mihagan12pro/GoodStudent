@@ -42,6 +42,14 @@ namespace GoodStudent.Presenters.Sections
             return Ok(result);
         }
 
+        [HttpGet("{id}/subjects")]
+        public async Task<IActionResult> GetSubjects([FromRoute] Guid id, CancellationToken cancellationToken)
+        {
+            var result = await _departmentsService.GetSubjects(id, cancellationToken);
+
+            return Ok(result);
+        }
+
         [HttpPatch]
         public async Task<IActionResult> UpdateAdmin([FromQuery] Guid DepartmentId, [FromQuery] Guid InstructorId, CancellationToken cancellationToken)
         {

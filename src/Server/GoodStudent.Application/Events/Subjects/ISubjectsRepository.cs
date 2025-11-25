@@ -13,6 +13,8 @@ namespace GoodStudent.Application.Events.Subjects
 
         Task<Subject> GetByIdAsync(Guid id, CancellationToken cancellationToken);
 
+        Task<IEnumerable<Subject>> GetSubjectsByDepartment(Guid id, CancellationToken cancellationToken);
+
         Task<Guid> GetIdAsync(string tittle, CancellationToken cancellationToken);
     }
 }

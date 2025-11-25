@@ -43,6 +43,20 @@ namespace GoodStudent.Infrastracture.Postgres.Events.Subjects
             return id;
         }
 
+        public async Task<IEnumerable<Subject>> GetSubjectsByDepartment(Guid id, CancellationToken cancellationToken)
+        {
+            IEnumerable<SubjectEntity> subjectEntities = await eventsContext.Subjects.
+                Where(s => s.DepartmentId == id).
+                    ToListAsync();
+
+            if (subjectEntities == null)
+                return null!;
+
+            IEnumerable<Subject> subjects = subjectEntities.Select(se => new Subject() { Tittle = se.Tittle, Description = se.Description, DepartmentId = se.DepartmentId});
+
+            return subjects;
+        }
+
         public SubjectsRepository(EventsContext eventsContext) : base(eventsContext)
         {
         }
