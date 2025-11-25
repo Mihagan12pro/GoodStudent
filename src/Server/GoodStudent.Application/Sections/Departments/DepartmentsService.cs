@@ -52,6 +52,16 @@ namespace GoodStudent.Application.Sections.Departments
             return response;
         }
 
+        public async Task<bool> UpdateAdmin(Guid DepartmentId, Guid InstructorId, CancellationToken cancellationToken)
+        {
+            bool success = await _departmentsRepository.UpdateAdminAsync(DepartmentId, InstructorId, cancellationToken);
+
+            if (!success)
+                throw new NullReferenceException();
+
+            return success;
+        }
+
         public DepartmentsService(IDepartmentsRepository departmentsRepository)
         {
             _departmentsRepository = departmentsRepository;

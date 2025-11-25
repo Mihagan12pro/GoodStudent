@@ -1,5 +1,6 @@
 ﻿using GoodStudent.Application.Sections.Departments;
 using GoodStudent.Domain.Sections;
+using GoodStudent.Infrastracture.Postgres.Instructors;
 using GoodStudent.Infrastracture.Postgres.Sections.Faculties;
 using GoodStudent.Infrastracture.Postgres.Sections.Professions;
 using Microsoft.EntityFrameworkCore;
@@ -9,6 +10,8 @@ namespace GoodStudent.Infrastracture.Postgres.Sections.Departments
     internal class DepartmentsRepository : IDepartmentsRepository
     {
         private readonly SectionsContext _sectionsContext;
+
+        private readonly InstructorsContext _instructorsContext;
 
         public async Task<Guid> AddAsync(Department department, CancellationToken cancellationToken)
         {
@@ -85,9 +88,24 @@ namespace GoodStudent.Infrastracture.Postgres.Sections.Departments
             return professions;
         }
 
-        public DepartmentsRepository(SectionsContext sectionsContext)
+        public async Task<bool> UpdateAdminAsync(Guid DepartmentId, Guid InstructorId, CancellationToken cancellationToken)
+        {
+            DepartmentEntity? departmentEntity = await _sectionsContext.Departments.
+                Select(d => d).
+                    Where(d => d.Id == DepartmentId).FirstOrDefaultAsync();
+
+            if (departmentEntity == null)
+                return false;
+           
+
+
+            throw new NotImplementedException();
+        }
+
+        public DepartmentsRepository(SectionsContext sectionsContext, InstructorsContext instructorsContext)
         {
             _sectionsContext = sectionsContext;
+            _instructorsContext = instructorsContext;
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using GoodStudent.Application.Sections.Departments;
+﻿using GoodStudent.Application.Instructors;
+using GoodStudent.Application.Sections.Departments;
 using GoodStudent.Application.Sections.Faculties;
 using GoodStudent.Application.Sections.Professions;
 using GoodStudent.Application.Students;
@@ -30,6 +31,8 @@ public static class DependencyInjection
 
 
         services.AddDbContext<InstructorsContext>();
+
+        services.AddScoped<IInstructorsRepository, InstructorRepository>();
 
         return services;
     }

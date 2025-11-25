@@ -14,5 +14,7 @@ namespace GoodStudent.Application.Instructors
         Task<Guid> GetId(GetInstructorDto response, CancellationToken cancellationToken);
 
         Task<GetInstructorDto> GetById(Guid id, CancellationToken cancellationToken);
+
+        Task<GetInstructorDto> UpdateInstructor(Guid id, UpdateInstructorDto request, CancellationToken cancellationToken);
     }
 }

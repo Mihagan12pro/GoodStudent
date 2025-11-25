@@ -18,6 +18,14 @@ namespace GoodStudent.Presenters.Instructors
             return Ok(result);
         }
 
+        [HttpPatch("update/{id}")]
+        public async Task<IActionResult> UpdateData([FromRoute] Guid id, [FromBody]UpdateInstructorDto request, CancellationToken cancellationToken)
+        {
+            var result = await _instructorService.UpdateInstructor(id, request, cancellationToken);
+
+            return Ok(result);
+        }
+
         [HttpGet]
         public async Task<IActionResult> GetId([FromQuery] GetInstructorDto request, CancellationToken cancellationToken)
         {
@@ -26,12 +34,12 @@ namespace GoodStudent.Presenters.Instructors
             return Ok(result);
         }
 
-        [HttpGet("{result}")]
+        [HttpGet("{id}")]
         public async Task<IActionResult> GetById([FromRoute]Guid id, CancellationToken cancellationToken)
         {
             var result = await _instructorService.GetById(id, cancellationToken);
 
-            return Ok();
+            return Ok(result);
         }
 
         public InstructorsController(IInstructorService instructorService)

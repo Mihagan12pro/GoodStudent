@@ -3,8 +3,7 @@
     public record GetInstructorDto(
         string Name,
         string Surname, 
-        string Patronymic,
-        Guid DepartmentId,
-        bool IsAdmin
+        string? Patronymic,
+        Guid? DepartmentId
     );
 }

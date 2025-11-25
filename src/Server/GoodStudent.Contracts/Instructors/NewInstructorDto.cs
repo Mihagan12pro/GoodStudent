@@ -6,9 +6,8 @@ namespace GoodStudent.Contracts.Instructors
         string Name,
         string Surname, 
         string? Patronymic,
-        Guid DepartmentId,
+        Guid? DepartmentId,
         InstructorStatus InstructorStatus = InstructorStatus.Teaching,
-        InstructorPosition InstructorPosition = InstructorPosition.Instructor,
-        bool IsAdmin = false
+        InstructorPosition InstructorPosition = InstructorPosition.Instructor
     );
 }

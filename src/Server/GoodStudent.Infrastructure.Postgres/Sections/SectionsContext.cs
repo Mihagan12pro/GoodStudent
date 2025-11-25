@@ -9,13 +9,12 @@ namespace GoodStudent.Infrastracture.Postgres.Sections
     {
         public DbSet<DepartmentEntity> Departments { get; set; } = null!;
         public DbSet<FacultyEntity> Faculties { get; set; } = null!;
+        public DbSet<ProfessionEntity> Professions { get; set; } = null!;
 
         public SectionsContext(DbSet<FacultyEntity> faculties)
         {
             Faculties = faculties;
         }
-
-        public DbSet<ProfessionEntity> Professions { get; set; } = null!;
 
         public SectionsContext()
         {
