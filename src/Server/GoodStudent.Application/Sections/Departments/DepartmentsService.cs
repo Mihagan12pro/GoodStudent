@@ -1,5 +1,8 @@
-﻿using GoodStudent.Contracts.Sections.Departments;
+﻿using GoodStudent.Application.Instructors;
+using GoodStudent.Contracts.Instructors;
+using GoodStudent.Contracts.Sections.Departments;
 using GoodStudent.Contracts.Sections.Professions;
+using GoodStudent.Domain.Instructors;
 using GoodStudent.Domain.Sections;
 
 namespace GoodStudent.Application.Sections.Departments
@@ -7,6 +10,8 @@ namespace GoodStudent.Application.Sections.Departments
     internal class DepartmentsService : IDepartmentsService
     {
         private readonly IDepartmentsRepository _departmentsRepository;
+
+        private readonly IInstructorsRepository _instructorsRepository;
 
         public async Task<Guid> AddNew(NewDepartmentDto request, CancellationToken cancellationToken)
         {
@@ -52,19 +57,30 @@ namespace GoodStudent.Application.Sections.Departments
             return response;
         }
 
-        public async Task<bool> UpdateAdmin(Guid DepartmentId, Guid InstructorId, CancellationToken cancellationToken)
+        public async Task<GetInstructorDto> UpdateAdmin(Guid DepartmentId, Guid InstructorId, CancellationToken cancellationToken)
         {
-            bool success = await _departmentsRepository.UpdateAdminAsync(DepartmentId, InstructorId, cancellationToken);
+            Instructor? instructor = await _instructorsRepository.GetByIdAsync(InstructorId, cancellationToken);
+
+            if (instructor == null)
+                throw new NullReferenceException();
+
+            if (instructor.DepartmentId != DepartmentId)
+                throw new NullReferenceException();
+
+            var success = await _departmentsRepository.UpdateAdminAsync(DepartmentId, InstructorId, cancellationToken);
 
             if (!success)
                 throw new NullReferenceException();
 
-            return success;
+            var request = new GetInstructorDto(instructor.Name, instructor.Surname, instructor.Patronymic, instructor.DepartmentId);
+
+            return request;
         }
 
-        public DepartmentsService(IDepartmentsRepository departmentsRepository)
+        public DepartmentsService(IDepartmentsRepository departmentsRepository, IInstructorsRepository instructorsRepository)
         {
             _departmentsRepository = departmentsRepository;
+            _instructorsRepository = instructorsRepository;
         }
     }
 }

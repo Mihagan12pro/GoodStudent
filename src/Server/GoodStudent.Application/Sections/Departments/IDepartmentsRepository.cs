@@ -1,4 +1,5 @@
-﻿using GoodStudent.Domain.Sections;
+﻿using GoodStudent.Domain.Instructors;
+using GoodStudent.Domain.Sections;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GoodStudent.Application.Sections.Departments

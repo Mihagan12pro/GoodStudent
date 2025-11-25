@@ -1,4 +1,5 @@
 ﻿using GoodStudent.Application.Sections.Departments;
+using GoodStudent.Domain.Instructors;
 using GoodStudent.Domain.Sections;
 using GoodStudent.Infrastracture.Postgres.Instructors;
 using GoodStudent.Infrastracture.Postgres.Sections.Faculties;
@@ -96,10 +97,14 @@ namespace GoodStudent.Infrastracture.Postgres.Sections.Departments
 
             if (departmentEntity == null)
                 return false;
-           
 
 
-            throw new NotImplementedException();
+
+            departmentEntity.AdminId = InstructorId;
+
+            await _sectionsContext.SaveChangesAsync();
+
+            return true;
         }
 
         public DepartmentsRepository(SectionsContext sectionsContext, InstructorsContext instructorsContext)
