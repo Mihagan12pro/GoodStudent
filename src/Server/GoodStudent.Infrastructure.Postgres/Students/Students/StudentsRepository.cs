@@ -1,4 +1,4 @@
-﻿using GoodStudent.Application.Students;
+﻿using GoodStudent.Application.Students.Students;
 using GoodStudent.Contracts.Students;
 using GoodStudent.Domain.Students;
 using Microsoft.EntityFrameworkCore;
@@ -9,7 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
-namespace GoodStudent.Infrastracture.Postgres.Students
+namespace GoodStudent.Infrastracture.Postgres.Students.Students
 {
     internal class StudentsRepository : IStudentsRepository
     {

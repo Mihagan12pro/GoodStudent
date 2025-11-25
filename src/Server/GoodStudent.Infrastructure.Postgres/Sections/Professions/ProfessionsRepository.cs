@@ -49,6 +49,21 @@ namespace GoodStudent.Infrastracture.Postgres.Sections.Professions
             return profession;
         }
 
+        public async Task<Guid> GetIdByTittleAsync(Profession profession, CancellationToken cancellationToken)
+        {
+            Guid id = await _sectionsContext.Professions.
+                Where(p => p.Tittle == profession.Tittle 
+                        &&
+                        p.Code == profession.Code 
+                        &&
+                        p.Profile == profession.Profile
+                    ).
+                    Select(p => p.Id).
+                        FirstOrDefaultAsync();
+
+            return id;
+        }
+
         public ProfessionsRepository(SectionsContext sectionsContext)
         {
             _sectionsContext = sectionsContext;

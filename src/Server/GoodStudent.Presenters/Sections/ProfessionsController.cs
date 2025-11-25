@@ -26,6 +26,14 @@ namespace GoodStudent.Presenters.Sections
             return Ok(result);
         }
 
+        [HttpGet("id/")]
+        public async Task<IActionResult> GetIdByTittle([FromQuery] GetProfessionDto request, CancellationToken cancellationToken)
+        {
+            var result = await _professionService.GetIdByTittle(request, cancellationToken);
+
+            return Ok(result);
+        }
+
         public ProfessionsController(IProfessionService professionService)
         {
             _professionService = professionService;

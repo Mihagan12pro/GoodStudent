@@ -2,13 +2,16 @@
 using GoodStudent.Application.Sections.Departments;
 using GoodStudent.Application.Sections.Faculties;
 using GoodStudent.Application.Sections.Professions;
-using GoodStudent.Application.Students;
+using GoodStudent.Application.Students.Groups;
+using GoodStudent.Application.Students.Students;
 using GoodStudent.Infrastracture.Postgres.Instructors;
 using GoodStudent.Infrastracture.Postgres.Sections;
 using GoodStudent.Infrastracture.Postgres.Sections.Departments;
 using GoodStudent.Infrastracture.Postgres.Sections.Faculties;
 using GoodStudent.Infrastracture.Postgres.Sections.Professions;
 using GoodStudent.Infrastracture.Postgres.Students;
+using GoodStudent.Infrastracture.Postgres.Students.Groups;
+using GoodStudent.Infrastracture.Postgres.Students.Students;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace GoodStudent.Infrastracture.Postgres;

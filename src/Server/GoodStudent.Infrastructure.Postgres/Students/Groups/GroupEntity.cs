@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace GoodStudent.Infrastracture.Postgres.Students
+namespace GoodStudent.Infrastracture.Postgres.Students.Groups
 {
     [Table("groups")]
     internal class GroupEntity : DbEntity

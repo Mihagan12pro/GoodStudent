@@ -7,7 +7,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Group = GoodStudent.Domain.Students.Group;
 
-namespace GoodStudent.Application.Students
+namespace GoodStudent.Application.Students.Groups
 {
     public interface IGroupsRepository
     {
@@ -16,5 +16,7 @@ namespace GoodStudent.Application.Students
         Task<Group> GetByIdAsync(Guid Id, CancellationToken cancellationToken);
 
         Task<(Group, IEnumerable<Student>)?> GetStudentsAsync(Guid groupId, CancellationToken cancellationToken);
+
+        Task<Guid> GetIdByNumberAsync(string number, CancellationToken cancellationToken);
     }
 }

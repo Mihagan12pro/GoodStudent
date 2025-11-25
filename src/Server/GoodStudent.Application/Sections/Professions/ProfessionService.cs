@@ -37,6 +37,18 @@ namespace GoodStudent.Application.Sections.Professions
             return response;
         }
 
+        public async Task<Guid> GetIdByTittle(GetProfessionDto request, CancellationToken cancellationToken)
+        {
+            Profession profession = new Profession() { Code = request.Code, DepartmentId = Guid.Empty, Tittle = request.Tittle, Profile = request.Profile };
+
+            Guid id = await _professionsRepository.GetIdByTittleAsync(profession, cancellationToken);
+
+            if (id == Guid.Empty)
+                throw new NullReferenceException();
+
+            return id;
+        }
+
         public ProfessionService(IProfessionsRepository professionsRepository)
         {
             _professionsRepository = professionsRepository;

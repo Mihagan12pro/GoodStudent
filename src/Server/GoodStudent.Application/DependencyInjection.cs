@@ -2,7 +2,8 @@
 using GoodStudent.Application.Sections.Departments;
 using GoodStudent.Application.Sections.Faculties;
 using GoodStudent.Application.Sections.Professions;
-using GoodStudent.Application.Students;
+using GoodStudent.Application.Students.Groups;
+using GoodStudent.Application.Students.Students;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace GoodStudent.Application

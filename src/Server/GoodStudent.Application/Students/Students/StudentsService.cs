@@ -1,7 +1,7 @@
 ﻿using GoodStudent.Contracts.Students.StudentsContracts;
 using GoodStudent.Domain.Students;
 
-namespace GoodStudent.Application.Students
+namespace GoodStudent.Application.Students.Students
 {
     public class StudentsService : IStudentsService
     {

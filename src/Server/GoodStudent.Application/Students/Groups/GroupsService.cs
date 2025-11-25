@@ -2,7 +2,7 @@
 using GoodStudent.Contracts.Students.StudentsContracts;
 using GoodStudent.Domain.Students;
 
-namespace GoodStudent.Application.Students
+namespace GoodStudent.Application.Students.Groups
 {
     internal class GroupsService : IGroupsService
     {
@@ -42,6 +42,16 @@ namespace GoodStudent.Application.Students
                 throw new NullReferenceException();
 
             return new GetGroupByIdDto(group.Number, group.ProfessionId);
+        }
+
+        public async Task<Guid> GetIdByNumber(string number, CancellationToken cancellationToken)
+        {
+            Guid id = await _groupsRepository.GetIdByNumberAsync(number, cancellationToken);
+
+            if (id == Guid.Empty)
+                throw new NullReferenceException();
+
+            return id;
         }
 
         public GroupsService(IGroupsRepository groupsRepository)

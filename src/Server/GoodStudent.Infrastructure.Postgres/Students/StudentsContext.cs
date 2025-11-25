@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using GoodStudent.Infrastracture.Postgres.Students.Groups;
+using GoodStudent.Infrastracture.Postgres.Students.Students;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Primitives;
 using System;

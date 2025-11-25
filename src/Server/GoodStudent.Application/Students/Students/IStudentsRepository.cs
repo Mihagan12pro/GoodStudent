@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace GoodStudent.Application.Students
+namespace GoodStudent.Application.Students.Students
 {
     public interface IStudentsRepository
     {

@@ -3,7 +3,7 @@ using GoodStudent.Contracts.Students.StudentsContracts;
 using GoodStudent.Domain.Students;
 using Group = GoodStudent.Domain.Students.Group;
 
-namespace GoodStudent.Application.Students
+namespace GoodStudent.Application.Students.Groups
 {
     public interface IGroupsService
     {
@@ -12,5 +12,7 @@ namespace GoodStudent.Application.Students
         Task<GetStudentsByGroupDto> GetStudents(Guid groupId, CancellationToken cancellationToken);
 
         Task<GetGroupByIdDto> GetGroupById(Guid Id, CancellationToken cancellationToken);
+
+        Task<Guid> GetIdByNumber(string number, CancellationToken cancellationToken);
     }
 }

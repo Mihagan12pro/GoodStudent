@@ -1,10 +1,11 @@
-﻿using GoodStudent.Application.Students;
+﻿using GoodStudent.Application.Students.Groups;
 using GoodStudent.Domain.Students;
+using GoodStudent.Infrastracture.Postgres.Students.Students;
 using Microsoft.EntityFrameworkCore;
 using System.Text.RegularExpressions;
 using Group = GoodStudent.Domain.Students.Group;
 
-namespace GoodStudent.Infrastracture.Postgres.Students
+namespace GoodStudent.Infrastracture.Postgres.Students.Groups
 {
     internal class GroupsRepository : IGroupsRepository
     {
@@ -78,6 +79,16 @@ namespace GoodStudent.Infrastracture.Postgres.Students
             };
 
             return group;
+        }
+
+        public async Task<Guid> GetIdByNumberAsync(string number, CancellationToken cancellationToken)
+        {
+            GroupEntity? groupEntity = await _studentsContext.Groups.FirstOrDefaultAsync(g => g.Number == number);
+
+            if (groupEntity == null)
+                return Guid.Empty;
+
+            return groupEntity.Id;
         }
 
         public GroupsRepository(StudentsContext studentsContext)

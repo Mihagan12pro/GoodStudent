@@ -9,8 +9,10 @@ namespace GoodStudent.Application.Sections.Professions
 {
     public interface IProfessionService
     {
-        Task<Guid> AddNew(NewProfessionDto resuest, CancellationToken cancellationToken);
+        Task<Guid> AddNew(NewProfessionDto request, CancellationToken cancellationToken);
 
         Task<GetProfessionDto> GetById(Guid id, CancellationToken cancellationToken);
+
+        Task<Guid> GetIdByTittle(GetProfessionDto request, CancellationToken cancellationToken);
     }
 }

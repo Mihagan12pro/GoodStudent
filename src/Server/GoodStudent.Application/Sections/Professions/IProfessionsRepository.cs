@@ -12,5 +12,7 @@ namespace GoodStudent.Application.Sections.Professions
         Task<Guid> AddAsync(Profession profession, CancellationToken cancellationToken);
 
         Task<Profession> GeByIdAsync(Guid id, CancellationToken cancellationToken);
+
+        Task<Guid> GetIdByTittleAsync(Profession profession, CancellationToken cancellationToken);
     }
 }
