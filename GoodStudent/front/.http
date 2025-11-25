@@ -18,3 +18,6 @@ Accept: application/json
 GET {{baseUrl}}/Students/92bb2733-10ab-4735-8c7b-6866646441df
 Accept: application/json
 
+GET {{baseUrl}}/Students
+Accept: application/json
+
