@@ -1,4 +1,5 @@
-﻿using GoodStudent.Application.Instructors;
+﻿using GoodStudent.Application.Events.Subjects;
+using GoodStudent.Application.Instructors;
 using GoodStudent.Application.Sections.Departments;
 using GoodStudent.Application.Sections.Faculties;
 using GoodStudent.Application.Sections.Professions;
@@ -20,6 +21,8 @@ namespace GoodStudent.Application
             services.AddScoped<IProfessionService, ProfessionService>();
 
             services.AddScoped<IInstructorService, InstructorService>();
+
+            services.AddScoped<ISubjectService, SubjectService>();
           
             return services;
         }

@@ -1,9 +1,12 @@
-﻿using GoodStudent.Application.Instructors;
+﻿using GoodStudent.Application.Events.Subjects;
+using GoodStudent.Application.Instructors;
 using GoodStudent.Application.Sections.Departments;
 using GoodStudent.Application.Sections.Faculties;
 using GoodStudent.Application.Sections.Professions;
 using GoodStudent.Application.Students.Groups;
 using GoodStudent.Application.Students.Students;
+using GoodStudent.Infrastracture.Postgres.Events;
+using GoodStudent.Infrastracture.Postgres.Events.Subjects;
 using GoodStudent.Infrastracture.Postgres.Instructors;
 using GoodStudent.Infrastracture.Postgres.Sections;
 using GoodStudent.Infrastracture.Postgres.Sections.Departments;
@@ -36,6 +39,11 @@ public static class DependencyInjection
         services.AddDbContext<InstructorsContext>();
 
         services.AddScoped<IInstructorsRepository, InstructorRepository>();
+
+
+        services.AddDbContext<EventsContext>();
+
+        services.AddScoped<ISubjectsRepository, SubjectsRepository>();
 
         return services;
     }
