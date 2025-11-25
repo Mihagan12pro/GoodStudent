@@ -12,6 +12,8 @@ namespace GoodStudent.Domain.Sections
 
         public required Guid FacultyId { get; set; }
 
+        public Guid? AdminId { get; set; }
+
         public required string Tittle { get; set; } 
 
         public string? Description { get; set; }

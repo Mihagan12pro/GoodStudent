@@ -15,7 +15,7 @@ namespace GoodStudent.Domain.Instructors
         public InstructorStatus Status { get; set; } = InstructorStatus.Teaching;
 
         public Department? Department { get; set; }
-        public required Guid DepartmentId { get; set; }
+        public Guid DepartmentId { get; set; }
 
         public bool IsAdmin { get; set; } = false;
     }
