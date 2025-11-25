@@ -27,6 +27,26 @@ class ApiClient {
             throw error;
         }
     }
+//     async getAllStudents() {
+//     try {
+//         const allStudents = await this.request('/Students');
+//         console.log(`Загружено студентов: ${allStudents.length}`);
+        
+//         return allStudents.map(student => ({
+//             id: student.id,
+//             name: student.name,
+//             surname: student.surname,
+//             patronymic: student.patronymic,
+//             fullName: `${student.surname} ${student.name} ${student.patronymic}`.trim(),
+//             groupId: student.groupId,
+//             groupName: student.groupNumber,
+//             present: false
+//         }));
+//     } catch (error) {
+//         console.error('Ошибка загрузки студентов:', error);
+//         return [];
+//     }
+// }
 async getAllStudents() {
     console.log('=== ПОЛУЧАЕМ ВСЕХ СТУДЕНТОВ ИЗ БАЗЫ ===');    
     try {
