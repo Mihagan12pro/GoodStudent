@@ -42,6 +42,14 @@ namespace GoodStudent.Presenters.Sections
             return Ok(result);
         }
 
+        [HttpPatch]
+        public async Task<IActionResult> UpdateAdmin([FromQuery] Guid DepartmentId, [FromQuery] Guid InstructorId, CancellationToken cancellationToken)
+        {
+            var result = await _departmentsService.UpdateAdmin(DepartmentId, InstructorId, cancellationToken);
+
+            return Ok(result);
+        }
+
         public DepartmentsController(IDepartmentsService departmentsService)
         {
             _departmentsService = departmentsService;

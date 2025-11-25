@@ -18,5 +18,7 @@ namespace GoodStudent.Infrastracture.Postgres.Sections.Departments
         public FacultyEntity? Faculty { get; set; }
 
         public string? Description { get; set; }
+
+        public Guid? AdminId { get; set; }
     }
 }

@@ -7,17 +7,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Instructors\GradesContracts\**" />
     <Compile Remove="People\**" />
+    <EmbeddedResource Remove="Instructors\GradesContracts\**" />
     <EmbeddedResource Remove="People\**" />
+    <None Remove="Instructors\GradesContracts\**" />
     <None Remove="People\**" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\GoodStudent.Domain\GoodStudent.Domain.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Instructors\GradesContracts\" />
   </ItemGroup>
 
 </Project>

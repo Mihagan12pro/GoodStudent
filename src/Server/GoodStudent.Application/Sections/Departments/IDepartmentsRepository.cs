@@ -1,4 +1,6 @@
-﻿using GoodStudent.Domain.Sections;
+﻿using GoodStudent.Domain.Instructors;
+using GoodStudent.Domain.Sections;
+using Microsoft.AspNetCore.Mvc;
 
 namespace GoodStudent.Application.Sections.Departments
 {
@@ -11,5 +13,7 @@ namespace GoodStudent.Application.Sections.Departments
         Task<Guid> GetIdAsync(string tittle, CancellationToken cancellationToken);
 
         Task<Department?> GetByIdAsync(Guid id, CancellationToken cancellationToken);
+
+        Task<bool> UpdateAdminAsync(Guid DepartmentId, Guid InstructorId, CancellationToken cancellationToken);
     }
 }
