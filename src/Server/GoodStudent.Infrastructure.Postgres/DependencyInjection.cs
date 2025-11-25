@@ -1,7 +1,9 @@
-﻿using GoodStudent.Application.Sections.Departments;
+﻿using GoodStudent.Application.Instructors;
+using GoodStudent.Application.Sections.Departments;
 using GoodStudent.Application.Sections.Faculties;
 using GoodStudent.Application.Sections.Professions;
 using GoodStudent.Application.Students;
+using GoodStudent.Infrastracture.Postgres.Instructors;
 using GoodStudent.Infrastracture.Postgres.Sections;
 using GoodStudent.Infrastracture.Postgres.Sections.Departments;
 using GoodStudent.Infrastracture.Postgres.Sections.Faculties;
@@ -26,6 +28,11 @@ public static class DependencyInjection
         services.AddScoped<IFacultiesRepository, FacultiesRepository>();
         services.AddScoped<IDepartmentsRepository, DepartmentsRepository>();
         services.AddScoped<IProfessionsRepository, ProfessionsRepository>();
+
+
+        services.AddDbContext<InstructorsContext>();
+
+        services.AddScoped<IInstructorsRepository, InstructorRepository>();
 
         return services;
     }

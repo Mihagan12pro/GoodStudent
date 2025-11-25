@@ -1,5 +1,7 @@
 ﻿using GoodStudent.Application.Sections.Departments;
+using GoodStudent.Domain.Instructors;
 using GoodStudent.Domain.Sections;
+using GoodStudent.Infrastracture.Postgres.Instructors;
 using GoodStudent.Infrastracture.Postgres.Sections.Faculties;
 using GoodStudent.Infrastracture.Postgres.Sections.Professions;
 using Microsoft.EntityFrameworkCore;
@@ -10,14 +12,10 @@ namespace GoodStudent.Infrastracture.Postgres.Sections.Departments
     {
         private readonly SectionsContext _sectionsContext;
 
+        private readonly InstructorsContext _instructorsContext;
+
         public async Task<Guid> AddAsync(Department department, CancellationToken cancellationToken)
         {
-            //FacultyEntity facultyEntity = new Faculties.FacultyEntity()
-            //{
-            //    Tittle = department.Faculty.Tittle,
-            //    Description = department.Faculty.Description
-            //};
-
             DepartmentEntity departmentEntity = new DepartmentEntity()
             { 
                 Tittle = department.Tittle, 
@@ -91,9 +89,28 @@ namespace GoodStudent.Infrastracture.Postgres.Sections.Departments
             return professions;
         }
 
-        public DepartmentsRepository(SectionsContext sectionsContext)
+        public async Task<bool> UpdateAdminAsync(Guid DepartmentId, Guid InstructorId, CancellationToken cancellationToken)
+        {
+            DepartmentEntity? departmentEntity = await _sectionsContext.Departments.
+                Select(d => d).
+                    Where(d => d.Id == DepartmentId).FirstOrDefaultAsync();
+
+            if (departmentEntity == null)
+                return false;
+
+
+
+            departmentEntity.AdminId = InstructorId;
+
+            await _sectionsContext.SaveChangesAsync();
+
+            return true;
+        }
+
+        public DepartmentsRepository(SectionsContext sectionsContext, InstructorsContext instructorsContext)
         {
             _sectionsContext = sectionsContext;
+            _instructorsContext = instructorsContext;
         }
     }
 }

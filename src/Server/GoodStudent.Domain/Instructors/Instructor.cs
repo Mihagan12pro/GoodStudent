@@ -14,6 +14,9 @@ namespace GoodStudent.Domain.Instructors
         [JsonConverter(typeof(JsonStringEnumConverter))]
         public InstructorStatus Status { get; set; } = InstructorStatus.Teaching;
 
-        public required Department Department { get; set; }
+        public Department? Department { get; set; }
+        public Guid? DepartmentId { get; set; }
+
+        public bool IsAdmin { get; set; } = false;
     }
 }
