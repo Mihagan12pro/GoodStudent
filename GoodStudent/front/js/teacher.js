@@ -1,55 +1,127 @@
 class TeacherApp {
     constructor() {
-        const token = localStorage.getItem('authToken');
-        if (!token) {
-            window.location.href = '/form.html'; 
+        if (!localStorage.getItem('authToken')) {
+            window.location.href = '/form.html';
             return;
-        }      
-        this.currentView = 'manual';
+        }        
+        this.currentUser = JSON.parse(localStorage.getItem('user') || '{}');
         this.students = [];
         this.groups = [];
+        this.subjects = [];
         this.currentGroupId = 'all';
+        this.currentView = 'manual';
         this.init();
     }
     async init() {
-        console.log('Инициализация приложения преподавателя');     
-        await this.loadGroups();
-        await this.loadStudents();
+        console.log('Инициализация приложения преподавателя');
+        
+        await this.loadInitialData();
         this.setupNavigation();
         this.setupEventListeners();
         this.displayCurrentDate();
-        this.generateCalendar();
         this.setupAttendanceButton();
+        this.generateCalendar();
     }
-    async loadStudents() {
-        try {
-            console.log('Загрузка студентов из C# бэкенда...');
-            this.students = await apiClient.getAllStudents();
-            console.log(`Загружено студентов: ${this.students.length}`);
-            
-            this.renderStudents();
-            this.updateStats();
-            
-        } catch (error) {
-            console.error('Ошибка загрузки студентов:', error);
-            this.showErrorMessage();
-        }
+    async loadInitialData() {
+    try {
+        console.log('Загружаем данные из бэкенда...');
+        const [students, groups, subjects] = await Promise.all([
+            apiClient.getAllStudents().catch(() => []),
+            apiClient.getAllGroups().catch(() => []),
+            this.loadSubjects().catch(() => [])
+        ]);
+        this.students = this.normalizeStudents(students || []);
+        this.groups = this.fixGroupIds(groups || []); 
+        this.subjects = subjects || [];
+        console.log(`Данные загружены: 
+            Студентов: ${this.students.length}
+            Групп: ${this.groups.length}
+            Предметов: ${this.subjects.length}`);
+        this.debugStudentsAndGroups();
+        this.populateGroupSelector();
+        this.renderStudents();
+        this.updateStats();
+    } catch (error) {
+        console.error('Ошибка загрузки данных:', error);
+        this.showErrorMessage('Не удалось загрузить данные. Проверьте подключение к серверу.');
     }
-    async loadGroups() {
-        try {
-            console.log('Загрузка групп...');
-            this.groups = await apiClient.getGroups();
-            console.log('Группы загружены:', this.groups);
-            this.populateGroupSelector();
-        } catch (error) {
-            console.warn('Ошибка загрузки групп:', error);
-            this.groups = [
-                {id:'b8f78604-7d47-4eb0-9389-6b8eaaa1653b', number: '231-324' },
-                {id:'137b8ecb-402d-41fe-979d-3bb5fd02e7c2', number: '231-325' },
-                {id:'73c75851-f1cb-48ce-8c15-af9f4c36f201', number: '231-326' }
-            ];
-            this.populateGroupSelector();
+}
+fixGroupIds(groups) {
+    if (!groups || !Array.isArray(groups)) {
+        return [];
+    }
+    const groupNameToId = {
+        '231-324': '1',
+        '231-325': '2', 
+        '231-326': '3',
+        'ПППП': '4',
+        '666-666': '5',
+        'Нани': '6'
+    };
+    return groups.map((group, index) => {
+        let fixedId = group.id;
+        
+        if (!fixedId || fixedId === 'undefined') {
+            fixedId = groupNameToId[group.number] || `group-${index + 1}`;
         }
+        return {
+            ...group,
+            id: fixedId
+        };
+    });
+}
+    debugStudentsAndGroups() {
+        console.log('ДЕБАГ СТУДЕНТОВ И ГРУПП ===');
+        console.log('Все группы:', this.groups);
+        console.log('Все студенты:', this.students);
+        
+        this.students.forEach(student => {
+            console.log(`${student.fullName}: groupId=${student.groupId}, groupName=${student.groupName}`);
+        });        
+        console.log(`Текущая выбранная группа ID: ${this.currentGroupId}`);
+    }
+    normalizeStudents(students) {
+    if (!students || !Array.isArray(students)) {
+        console.warn('Некорректные данные студентов:', students);
+        return [];
+    }
+    return students.map(student => {
+        const id = student.id || student.Id || this.generateTempId();
+        const name = student.name || student.Name || '';
+        const surname = student.surname || student.Surname || '';
+        const patronymic = student.patronymic || student.Patronymic || '';
+        let groupId = student.groupId || student.group_id || student.group?.id;
+        if (typeof groupId === 'number') {
+            groupId = groupId.toString();
+        }
+        if (!groupId && student.groupName) {
+            const groupMap = {
+                '231-324': '1',
+                '231-325': '2',
+                '231-326': '3'
+            };
+            groupId = groupMap[student.groupName];
+        }
+        const groupNumber = student.groupNumber || student.group?.number || this.getGroupNameById(groupId);
+        return {
+            id: id,
+            name: name,
+            surname: surname,
+            patronymic: patronymic,
+            fullName: `${surname} ${name} ${patronymic}`.trim(),
+            groupId: groupId,
+            groupName: groupNumber,
+            present: false
+        };
+    });
+}
+    generateTempId() {
+        return 'temp_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    }
+    getGroupNameById(groupId) {
+        if (!groupId) return 'Не указана';
+        const group = this.groups.find(g => g.id === groupId);
+        return group ? group.number : `Группа ${groupId}`;
     }
     populateGroupSelector() {
         const select = document.getElementById('group-select');
@@ -57,6 +129,7 @@ class TeacherApp {
             console.error('Элемент group-select не найден');
             return;
         }
+        console.log('Загруженные группы:', this.groups);
         const currentValue = select.value;
         select.innerHTML = '';
         const allOption = document.createElement('option');
@@ -67,39 +140,62 @@ class TeacherApp {
             const option = document.createElement('option');
             option.value = group.id;
             option.textContent = group.number || `Группа ${group.id}`;
+            console.log(`Добавляем группу: ${group.number} (ID: ${group.id})`);
             select.appendChild(option);
         });
-        if (currentValue) {
+        if (currentValue && this.groups.some(g => g.id === currentValue)) {
             select.value = currentValue;
+            this.currentGroupId = currentValue;
+        } else {
+            select.value = 'all';
+            this.currentGroupId = 'all';
         }
+        console.log(`Текущая выбранная группа: ${select.value}`);
     }
     renderStudents() {
         const container = document.getElementById('students-list');
         if (!container) {
             console.error('Элемент students-list не найден');
             return;
-        }                  
+        }
         if (this.students.length === 0) {
             container.innerHTML = `
                 <div class="no-students-message">
                     <h3>Нет студентов для отображения</h3>
-                    <p>Создаем тестовых студентов...</p>
+                    <p>Загрузите студентов через панель администратора</p>
+                    <button class="btn-primary" onclick="teacherApp.loadInitialData()">
+                        Обновить данные
+                    </button>
                 </div>
             `;
             return;
-        }              
-        let filteredStudents = this.students;
-        if (this.currentGroupId && this.currentGroupId !== 'all') {
-            const selectedGroup = this.groups.find(g => g.id === this.currentGroupId);
-            if (selectedGroup) {
-                filteredStudents = this.students.filter(student => 
-                    student.groupId === this.currentGroupId || 
-                    student.groupName === selectedGroup.number
-                );
-            }
         }
+        let filteredStudents = this.students;        
+        if (this.currentGroupId && this.currentGroupId !== 'all') {
+            console.log(`Фильтруем студентов по группе: ${this.currentGroupId}`);
+            
+            filteredStudents = this.students.filter(student => {
+                const matches = student.groupId === this.currentGroupId;
+                console.log(`Студент ${student.fullName}: groupId=${student.groupId}, matches=${matches}`);
+                return matches;
+            });
+        }
+        console.log(`После фильтрации: ${filteredStudents.length} студентов`);
+        if (filteredStudents.length === 0) {
+            container.innerHTML = `
+                <div class="no-students-message">
+                    <h3>Нет студентов в выбранной группе</h3>
+                    <p>Выберите другую группу или загрузите студентов</p>
+                    <button class="btn-primary" onclick="teacherApp.loadInitialData()">
+                        Обновить данные
+                    </button>
+                </div>
+            `;
+            return;
+        }
+        this.updateStudentsHeader();
         container.innerHTML = filteredStudents.map(student => `
-            <div class="student-item">
+            <div class="student-item ${student.present ? 'present' : ''}">
                 <div class="student-info">
                     <div class="student-name">${student.fullName}</div>
                     <div class="student-group">Группа: ${student.groupName}</div>
@@ -108,104 +204,262 @@ class TeacherApp {
                     <input type="checkbox" id="student-${student.id}" 
                         ${student.present ? 'checked' : ''}
                         onchange="teacherApp.toggleStudent('${student.id}', this.checked)">
-                    <label for="student-${student.id}"></label>
+                    <label for="student-${student.id}">
+                        <span class="toggle-slider"></span>
+                    </label>
                 </div>
             </div>
         `).join('');
         this.updateStats();
     }
+    updateStudentsHeader() {
+        const studentsHeader = document.querySelector('.students-header h4');
+        if (studentsHeader) {
+            if (this.currentGroupId === 'all') {
+                studentsHeader.textContent = `Список всех студентов (${this.students.length})`;
+            } else {
+                const group = this.groups.find(g => g.id === this.currentGroupId);
+                const groupName = group ? group.number : 'Неизвестная группа';
+                studentsHeader.textContent = `Список студентов группы ${groupName}`;
+            }
+        }
+    }
     toggleStudent(studentId, isPresent) {
         const student = this.students.find(s => s.id === studentId);
         if (student) {
             student.present = isPresent;
+            const studentElement = document.querySelector(`#student-${studentId}`)?.closest('.student-item');
+            if (studentElement) {
+                studentElement.classList.toggle('present', isPresent);
+            }
+            
             this.updateStats();
         }
     }
     updateStats() {
-        const presentCount = this.students.filter(s => s.present).length;
-        const totalCount = this.students.length;
-        
+        let presentCount, totalCount;
+        if (this.currentGroupId === 'all') {
+            presentCount = this.students.filter(s => s.present).length;
+            totalCount = this.students.length;
+        } else {
+            const filteredStudents = this.students.filter(s => s.groupId === this.currentGroupId);
+            presentCount = filteredStudents.filter(s => s.present).length;
+            totalCount = filteredStudents.length;
+        }        
         const presentElement = document.getElementById('present-count');
         const totalElement = document.getElementById('total-count');
         
         if (presentElement) presentElement.textContent = presentCount;
         if (totalElement) totalElement.textContent = totalCount;
-    }
-    async saveAttendance() {
-        const presentStudents = this.students.filter(s => s.present);
-        const totalCount = this.students.length;
-        if (presentStudents.length === 0) {
-            if (!confirm('Ни один студент не отмечен как присутствующий. Сохранить пустую посещаемость?')) {
-                return;
-            }
-        }
-        const attendanceData = {
-            date: new Date().toISOString(),
-            presentCount: presentStudents.length,
-            totalCount: totalCount,
-            students: this.students.map(student => ({
-                studentId: student.id,
-                studentName: student.fullName,
-                present: student.present,
-                group: student.groupName
-            }))
-        };
-        try {
-            console.log('Сохранение посещаемости:', attendanceData);
-            const result = await apiClient.markAttendance(attendanceData);
-            
-            alert(result.message);
-            console.log(`Посещаемость сохранена: ${presentStudents.length} из ${totalCount}`);
-            
-        } catch (error) {
-            console.error('Ошибка сохранения посещаемости:', error);
-            alert('Ошибка при сохранении посещаемости.');
-        }
-    }
-    showErrorMessage() {
-        const container = document.getElementById('students-list');
-        if (container) {
-            container.innerHTML = `
-                <div class="error-message">
-                    <h3>Ошибка загрузки</h3>
-                    <p>Не удалось подключиться к серверу</p>
-                    <button onclick="teacherApp.loadStudents()" class="btn-primary">
-                        Повторить попытку
-                    </button>
-                </div>
+        const statsElement = document.querySelector('.attendance-stats');
+        if (statsElement) {
+            statsElement.innerHTML = `
+                <span>Присутствуют: <strong id="present-count">${presentCount}</strong>/<strong id="total-count">${totalCount}</strong></span>
             `;
         }
     }
-    async loadStudentsForAttendance() {
-        const saveButton = document.getElementById('save-attendance-btn');
-        if (saveButton) {
-            saveButton.style.display = 'block';
+    async saveAttendance() {
+        let studentsToSave;
+        if (this.currentGroupId === 'all') {
+            studentsToSave = this.students;
+        } else {
+            studentsToSave = this.students.filter(s => s.groupId === this.currentGroupId);
         }
-        await this.loadStudents();
+        if (studentsToSave.length === 0) {
+            alert('Нет студентов для сохранения посещаемости');
+            return;
+        }
+        const presentStudents = studentsToSave.filter(s => s.present);
+        const absentStudents = studentsToSave.filter(s => !s.present);
+        if (presentStudents.length === 0 && !confirm('Ни один студент не отмечен как присутствующий. Сохранить пустую посещаемость?')) {
+            return;
+        }
+        const attendanceData = {
+            date: new Date().toISOString(),
+            subject: this.getCurrentSubject(),
+            group: this.getCurrentGroupName(),
+            presentCount: presentStudents.length,
+            totalCount: studentsToSave.length,
+            presentStudents: presentStudents.map(s => ({
+                id: s.id,
+                name: s.fullName,
+                group: s.groupName
+            })),
+            absentStudents: absentStudents.map(s => ({
+                id: s.id,
+                name: s.fullName,
+                group: s.groupName
+            })),
+            timestamp: new Date().toLocaleString('ru-RU')
+        };
+        try {
+            console.log('Сохранение посещаемости:', attendanceData);
+            
+            const result = await apiClient.markAttendance(attendanceData);
+            
+            alert(`${result.message}\n\nПрисутствуют: ${presentStudents.length} из ${studentsToSave.length}`);
+            
+            console.log('Посещаемость сохранена:', result);
+            
+        } catch (error) {
+            console.error('Ошибка сохранения посещаемости:', error);
+            alert('Ошибка при сохранении посещаемости. Данные сохранены локально.');
+        }
     }
-    setupAttendanceButton() {
-        const saveButton = document.getElementById('save-attendance-btn');
-        if (saveButton) {
-            saveButton.addEventListener('click', () => this.saveAttendance());
+    getCurrentSubject() {
+        const currentScheduleItem = document.querySelector('.schedule-item.current');
+        if (currentScheduleItem) {
+            const subjectElement = currentScheduleItem.querySelector('.item-title');
+            if (subjectElement) {
+                return subjectElement.textContent;
+            }
+        }
+        
+        return this.subjects.length > 0 ? this.subjects[0].name : 'Неизвестный предмет';
+    }
+    getCurrentGroupName() {
+        if (this.currentGroupId === 'all') {
+            return 'Все группы';
+        }
+        
+        const group = this.groups.find(g => g.id === this.currentGroupId);
+        return group ? group.number : 'Неизвестная группа';
+    }
+    async loadSubjects() {
+        try {
+            return await apiClient.getAllSubjects();
+        } catch (error) {
+            console.warn('Не удалось загрузить предметы:', error);
+            return [
+                { id: 1, name: 'Системы инженерного анализа', type: 'Лаб. работа' },
+                { id: 2, name: 'Нормативное регулирование', type: 'Лекция' }
+            ];
         }
     }
     setupNavigation() {
-        const navItems = document.querySelectorAll('.nav-item');        
+        const navItems = document.querySelectorAll('.nav-item');
+        
         navItems.forEach(item => {
             item.addEventListener('click', (e) => {
                 e.preventDefault();
                 const view = item.dataset.view;
                 this.switchView(view);
+                
                 navItems.forEach(nav => nav.classList.remove('active'));
                 item.classList.add('active');
             });
         });
+    }
+    switchView(view) {
+        this.currentView = view;
+        console.log('Переключение на вид:', view);
+        const contentArea = document.getElementById('content-area');
+        if (!contentArea) return;
+        switch (view) {
+            case 'manual':
+                contentArea.innerHTML = this.getManualAttendanceView();
+                this.renderStudents();
+                break;
+            case 'qr':
+                window.location.href = '/pages/qr-attendance.html';
+                break;
+            case 'ai':
+                this.openCameraModal();
+                break;
+            case 'history':
+                this.showAttendanceHistory();
+                break;
+        }
+    }
+    getManualAttendanceView() {
+        return `
+            <div class="manual-attendance-view">
+                <div class="students-list-container">
+                    <div class="students-header">
+                        <h4>Список студентов</h4>
+                        <div class="attendance-stats">
+                            <span>Присутствуют: <strong id="present-count">0</strong>/<strong id="total-count">0</strong></span>
+                        </div>
+                    </div>                            
+                    <div class="students-list" id="students-list">
+                        <p style="text-align: center; color: #666; padding: 20px;">
+                            Загрузка студентов...
+                        </p>
+                    </div>
+                </div>
+                <div class="attendance-actions" style="padding: 20px; text-align: center;">
+                    <button class="btn-primary" id="save-attendance-btn" 
+                    style="padding: 12px 24px; font-size: 16px;">Сохранить посещаемость
+                    </button>
+                </div>
+                <div class="attendance-calendar">
+                    <div class="calendar-header">
+                        <h4>Отметка посещаемости</h4>
+                        <div class="calendar-nav">
+                            <button class="nav-btn">←</button>
+                            <span class="current-month">Ноябрь 2025</span>
+                            <button class="nav-btn">→</button>
+                        </div>
+                    </div>
+                    <div class="calendar-days">
+                    </div>
+                    <div class="today-marker">
+                        <div class="today-indicator"></div>
+                        <span>Сегодня</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    openCameraModal() {
+        const modal = document.getElementById('camera-modal');
+        if (modal) {
+            modal.classList.remove('hidden');
+        } else {
+            alert('AI-камера будет доступна в следующей версии');
+        }
+    }
+    async showAttendanceHistory() {
+        try {
+            const history = await apiClient.getAttendanceHistory();
+            const contentArea = document.getElementById('content-area');
+            
+            if (history.length === 0) {
+                contentArea.innerHTML = `
+                    <div class="history-view">
+                        <h3>История посещаемости</h3>
+                        <div class="no-history">
+                            <p>Нет данных о посещаемости</p>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+            contentArea.innerHTML = `
+                <div class="history-view">
+                    <h3>История посещаемости</h3>
+                    <div class="history-list">
+                        ${history.map(record => `
+                            <div class="history-item">
+                                <div class="history-date">${new Date(record.date).toLocaleDateString('ru-RU')}</div>
+                                <div class="history-subject">${record.subject}</div>
+                                <div class="history-group">${record.group_name}</div>
+                                <div class="history-stats">${record.present_count}/${record.total_count}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        } catch (error) {
+            console.error('Ошибка загрузки истории:', error);
+        }
     }
     setupEventListeners() {
         const groupSelect = document.getElementById('group-select');
         if (groupSelect) {
             groupSelect.addEventListener('change', (e) => {
                 this.currentGroupId = e.target.value;
+                console.log(`Выбрана группа: ${this.currentGroupId}`);
                 this.renderStudents();
             });
         }
@@ -213,9 +467,42 @@ class TeacherApp {
         if (logoutBtn) {
             logoutBtn.addEventListener('click', () => {
                 localStorage.removeItem('authToken');
+                localStorage.removeItem('user');
                 window.location.href = 'form.html';
             });
         }
+        const loadStudentsBtn = document.querySelector('.btn-mark-attendance');
+        if (loadStudentsBtn) {
+            loadStudentsBtn.addEventListener('click', () => this.loadStudentsForAttendance());
+        }
+        const cameraClose = document.getElementById('camera-close');
+        if (cameraClose) {
+            cameraClose.addEventListener('click', () => {
+                document.getElementById('camera-modal').classList.add('hidden');
+            });
+        }
+        const startCamera = document.getElementById('start-camera');
+        if (startCamera) {
+            startCamera.addEventListener('click', () => {
+                alert('Функция AI-камеры будет доступна в следующем обновлении');
+            });
+        }
+    }
+    setupAttendanceButton() {
+        const saveButton = document.getElementById('save-attendance-btn');
+        if (saveButton) {
+            saveButton.addEventListener('click', () => this.saveAttendance());
+        }
+    }
+    async loadStudentsForAttendance() {
+        console.log('Загрузка студентов для текущего занятия');
+        
+        const saveButton = document.getElementById('save-attendance-btn');
+        if (saveButton) {
+            saveButton.style.display = 'block';
+        }        
+        await this.loadInitialData();        
+        alert(`Студенты загружены: ${this.students.length} человек`);
     }
     displayCurrentDate() {
         const now = new Date();
@@ -224,7 +511,7 @@ class TeacherApp {
             year: 'numeric', 
             month: 'long', 
             day: 'numeric' 
-        };
+        };       
         const dateElement = document.getElementById('current-date');
         if (dateElement) {
             dateElement.textContent = now.toLocaleDateString('ru-RU', options);
@@ -232,11 +519,9 @@ class TeacherApp {
     }
     generateCalendar() {
         const container = document.querySelector('.calendar-days');
-        if (!container) return;
-        
+        if (!container) return;        
         const today = new Date();
-        const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
-        
+        const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();        
         let calendarHTML = '';
         for (let i = 1; i <= daysInMonth; i++) {
             const isToday = i === today.getDate();
@@ -245,9 +530,71 @@ class TeacherApp {
         }        
         container.innerHTML = calendarHTML;
     }
-    switchView(view) {
-        this.currentView = view;
-        console.log('Переключение на вид:', view);
+    showErrorMessage(message) {
+        const container = document.getElementById('students-list');
+        if (container) {
+            container.innerHTML = `
+                <div class="error-message">
+                    <h3>Ошибка загрузки</h3>
+                    <p>${message}</p>
+                    <div class="error-actions">
+                        <button onclick="teacherApp.loadInitialData()" class="btn-primary">
+                            Повторить попытку
+                        </button>
+                        <button onclick="teacherApp.useDemoData()" class="btn-secondary">
+                            Использовать демо-данные
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+    }
+    useDemoData() {
+        console.log('Используем демо-данные...');
+        
+        this.students = [
+            {
+                id: '1',
+                name: 'Иван',
+                surname: 'Иванов',
+                patronymic: 'Иванович',
+                fullName: 'Иванов Иван Иванович',
+                groupId: '1',
+                groupName: '231-324',
+                present: false
+            },
+            {
+                id: '2',
+                name: 'Мария',
+                surname: 'Петрова',
+                patronymic: 'Сергеевна',
+                fullName: 'Петрова Мария Сергеевна',
+                groupId: '1',
+                groupName: '231-324',
+                present: false
+            },
+            {
+                id: '3',
+                name: 'Сергей',
+                surname: 'Сидоров',
+                patronymic: 'Алексеевич',
+                fullName: 'Сидоров Сергей Алексеевич',
+                groupId: '2',
+                groupName: '231-325',
+                present: false
+            }
+        ];
+        this.groups = [
+            { id: '1', number: '231-324' },
+            { id: '2', number: '231-325' },
+            { id: '3', number: '231-326' }
+        ];
+        this.populateGroupSelector();
+        this.renderStudents();
+        this.updateStats();
+        
+        alert('Демо-данные загружены!');
     }
 }
 const teacherApp = new TeacherApp();
+window.teacherApp = teacherApp;

@@ -1,236 +1,209 @@
 class ApiClient {
     constructor() {
-        this.baseUrl = 'https://localhost:7298/api';
-        this.createdStudents = []; 
-    }    
+        this.baseUrl = 'http://localhost:5000/api';
+        this.createdStudents = [];
+    }
     async request(endpoint, options = {}) {
-        const url = `${this.baseUrl}${endpoint}`;        
-        console.log(`${options.method || 'GET'} ${url}`);        
+        const url = `${this.baseUrl}${endpoint}`;
+        console.log(`Node.js API: ${options.method || 'GET'} ${url}`);        
         try {
             const config = {
                 headers: {
                     'Content-Type': 'application/json',
-                    'Accept': 'application/json'
+                    'Accept': 'application/json',
                 },
                 ...options
             };
             if (['POST', 'PUT', 'PATCH'].includes(options.method) && options.body) {
                 config.body = JSON.stringify(options.body);
             }
-            const response = await fetch(url, config);
+            const response = await fetch(url, config);            
             if (!response.ok) {
-                throw new Error(`HTTP ${response.status}`);
+                const errorText = await response.text();
+                console.error(`HTTP ${response.status}: ${errorText}`);
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
-            return await response.json();
+            const data = await response.json();
+            console.log(`API Success:`, data);
+            return data;
         } catch (error) {
-            console.error(`Backend error [${endpoint}]: ${error.message}`);
+            console.error(`API Error [${endpoint}]:`, error.message);
             throw error;
         }
     }
-//     async getAllStudents() {
-//     try {
-//         const allStudents = await this.request('/Students');
-//         console.log(`Загружено студентов: ${allStudents.length}`);
-        
-//         return allStudents.map(student => ({
-//             id: student.id,
-//             name: student.name,
-//             surname: student.surname,
-//             patronymic: student.patronymic,
-//             fullName: `${student.surname} ${student.name} ${student.patronymic}`.trim(),
-//             groupId: student.groupId,
-//             groupName: student.groupNumber,
-//             present: false
-//         }));
-//     } catch (error) {
-//         console.error('Ошибка загрузки студентов:', error);
-//         return [];
-//     }
-// }
-async getAllStudents() {
-    console.log('=== ПОЛУЧАЕМ ВСЕХ СТУДЕНТОВ ИЗ БАЗЫ ===');    
-    try {
+    async getAllStudents() {
         try {
-            console.log('Пробуем endpoint /Students...');
-            const allStudents = await this.request('/Students');
-            console.log('Ответ от /Students:', allStudents);            
-            if (allStudents && Array.isArray(allStudents) && allStudents.length > 0) {
-                console.log(`Найдено студентов через /Students: ${allStudents.length}`);                
-                return allStudents.map(student => ({
-                    id: student.id || student.Id || this.generateUUID(),
-                    name: student.name || '',
-                    surname: student.surname || '',
-                    patronymic: student.patronymic || '',
-                    fullName: `${student.surname || ''} ${student.name || ''} ${student.patronymic || ''}`.trim(),
-                    groupId: student.groupId || this.getGroupIdByNumber(student.groupNumber),
-                    groupName: student.groupNumber || '231-324',
-                    present: false
-                }));
-            }
+            console.log('Запрос всех студентов из PostgreSQL...');
+            const students = await this.request('/students');
+            return students;
         } catch (error) {
-            console.log('/Students не работает:', error.message);
+            console.error('Ошибка загрузки студентов:', error);
+            return this.getFallbackStudents();
         }
-        console.log('Получаем студентов через группы...');
-        const groups = await this.getGroups();
-        const studentsFromGroups = [];        
-        for (const group of groups) {
-            try {
-                const groupData = await this.request(`/Groups/${group.id}/students`);
-                console.log(`Группа ${group.number}:`, groupData);                
-                if (groupData && groupData.students && Array.isArray(groupData.students)) {
-                    const students = groupData.students.map(student => ({
-                        id: student.id || student.Id || this.generateUUID(),
-                        name: student.name || '',
-                        surname: student.surname || '',
-                        patronymic: student.patronymic || '',
-                        fullName: `${student.surname || ''} ${student.name || ''} ${student.patronymic || ''}`.trim(),
-                        groupId: group.id,
-                        groupName: group.number,
-                        present: false
-                    }));
-                    studentsFromGroups.push(...students);
-                    console.log(`Группа ${group.number}: ${students.length} студентов`);
-                }
-            } catch (error) {
-                console.warn(`Группа ${group.number}: ${error.message}`);
-            }
-        }
-        if (studentsFromGroups.length > 0) {
-            console.log(`Всего студентов из групп: ${studentsFromGroups.length}`);
-            return studentsFromGroups;
-        }
-        console.log('Используем расширенный список ID...');
-        const extendedStudentIds = [
-            '29883b0c-6b9b-44ab-997e-8113a0a63c21', 'b6ec0b67-b3ac-4c93-becf-22aaa9546b79',
-            '928348ec-9ebf-4cfa-bb27-2f6f94276c98', '6860a1b5-5bb4-4d28-9c8b-89bbab6c3477',
-            'c6b104dd-bafd-48eb-ba2d-efa8109dc251', '34758362-09e2-4cda-a24f-7a7f9aca23b5',
-            '5b88c9a3-6fdd-4ee0-ac39-4fac4bba73ee', '92bb2733-10ab-4735-8c7b-6866646441df',
-            'ea32956a-6d37-481e-b82b-cb23def6c913', '55fe79d5-7610-4353-96c7-af69d57e2ee1',
-            'edfca4fb-66af-49bf-b2b5-f5f350019811', '3dc07132-ceac-4e6c-8c7d-1ac972f65c2c',
-            'ae146129-f173-4505-94f1-554fb9ed7481', 'dc09f97b-b812-456c-b768-a4a75a8df30e',
-            '0bc87485-3630-4ba9-92c8-2a2ddb9dd02f', 'c24dca05-1550-4dcd-b5e4-8c42a28f72aa'
-        ];
-        const studentsById = [];        
-        for (const id of extendedStudentIds) {
-            try {
-                const student = await this.request(`/Students/${id}`);
-                if (student) {
-                    const studentData = {
-                        id: id,
-                        name: student.name || '',
-                        surname: student.surname || '',
-                        patronymic: student.patronymic || '',
-                        fullName: `${student.surname || ''} ${student.name || ''} ${student.patronymic || ''}`.trim(),
-                        groupId: this.getGroupIdByNumber(student.groupNumber),
-                        groupName: student.groupNumber || '231-324',
-                        present: false
-                    };
-                    studentsById.push(studentData);
-                }
-            } catch (error) {
-            }
-        }       
-        console.log(`Загружено студентов по ID: ${studentsById.length}`);
-        return studentsById;
-    } catch (error) {
-        console.error('Ошибка загрузки всех студентов:', error);
-        return [];
     }
-}
-getGroupIdByNumber(groupNumber) {
-    const groupMap = {
-        '231-324': 'b8f78604-7d47-4eb0-9389-6b8eaaa1653b',
-        '231-325': '137b8ecb-402d-41fe-979d-3bb5fd02e7c2',
-        '231-326': '73c75851-f1cb-48ce-8c15-af9f4c36f201'
-    };
-    return groupMap[groupNumber] || 'b8f78604-7d47-4eb0-9389-6b8eaaa1653b';
-}
-    getGroupNameById(groupId) {
-        const groupMap = {
-            'b8f78604-7d47-4eb0-9389-6b8eaaa1653b': '231-324',
-            '137b8ecb-402d-41fe-979d-3bb5fd02e7c2': '231-325', 
-            '73c75851-f1cb-48ce-8c15-af9f4c36f201': '231-326',
-            'cd71471f-23e6-44a2-b0bb-a7aa27f8dce8': '231-324',
-            'e48a3eb9-b7d3-4d22-948b-d9c4e5147d06': '231-324',
-            '5c5f8672-8337-42a4-8a63-a024cbbef6c4': '231-324',
-            '83a2659d-a465-4335-873f-df5fecc770e6': '231-324'
-        };
-        return groupMap[groupId] || 'Неизвестная группа';
+    async getStudentById(id) {
+        return await this.request(`/students/${id}`);
     }
     async createStudent(studentData) {
-        const result = await this.request('/Students', {
-            method: 'POST',
-            body: studentData
-        });
-        this.createdStudents.push({
-            id: result,
+        const requestData = {
             name: studentData.name,
             surname: studentData.surname,
-            patronymic: studentData.patronymic,
-            groupId: studentData.group.id,
-            groupName: studentData.group.number
+            patronymic: studentData.patronymic || null,
+            startYear: studentData.startYear || new Date().getFullYear(),
+            groupId: studentData.groupId || studentData.group?.id || null
+        };
+        console.log('Создание студента в PostgreSQL:', requestData);
+        const result = await this.request('/students', {
+            method: 'POST',
+            body: requestData
         });
-        
+        const createdStudent = {
+            id: result,
+            ...studentData
+        };
+        this.createdStudents.push(createdStudent);
         return result;
     }
+    async getAllGroups() {
+        try {
+            console.log('Запрос всех групп из PostgreSQL');
+            const groups = await this.request('/groups');
+            return groups;
+        } catch (error) {
+            console.error('Ошибка загрузки групп:', error);
+            return this.getFallbackGroups();
+        }
+    }
+    async getGroupById(id) {
+        return await this.request(`/groups/${id}`);
+    }
     async getGroupStudents(groupId) {
-        const data = await this.request(`/Groups/${groupId}/students`);
-        return {
-            group: data.item1,
-            students: data.item2 || []
+        try {
+            console.log(`👥 Запрос студентов группы ${groupId} из PostgreSQL...`);
+            const data = await this.request(`/groups/${groupId}/students`);
+            return data;
+        } catch (error) {
+            console.error(`Ошибка загрузки студентов группы ${groupId}:`, error);
+            return {
+                group: { id: groupId, number: this.getGroupNameById(groupId) },
+                students: []
+            };
+        }
+    }
+    async createGroup(groupData) {
+        const requestData = {
+            number: groupData.number,
+            professionId: groupData.professionId || "3fa85f64-5717-4562-b3fc-2c963f66afa6"
         };
+        return await this.request('/groups', {
+            method: 'POST',
+            body: requestData
+        });
+    }
+    async getAllSubjects() {
+        try {
+            console.log('Запрос всех предметов...');
+            return await this.request('/subjects');
+        } catch (error) {
+            console.error('Ошибка загрузки предметов:', error);
+            return this.getFallbackSubjects();
+        }
+    }
+    async getAllInstructors() {
+        try {
+            console.log('Запрос всех преподавателей...');
+            return await this.request('/instructors');
+        } catch (error) {
+            console.error('Ошибка загрузки преподавателей:', error);
+            return this.getFallbackInstructors();
+        }
     }
     async markAttendance(attendanceData) {
-        const key = `attendance_${new Date().toISOString().split('T')[0]}`;
+        try {
+            console.log('Сохранение посещаемости в базу...');
+            
+            const requestData = {
+                date: attendanceData.date,
+                subject: attendanceData.subject,
+                group: attendanceData.group,
+                presentStudents: attendanceData.presentStudents || [],
+                absentStudents: attendanceData.absentStudents || [],
+                presentCount: attendanceData.presentCount,
+                totalCount: attendanceData.totalCount
+            };
+            const result = await this.request('/attendance', {
+                method: 'POST',
+                body: requestData
+            });
+            return result;
+        } catch (error) {
+            console.error('Ошибка сохранения посещаемости:', error);
+            return this.saveAttendanceToLocalStorage(attendanceData);
+        }
+    }
+    saveAttendanceToLocalStorage(attendanceData) {
+        const key = `attendance_${new Date().toISOString().split('T')[0]}_${Date.now()}`;
         const savedData = {
             ...attendanceData,
             savedAt: new Date().toISOString(),
-            source: 'frontend'
+            id: key,
+            source: 'localstorage'
         };        
-        localStorage.setItem(key, JSON.stringify(savedData));       
-        try {
-            console.log('Данные для отправки на бэкенд:', attendanceData);
-        } catch (error) {
-            console.log('Нет endpoint для посещаемости в бэкенде');
-        }        
+        localStorage.setItem(key, JSON.stringify(savedData));        
+        const allAttendance = JSON.parse(localStorage.getItem('all_attendance') || '[]');
+        allAttendance.push(savedData);
+        localStorage.setItem('all_attendance', JSON.stringify(allAttendance));        
         return {
             success: true,
-            message: `Посещаемость сохранена: ${attendanceData.presentCount} из ${attendanceData.totalCount} студентов`,
-            data: savedData
+            message: `Посещаемость сохранена локально: ${attendanceData.presentCount} из ${attendanceData.totalCount} студентов`,
+            data: savedData,
+            id: key
         };
     }
-    async getGroups() {
-        return [
-            {id:'b8f78604-7d47-4eb0-9389-6b8eaaa1653b', number: '231-324' },
-            {id:'137b8ecb-402d-41fe-979d-3bb5fd02e7c2', number: '231-325' },
-            {id:'73c75851-f1cb-48ce-8c15-af9f4c36f201', number: '231-326' }
-        ];
+    async getAttendanceHistory() {
+        try {
+            return await this.request('/attendance');
+        } catch (error) {
+            console.error('Ошибка загрузки истории:', error);
+            return JSON.parse(localStorage.getItem('all_attendance') || '[]');
+        }
     }
     async createStudentsFromExcel(excelStudents) {
         const results = [];
-        
+        const groupsMap = new Map();
+        try {
+            const existingGroups = await this.getAllGroups();
+            existingGroups.forEach(group => groupsMap.set(group.number, group));
+        } catch (error) {
+            console.warn('Не удалось загрузить группы, создаем новые...');
+        }        
         for (const excelStudent of excelStudents) {
             try {
-                const groups = await this.getGroups();
-                let targetGroup = groups.find(g => g.number === excelStudent.group);
-                
+                let targetGroup = groupsMap.get(excelStudent.group);                
                 if (!targetGroup) {
-                    targetGroup = {
-                        id: this.generateUUID(),
-                        number: excelStudent.group
-                    };
-                }
+                    try {
+                        const groupId = await this.createGroup({
+                            number: excelStudent.group,
+                            professionId: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                        });
+                        targetGroup = { id: groupId, number: excelStudent.group };
+                        groupsMap.set(excelStudent.group, targetGroup);
+                        console.log(`Создана новая группа: ${excelStudent.group}`);
+                    } catch (error) {
+                        console.error(`Ошибка создания группы ${excelStudent.group}:`, error);
+                        targetGroup = {
+                            id: this.generateUUID(),
+                            number: excelStudent.group
+                        };
+                        groupsMap.set(excelStudent.group, targetGroup);
+                    }
+                }                
                 const studentData = {
                     name: excelStudent.name,
                     surname: excelStudent.surname,
                     patronymic: excelStudent.patronymic || '',
                     startYear: 2024,
-                    group: {
-                        id: targetGroup.id,
-                        number: targetGroup.number,
-                        professionId: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
-                    },
-                    status: 0
+                    groupId: targetGroup.id
                 };                
                 const result = await this.createStudent(studentData);                
                 results.push({
@@ -238,8 +211,10 @@ getGroupIdByNumber(groupNumber) {
                     student: excelStudent.fullName,
                     id: result,
                     group: targetGroup.number
-                });                
-                console.log(`Создан студент из Excel: ${excelStudent.fullName} в группе ${targetGroup.number}`);                
+                });               
+                console.log(`Создан студент: ${excelStudent.fullName} в группе ${targetGroup.number}`);
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
             } catch (error) {
                 results.push({
                     success: false,
@@ -248,10 +223,31 @@ getGroupIdByNumber(groupNumber) {
                 });
                 console.error(`Ошибка создания студента ${excelStudent.fullName}:`, error);
             }
-        }
-        
+        }        
         return results;
     }
+    async saveExcelData(excelData) {
+        try {
+            console.log('Сохранение Excel данных в базу...');
+            const result = await this.request('/save-excel-data', {
+                method: 'POST',
+                body: excelData
+            });
+            return result;
+        } catch (error) {
+            console.error('Ошибка сохранения Excel данных:', error);
+            throw error;
+        }
+    }
+    getGroupNameById(groupId) {
+        const groupMap = {
+            'b8f78604-7d47-4eb0-9389-6b8eaaa1653b': '231-324',
+            '137b8ecb-402d-41fe-979d-3bb5fd02e7c2': '231-325',
+            '73c75851-f1cb-48ce-8c15-af9f4c36f201': '231-326'
+        };
+        return groupMap[groupId] || `Группа ${groupId}`;
+    }
+
     generateUUID() {
         return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
             const r = Math.random() * 16 | 0;
@@ -259,46 +255,119 @@ getGroupIdByNumber(groupNumber) {
             return v.toString(16);
         });
     }
+    async testAllEndpoints() {
+        console.log('ТЕСТИРУЕМ ВСЕ ЭНДПОИНТЫ');
+        
+        const endpoints = [
+            { name: 'Все студенты', url: '/students', method: 'GET' },
+            { name: 'Все группы', url: '/groups', method: 'GET' },
+            { name: 'Все преподаватели', url: '/instructors', method: 'GET' },
+            { name: 'Все предметы', url: '/subjects', method: 'GET' },
+            { name: 'Диагностика базы', url: '/debug/database', method: 'GET' }
+        ];
+        const results = [];
+        for (const endpoint of endpoints) {
+            try {
+                console.log(`\nТестируем: ${endpoint.name} (${endpoint.url})`);
+                const startTime = Date.now();                
+                const data = await this.request(endpoint.url);
+                const responseTime = Date.now() - startTime;                
+                const result = {
+                    name: endpoint.name,
+                    url: endpoint.url,
+                    status: 'УСПЕХ',
+                    responseTime: `${responseTime}ms`,
+                    dataLength: Array.isArray(data) ? data.length : 'object',
+                    sample: Array.isArray(data) && data.length > 0 ? data[0] : data
+                };                
+                results.push(result);
+                console.log(`${endpoint.name}: ${Array.isArray(data) ? data.length + ' записей' : 'Данные получены'} (${responseTime}ms)`);
+                
+            } catch (error) {
+                const result = {
+                    name: endpoint.name,
+                    url: endpoint.url,
+                    status: 'ОШИБКА',
+                    error: error.message
+                };
+                
+                results.push(result);
+                console.log(`${endpoint.name}: ${error.message}`);
+            }
+        }
+        console.log('\nРЕЗУЛЬТАТЫ ДИАГНОСТИКИ');
+        results.forEach(result => {
+            console.log(`${result.status} ${result.name}: ${result.responseTime || result.error}`);
+        });
+        return results;
+    }
+    getFallbackStudents() {
+        console.log('Используем тестовых студентов');
+        return [
+            {
+                id: '29883b0c-6b9b-44ab-997e-8113a0a63c21',
+                name: 'Иван',
+                surname: 'Иванов',
+                patronymic: 'Иванович',
+                groupId: 'b8f78604-7d47-4eb0-9389-6b8eaaa1653b',
+                groupNumber: '231-324'
+            },
+            {
+                id: 'b6ec0b67-b3ac-4c93-becf-22aaa9546b79',
+                name: 'Мария',
+                surname: 'Петрова', 
+                patronymic: 'Сергеевна',
+                groupId: 'b8f78604-7d47-4eb0-9389-6b8eaaa1653b',
+                groupNumber: '231-324'
+            },
+            {
+                id: '928348ec-9ebf-4cfa-bb27-2f6f94276c98',
+                name: 'Сергей',
+                surname: 'Сидоров',
+                patronymic: 'Алексеевич',
+                groupId: '137b8ecb-402d-41fe-979d-3bb5fd02e7c2',
+                groupNumber: '231-325'
+            }
+        ];
+    }
+    getFallbackGroups() {
+        return [
+            { id: 'b8f78604-7d47-4eb0-9389-6b8eaaa1653b', number: '231-324' },
+            { id: '137b8ecb-402d-41fe-979d-3bb5fd02e7c2', number: '231-325' },
+            { id: '73c75851-f1cb-48ce-8c15-af9f4c36f201', number: '231-326' }
+        ];
+    }
+    getFallbackSubjects() {
+        return [
+            { id: 1, name: 'Системы инженерного анализа', type: 'Лаб. работа' },
+            { id: 2, name: 'Нормативное регулирование', type: 'Лекция' },
+            { id: 3, name: 'Базы данных', type: 'Практика' }
+        ];
+    }
+    getFallbackInstructors() {
+        return [
+            { id: 1, name: 'Иванов', surname: 'Петр', patronymic: 'Сергеевич' },
+            { id: 2, name: 'Петрова', surname: 'Мария', patronymic: 'Ивановna' }
+        ];
+    }
     async login(email, password) {
         const user = {
             id: 1,
             name: email.includes('admin') ? 'Заведующий кафедрой' : 'Преподаватель',
             email: email,
             role: email.includes('admin') ? 'admin' : 'teacher'
-        };        
+        };       
         const token = 'demo-token-' + Date.now();
         localStorage.setItem('authToken', token);
-        localStorage.setItem('user', JSON.stringify(user));        
+        localStorage.setItem('user', JSON.stringify(user));
+        
         return { token: token, user };
     }
     logout() {
         localStorage.removeItem('authToken');
         localStorage.removeItem('user');
     }
-    async debugStudents() {
-        console.log('=== ДИАГНОСТИКА СТУДЕНТОВ ===');
-        
-        const testIds = [
-            '29883b0c-6b9b-44ab-997e-8113a0a63c21',
-            'b6ec0b67-b3ac-4c93-becf-22aaa9546b79'
-        ];
-        
-        for (const id of testIds) {
-            try {
-                console.log(`Проверяем студента ${id}...`);
-                const response = await fetch(`${this.baseUrl}/Students/${id}`);
-                console.log(`Статус: ${response.status} ${response.statusText}`);
-                
-                if (response.ok) {
-                    const student = await response.json();
-                    console.log('Данные студента:', student);
-                } else {
-                    console.log('Ошибка HTTP:', response.status);
-                }
-            } catch (error) {
-                console.log('Ошибка запроса:', error.message);
-            }
-        }
-    }
 }
 const apiClient = new ApiClient();
+window.apiClient = apiClient;
+console.log('API Client настроен для работы с PostgreSQL через Node.js');
