@@ -99,6 +99,63 @@ app.get('*', (req, res) => {
   console.log('Redirecting to auth form');
   res.redirect('/');
 });
+app.get('/api/debug-students', async (req, res) => {
+  try {
+    console.log('Диагностика бэкенда...');
+    const endpoints = [
+      '/Students',
+      '/Groups/b8f78604-7d47-4eb0-9389-6b8eaaa1653b/students',
+      '/Groups/137b8ecb-402d-41fe-979d-3bb5fd02e7c2/students'
+    ];    
+    const results = {};    
+    for (const endpoint of endpoints) {
+      try {
+        const response = await fetch(`https://localhost:7298/api${endpoint}`);
+        results[endpoint] = {
+          status: response.status,
+          statusText: response.statusText,
+          data: response.ok ? await response.json() : null
+        };
+      } catch (error) {
+        results[endpoint] = { error: error.message };
+      }
+    }    
+    res.json({
+      message: 'Диагностика бэкенда',
+      results: results
+    });
+    
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+app.get('/api/all-students-from-db', async (req, res) => {
+  try {
+    const studentIds = [
+      'bc4b81d6-c414-43fc-9e2c-4d5ffeed690d',
+      '6f5e95bf-68ef-4f5a-9b46-b6b43bd01f8d',
+    ];    
+    const students = [];    
+    for (const id of studentIds) {
+      try {
+        const response = await fetch(`https://localhost:7298/api/Students/${id}`);
+        if (response.ok) {
+          const student = await response.json();
+          students.push(student);
+        }
+      } catch (error) {
+        console.log(`Студент ${id} не найден`);
+      }
+    }    
+    res.json({
+      totalInDb: studentIds.length,
+      retrieved: students.length,
+      students: students
+    });    
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 app.listen(PORT, () => {
   console.log('=' .repeat(60));
   console.log(`Node.js сервер запущен на http://localhost:${PORT}`);
