@@ -208,6 +208,74 @@ class ApiClient {
             ];
         }
     }
+    async assignSubjectToInstructor(assignmentData){
+    try{
+        if(this.useFallback){
+            return await this.requestFallback('/assignments',{
+                method:'POST',
+                body:assignmentData
+            });
+        }
+        return await this.request('/Assignments',{
+            method:'POST',
+            body:{
+                instructorId:assignmentData.instructorId,
+                subjectId:assignmentData.subjectId,
+                groupId:assignmentData.groupId,
+                departmentId:assignmentData.departmentId
+            }
+        });
+    }catch(error){
+        // Для Node.js бэкенда сохраняем в localStorage
+        return this.saveAssignmentToLocalStorage(assignmentData);
+    }
+}
+
+async getInstructorAssignments(instructorId){
+    try{
+        if(this.useFallback){
+            return await this.requestFallback(`/assignments/instructor/${instructorId}`);
+        }
+        return await this.request(`/Assignments/instructor/${instructorId}`);
+    }catch(error){
+        return this.getAssignmentsFromLocalStorage(instructorId);
+    }
+}
+
+async getSubjectAssignments(subjectId){
+    try{
+        if(this.useFallback){
+            return await this.requestFallback(`/assignments/subject/${subjectId}`);
+        }
+        return await this.request(`/Assignments/subject/${subjectId}`);
+    }catch(error){
+        return this.getAssignmentsBySubjectFromLocalStorage(subjectId);
+    }
+}
+saveAssignmentToLocalStorage(assignmentData){
+    const key=`assignment_${Date.now()}`;
+    const assignment={
+        id:key,
+        ...assignmentData,
+        createdAt:new Date().toISOString()
+    };
+    
+    const assignments=JSON.parse(localStorage.getItem('instructor_assignments')||'[]');
+    assignments.push(assignment);
+    localStorage.setItem('instructor_assignments',JSON.stringify(assignments));
+    
+    return{id:key,success:true};
+}
+
+getAssignmentsFromLocalStorage(instructorId){
+    const assignments=JSON.parse(localStorage.getItem('instructor_assignments')||'[]');
+    return assignments.filter(a=>a.instructorId===instructorId);
+}
+
+getAssignmentsBySubjectFromLocalStorage(subjectId){
+    const assignments=JSON.parse(localStorage.getItem('instructor_assignments')||'[]');
+    return assignments.filter(a=>a.subjectId==subjectId);
+}
 }
 const apiClient=new ApiClient();
 window.apiClient=apiClient;
