@@ -1,16 +1,16 @@
 class TeacherApp {
     constructor() {
-        if (!localStorage.getItem('authToken')) {
-            window.location.href = '/form.html';
+        if(!localStorage.getItem('authToken')){
+            window.location.href='/form.html';
             return;
         }
-        this.currentUser = JSON.parse(localStorage.getItem('user') || '{}');
-        this.students = [];
-        this.groups = [];
-        this.subjects = [];
-        this.currentGroupId = 'all';
-        this.currentSubjectId = 'all';
-        this.currentView = 'manual';
+        this.currentUser=JSON.parse(localStorage.getItem('user')||'{}');
+        this.students=[];
+        this.groups=[];
+        this.subjects=[];
+        this.currentGroupId='all';
+        this.currentSubjectId='all';
+        this.currentView='manual';
         this.init();
     }
     async init() {
@@ -22,114 +22,80 @@ class TeacherApp {
         this.generateCalendar();
     }
     async loadInitialData() {
-    try {
-        console.log('Загружаем данные из Node.js бэкенда...');
-        await this.loadFromNodeBackend();
-    } catch (error) {
-        console.error('Ошибка загрузки из всех источников:', error);
-        this.useDemoData();
-    }
-    }
-    // async loadInitialData() {
-    //     try {
-    //         console.log('Загружаем данные из C# бэкенда...');
-    //         // const [students, groups, subjects] = await Promise.all([
-    //         //     csharpApi.getAllStudents(),
-    //         //     csharpApi.getAllGroups(),
-    //         //     csharpApi.getSubjects()
-    //         // ]);
-    //         await this.loadFromNodeBackend();
-    //         this.students = this.normalizeStudents(students || []);
-    //         this.groups = this.fixGroupIds(groups || []);
-    //         this.subjects = subjects || [];
-    //         console.log(`Данные загружены: Студентов: ${this.students.length} Групп: ${this.groups.length} Предметов: ${this.subjects.length}`);
-    //         this.populateSubjectSelector();
-    //         this.populateGroupSelector();
-    //         this.renderStudents();
-    //         this.updateStats();
-    //     } catch (error) {
-    //         console.error('Ошибка загрузки из C# бэкенда, пробуем Node.js...', error);
-    //         await this.loadFromNodeBackend();
-    //     }
-    // }
-    async loadFromNodeBackend() {
-        try {
-            const [students, groups, subjects] = await Promise.all([
-                apiClient.getAllStudents(),
-                apiClient.getAllGroups(),
-                apiClient.getAllSubjects()
-            ]);
-            this.students = students || [];
-            this.groups = groups || [];
-            this.subjects = subjects || [];
-            console.log('Данные загружены из Node.js бэкенда');
-            this.populateSubjectSelector();
-            this.populateGroupSelector();
-            this.renderStudents();
-            this.updateStats();
-        } catch (error) {
-            console.error('Ошибка загрузки из всех источников:', error);
+        try{
+            console.log('Загружаем данные...');
+            await this.loadFromBackend();
+        }catch(error){
+            console.error('Ошибка загрузки:',error);
             this.useDemoData();
         }
     }
-    normalizeStudents(students) {
-        if (!students || !Array.isArray(students)) {
-            console.warn('Некорректные данные студентов:', students);
-            return [];
-        }
-        return students.map(student => {
-            const id = student.id || student.Id || this.generateTempId();
-            const name = student.name || student.Name || '';
-            const surname = student.surname || student.Surname || '';
-            const patronymic = student.patronymic || student.Patronymic || '';
-            let groupId = student.groupId || student.group_id || student.group?.id;
-            if (typeof groupId === 'number') {
-                groupId = groupId.toString();
-            }
-            if (!groupId && student.groupName) {
-                const groupMap = {
-                    '231-324': '1',
-                    '231-325': '2',
-                    '231-326': '3'
-                };
-                groupId = groupMap[student.groupName];
-            }
-            const groupNumber = student.groupNumber || student.group?.number || this.getGroupNameById(groupId);
-            return {
-                id: id,
-                name: name,
-                surname: surname,
-                patronymic: patronymic,
-                fullName: `${surname} ${name} ${patronymic}`.trim(),
-                groupId: groupId,
-                groupName: groupNumber,
-                present: false
-            };
-        });
+    async loadFromBackend(){
+    try{
+        console.log('Загружаем студентов и группы...');
+        const students=await apiClient.getAllStudents();
+        const groups=await apiClient.getAllGroups();
+        const subjects=await apiClient.getAllSubjects();        
+        console.log('Студенты RAW:',students);
+        console.log('Группы RAW:',groups);        
+        this.students=this.normalizeStudents(students||[],groups||[]);
+        this.groups=groups||[];
+        this.subjects=subjects||[];        
+        console.log('Нормализованные студенты:',this.students);
+        console.log('Нормализованные группы:',this.groups);        
+        this.populateSubjectSelector();
+        this.populateGroupSelector();
+        this.renderStudents();
+        this.updateStats();
+    }catch(error){
+        console.error('Ошибка загрузки из API:',error);
+        this.useDemoData();
     }
-    fixGroupIds(groups) {
-        if (!groups || !Array.isArray(groups)) {
-            return [];
-        }
-        const groupNameToId = {
-            '231-324': '1',
-            '231-325': '2',
-            '231-326': '3',
-            'ПППП': '4',
-            '666-666': '5',
-            'Нани': '6'
+}
+    normalizeStudents(students,groups){
+    if(!students||!Array.isArray(students)){
+        console.warn('Некорректные данные студентов:',students);
+        return[];
+    }    
+    return students.map(student=>{
+        const id=student.id||student.Id||this.generateTempId();
+        const name=student.name||student.Name||'';
+        const surname=student.surname||student.Surname||'';
+        const patronymic=student.patronymic||student.Patronymic||'';
+        let groupId=student.groupId||student.group_id||student.group?.id;        
+        console.log('Обрабатываем студента:',{name,surname,groupId});
+        let groupName='Не указана';
+        if(groupId){
+            const foundGroup=groups.find(g=>g.id===groupId||g.Id===groupId);
+            if(foundGroup){
+                groupName=foundGroup.number||foundGroup.name||'Группа найдена';
+                console.log('Найдена группа:',foundGroup);
+            }else{
+                console.log('Группа не найдена для ID:',groupId,'Доступные группы:',groups);
+            }
+        }        
+        return{
+            id:id,
+            name:name,
+            surname:surname,
+            patronymic:patronymic,
+            fullName:`${surname} ${name} ${patronymic}`.trim(),
+            groupId:groupId,
+            groupName:groupName,
+            present:false
         };
-        return groups.map((group, index) => {
-            let fixedId = group.id;
-            if (!fixedId || fixedId === 'undefined') {
-                fixedId = groupNameToId[group.number] || `group-${index + 1}`;
-            }
-            return {
-                ...group,
-                id: fixedId
-            };
-        });
+    });
+}
+    fixGroupIds(groups){
+    if(!groups||!Array.isArray(groups)){
+        return[];
     }
+    return groups.map(group=>({
+        id:group.id||group.Id,
+        number:group.number||group.name,
+        professionId:group.profession_id||group.professionId
+    }));
+}
     generateTempId() {
         return 'temp_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
     }
@@ -429,7 +395,7 @@ class TeacherApp {
         container.innerHTML = calendarHTML;
     }
     useDemoData() {
-        console.log('Используем демо-данные...');
+        console.log('Используем демо-данные');
         this.students = [
             {
                 id: '1',
