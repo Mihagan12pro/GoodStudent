@@ -24,22 +24,20 @@ class TeacherApp {
     async loadInitialData() {
         try {
             console.log('Загружаем данные из бэкенда...');
-            const [students, groups, subjects] = await Promise.all([
-                apiClient.getAllStudents().catch(() => []),
-                apiClient.getAllGroups().catch(() => []),
-                apiClient.getAllSubjects().catch(() => [])
-            ]);
-            this.students = this.normalizeStudents(students || []);
+            const students = await apiClient.getAllStudents();
+            const groups = await apiClient.getAllGroups();
+            const subjects = await apiClient.getAllSubjects();
+            this.students = students || [];
             this.groups = groups || [];
             this.subjects = subjects || [];
-            console.log(`Данные загружены: Студентов: ${this.students.length} Групп: ${this.groups.length} Предметов: ${this.subjects.length}`);
+            console.log(`Данные загружены: Студентов: ${this.students.length} Групп: ${this.groups.length} Предметов: ${this.subjects.length}`);            
             this.populateSubjectSelector();
             this.populateGroupSelector();
             this.renderStudents();
             this.updateStats();
         } catch (error) {
             console.error('Ошибка загрузки данных:', error);
-            this.showErrorMessage('Не удалось загрузить данные.');
+            this.showErrorMessage('Не удалось загрузить данные с сервера.');
         }
     }
 fixGroupIds(groups) {
@@ -125,81 +123,36 @@ fixGroupIds(groups) {
             console.error('Элемент group-select не найден');
             return;
         }
-        console.log('Загруженные группы:', this.groups);
-        const currentValue = select.value;
-        select.innerHTML = '';
-        const allOption = document.createElement('option');
-        allOption.value = 'all';
-        allOption.textContent = 'Все группы';
-        select.appendChild(allOption);
+        select.innerHTML = '<option value="all">Все группы</option>';
         this.groups.forEach(group => {
             const option = document.createElement('option');
             option.value = group.id;
-            option.textContent = group.number || `Группа ${group.id}`;
-            console.log(`Добавляем группу: ${group.number} (ID: ${group.id})`);
+            option.textContent = group.number;
             select.appendChild(option);
-        });
-        if (currentValue && this.groups.some(g => g.id === currentValue)) {
-            select.value = currentValue;
-            this.currentGroupId = currentValue;
-        } else {
-            select.value = 'all';
-            this.currentGroupId = 'all';
-        }
-        console.log(`Текущая выбранная группа: ${select.value}`);
+        });        
+        console.log(`Загружено групп с бэкенда: ${this.groups.length}`);
     }
     renderStudents() {
         const container = document.getElementById('students-list');
-        if (!container) {
-            console.error('Элемент students-list не найден');
-            return;
-        }
+        if (!container) return;
         if (this.students.length === 0) {
-            container.innerHTML = `
-                <div class="no-students-message">
-                    <h3>Нет студентов для отображения</h3>
-                    <p>Загрузите студентов через панель администратора</p>
-                    <button class="btn-primary" onclick="teacherApp.loadInitialData()">
-                        Обновить данные
-                    </button>
-                </div>
-            `;
+            container.innerHTML = '<p>Нет студентов для отображения</p>';
             return;
         }
-        let filteredStudents = this.students;        
+        let filteredStudents = this.students;
         if (this.currentGroupId && this.currentGroupId !== 'all') {
-            console.log(`Фильтруем студентов по группе: ${this.currentGroupId}`);
-            
-            filteredStudents = this.students.filter(student => {
-                const matches = student.groupId === this.currentGroupId;
-                console.log(`Студент ${student.fullName}: groupId=${student.groupId}, matches=${matches}`);
-                return matches;
-            });
+            filteredStudents = this.students.filter(student => 
+                student.groupId === this.currentGroupId
+            );
         }
-        console.log(`После фильтрации: ${filteredStudents.length} студентов`);
-        if (filteredStudents.length === 0) {
-            container.innerHTML = `
-                <div class="no-students-message">
-                    <h3>Нет студентов в выбранной группе</h3>
-                    <p>Выберите другую группу или загрузите студентов</p>
-                    <button class="btn-primary" onclick="teacherApp.loadInitialData()">
-                        Обновить данные
-                    </button>
-                </div>
-            `;
-            return;
-        }
-        this.updateStudentsHeader();
         container.innerHTML = filteredStudents.map(student => `
-            <div class="student-item ${student.present ? 'present' : ''}">
+            <div class="student-item">
                 <div class="student-info">
-                    <div class="student-name">${student.fullName}</div>
-                    <div class="student-group">Группа: ${student.groupName}</div>
+                    <div class="student-name">${student.surname} ${student.name} ${student.patronymic || ''}</div>
+                    <div class="student-group">Группа: ${student.groupNumber || 'Не указана'}</div>
                 </div>
                 <div class="attendance-toggle">
-                    <input type="checkbox" id="student-${student.id}" 
-                        ${student.present ? 'checked' : ''}
-                        onchange="teacherApp.toggleStudent('${student.id}', this.checked)">
+                    <input type="checkbox" id="student-${student.id}" onchange="teacherApp.toggleStudent('${student.id}', this.checked)">
                     <label for="student-${student.id}">
                         <span class="toggle-slider"></span>
                     </label>
@@ -224,82 +177,33 @@ fixGroupIds(groups) {
         const student = this.students.find(s => s.id === studentId);
         if (student) {
             student.present = isPresent;
-            const studentElement = document.querySelector(`#student-${studentId}`)?.closest('.student-item');
-            if (studentElement) {
-                studentElement.classList.toggle('present', isPresent);
-            }
-            
             this.updateStats();
         }
     }
     updateStats() {
-        let presentCount, totalCount;
-        if (this.currentGroupId === 'all') {
-            presentCount = this.students.filter(s => s.present).length;
-            totalCount = this.students.length;
-        } else {
-            const filteredStudents = this.students.filter(s => s.groupId === this.currentGroupId);
-            presentCount = filteredStudents.filter(s => s.present).length;
-            totalCount = filteredStudents.length;
-        }        
+        const presentCount = this.students.filter(s => s.present).length;
+        const totalCount = this.students.length;        
         const presentElement = document.getElementById('present-count');
-        const totalElement = document.getElementById('total-count');
-        
+        const totalElement = document.getElementById('total-count');        
         if (presentElement) presentElement.textContent = presentCount;
         if (totalElement) totalElement.textContent = totalCount;
-        const statsElement = document.querySelector('.attendance-stats');
-        if (statsElement) {
-            statsElement.innerHTML = `
-                <span>Присутствуют: <strong id="present-count">${presentCount}</strong>/<strong id="total-count">${totalCount}</strong></span>
-            `;
-        }
     }
     async saveAttendance() {
-        let studentsToSave;
-        if (this.currentGroupId === 'all') {
-            studentsToSave = this.students;
-        } else {
-            studentsToSave = this.students.filter(s => s.groupId === this.currentGroupId);
-        }
-        if (studentsToSave.length === 0) {
-            alert('Нет студентов для сохранения посещаемости');
-            return;
-        }
-        const presentStudents = studentsToSave.filter(s => s.present);
-        const absentStudents = studentsToSave.filter(s => !s.present);
-        if (presentStudents.length === 0 && !confirm('Ни один студент не отмечен как присутствующий. Сохранить пустую посещаемость?')) {
-            return;
-        }
-        const attendanceData = {
-            date: new Date().toISOString(),
-            subject: this.getCurrentSubject(),
-            group: this.getCurrentGroupName(),
-            presentCount: presentStudents.length,
-            totalCount: studentsToSave.length,
-            presentStudents: presentStudents.map(s => ({
-                id: s.id,
-                name: s.fullName,
-                group: s.groupName
-            })),
-            absentStudents: absentStudents.map(s => ({
-                id: s.id,
-                name: s.fullName,
-                group: s.groupName
-            })),
-            timestamp: new Date().toLocaleString('ru-RU')
-        };
+        const presentStudents = this.students.filter(s => s.present);
+        
         try {
-            console.log('Сохранение посещаемости:', attendanceData);
+            const result = await apiClient.markAttendance({
+                date: new Date().toISOString(),
+                subject: 'Выбранный предмет', // TODO: получить выбранный предмет
+                group: 'Выбранная группа', // TODO: получить выбранную группу
+                presentStudents: presentStudents,
+                presentCount: presentStudents.length,
+                totalCount: this.students.length
+            });
             
-            const result = await apiClient.markAttendance(attendanceData);
-            
-            alert(`${result.message}\n\nПрисутствуют: ${presentStudents.length} из ${studentsToSave.length}`);
-            
-            console.log('Посещаемость сохранена:', result);
-            
+            alert(`Посещаемость сохранена: ${presentStudents.length} из ${this.students.length} студентов`);
         } catch (error) {
-            console.error('Ошибка сохранения посещаемости:', error);
-            alert('Ошибка при сохранении посещаемости. Данные сохранены локально.');
+            alert('Ошибка при сохранении посещаемости');
         }
     }
     getCurrentSubject() {
@@ -462,8 +366,8 @@ fixGroupIds(groups) {
             option.value = subject.id;
             option.textContent = subject.name;
             select.appendChild(option);
-        });
-        console.log(`Загружено предметов: ${this.subjects.length}`);
+        });        
+        console.log(`Загружено предметов с бэкенда: ${this.subjects.length}`);
     }
     setupEventListeners() {
         const groupSelect = document.getElementById('group-select');
@@ -488,6 +392,10 @@ fixGroupIds(groups) {
                 window.location.href = 'form.html';
             });
         }
+        const saveBtn = document.getElementById('save-attendance-btn');
+        if (saveBtn) {
+            saveBtn.addEventListener('click', () => this.saveAttendance());
+        }
     }
     setupAttendanceButton() {
         const saveButton = document.getElementById('save-attendance-btn');
@@ -507,15 +415,14 @@ fixGroupIds(groups) {
     }
     displayCurrentDate() {
         const now = new Date();
-        const options = { 
-            weekday: 'long', 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric' 
-        };       
         const dateElement = document.getElementById('current-date');
         if (dateElement) {
-            dateElement.textContent = now.toLocaleDateString('ru-RU', options);
+            dateElement.textContent = now.toLocaleDateString('ru-RU', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
         }
     }
     generateCalendar() {
@@ -538,21 +445,13 @@ fixGroupIds(groups) {
                 <div class="error-message">
                     <h3>Ошибка загрузки</h3>
                     <p>${message}</p>
-                    <div class="error-actions">
-                        <button onclick="teacherApp.loadInitialData()" class="btn-primary">
-                            Повторить попытку
-                        </button>
-                        <button onclick="teacherApp.useDemoData()" class="btn-secondary">
-                            Использовать демо-данные
-                        </button>
-                    </div>
+                    <button onclick="teacherApp.loadInitialData()" class="btn-primary">Повторить попытку</button>
                 </div>
             `;
         }
     }
     useDemoData() {
-        console.log('Используем демо-данные...');
-        
+        console.log('Используем демо-данные...');        
         this.students = [
             {
                 id: '1',
