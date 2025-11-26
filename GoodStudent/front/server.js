@@ -485,6 +485,31 @@ app.get('/api/csharp/professions', async (req, res) => {
     res.status(500).json({ error: 'Ошибка загрузки специальностей' });
   }
 });
+app.use((req, res, next) => {
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    next();
+});
+app.get('/api/departments-full', async (req, res) => {
+  let client;
+  try {
+    client = await pool.connect();
+    const result = await client.query('SELECT * FROM departments ORDER BY "tittle"');
+    const departments = result.rows.map(row => ({
+      id: row.Id,
+      tittle: row.tittle,
+      description: row.description,
+      faculty_id: row.faculty_id
+    }));
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.json(departments);
+  } catch (error) {
+    console.error('Ошибка загрузки кафедр:', error);
+    res.status(500).json({ error: 'Ошибка загрузки кафедр' });
+  } finally {
+    if (client) client.release();
+  }
+});
 app.listen(PORT, () => {
   console.log('='.repeat(60));
   console.log(`Node.js сервер запущен на http://localhost:${PORT}`);
