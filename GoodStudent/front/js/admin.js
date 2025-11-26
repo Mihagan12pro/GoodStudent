@@ -256,7 +256,7 @@ if(!tbody)return;
 tbody.innerHTML=this.filteredStudents.map(student=>{
 const group=this.groups.find(g=>g.id===student.groupId);
 const statusText=this.getStatusText(student.status);
-const assignedInstructor=this.getAssignedInstructor(student.groupId);
+const assignedInstructor = this.getAssignedInstructors(student.groupId);
 return`
 <tr>
 <td>${student.id}</td>
@@ -483,20 +483,33 @@ if(this.assignments.length===0){
 assignmentsContainer.innerHTML='<p style="text-align:center;color:#666;padding:20px;">Нет назначенных предметов</p>';
 return;
 }
-assignmentsContainer.innerHTML=this.assignments.map(assignment=>`
-<div class="assignment-item">
-<div class="assignment-header">
-<h4>${assignment.subject_name}</h4>
-<button class="btn-remove" onclick="adminApp.removeAssignment('${assignment.id}')">×</button>
-</div>
-<div class="assignment-details">
-<p><strong>Преподаватель:</strong>${assignment.instructor_surname}${assignment.instructor_name}</p>
-<p><strong>Группа:</strong>${assignment.group_number}</p>
-<p><strong>Кафедра:</strong>${assignment.department_name}</p>
-<small>Назначено:${new Date(assignment.created_at).toLocaleDateString('ru-RU')}</small>
-</div>
-</div>
-`).join('');
+assignmentsContainer.innerHTML = this.assignments.map(assignment => {
+        const instructor = this.instructors.find(i => i.id === assignment.instructor_id);
+        const subject = this.subjects.find(s => s.id === assignment.subject_id);
+        const group = this.groups.find(g => g.id === assignment.group_id);
+        const department = this.departments.find(d => d.id === assignment.department_id);        
+        console.log('Отладка назначения:', {
+            assignment: assignment,
+            instructor: instructor,
+            subject: subject,
+            group: group,
+            department: department
+        });        
+        return `
+            <div class="assignment-item">
+                <div class="assignment-header">
+                    <h4>${subject ? subject.name : 'Неизвестный предмет'}</h4>
+                    <button class="btn-remove" onclick="adminApp.removeAssignment('${assignment.id}')">×</button>
+                </div>
+                <div class="assignment-details">
+                    <p><strong>Преподаватель:</strong> ${instructor ? `${instructor.surname} ${instructor.name}` : 'Неизвестен'}</p>
+                    <p><strong>Группа:</strong> ${group ? group.number : 'Неизвестна'}</p>
+                    <p><strong>Кафедра:</strong> ${department ? department.tittle : 'Неизвестна'}</p>
+                    <small>Назначено: ${new Date(assignment.created_at).toLocaleDateString('ru-RU')}</small>
+                </div>
+            </div>
+        `;
+    }).join('');
 }
 clearAssignmentForm(){
 document.getElementById('instructor-select').value='';
