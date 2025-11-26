@@ -30,7 +30,7 @@
                 </div>
             </div>
         </header>
-        <main class="main-content">     
+        <main class="main-content">
             <aside class="schedule-sidebar">
                 <div class="schedule-header">
                     <h2>Расписание</h2>
@@ -78,25 +78,37 @@
             </aside>
             <section class="attendance-main">
                 <div class="attendance-header">
-                    <h3>Посещаемость за сегодня</h3>
+                    <h3>Посещаемость</h3>
+                    <div class="filters-container">
+                        <div class="filter-group">
+                            <label>Предмет:</label>
+                            <select id="subject-select" class="filter-select">
+                                <option value="all">Все предметы</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Группа:</label>
+                            <select id="group-select" class="filter-select">
+                                <option value="all">Все группы</option>
+                            </select>
+                        </div>
+                    </div>
                     <div class="date-info" id="current-date"></div>
                 </div>
                 <div class="content-area" id="content-area">
                     <div class="manual-attendance-view">
                         <div class="students-list-container">
                             <div class="students-header">
-                                <h4>Список студентов группы 231-324</h4>
+                                <h4>Список студентов</h4>
                                 <div class="attendance-stats">
                                     <span>Присутствуют: <strong id="present-count">0</strong>/<strong id="total-count">0</strong></span>
                                 </div>
-                            </div>                            
+                            </div>
                             <div class="students-list" id="students-list">
                             </div>
                         </div>
-                        <div class="attendance-actions" style="padding: 20px; text-align: center;">
-                            <button class="btn-primary" id="save-attendance-btn" 
-                            style="padding: 12px 24px; font-size: 16px;">Сохранить посещаемость
-                            </button>
+                        <div class="attendance-actions">
+                            <button class="btn-primary" id="save-attendance-btn">Сохранить посещаемость</button>
                         </div>
                         <div class="attendance-calendar">
                             <div class="calendar-header">
@@ -118,24 +130,24 @@
                 </div>
             </section>
         </main>
-<nav class="bottom-nav">
-    <button class="nav-item active" data-view="manual">
-        <img src="/images/чекбокс.jpg" alt="Ручная" class="nav-icon">
-        <span class="nav-label">Ручная</span>
-    </button>
-    <button class="nav-item" data-view="qr">
-        <img src="/images/qr.png" alt="QR" class="nav-icon">
-        <span class="nav-label">QR</span>
-    </button>
-    <button class="nav-item" data-view="ai">
-        <img src="/images/camera-outline.svg" alt="AI" class="nav-icon">
-        <span class="nav-label">AI</span>
-    </button>
-    <button class="nav-item" data-view="history">
-        <img src="/images/история.png" alt="История" class="nav-icon">
-        <span class="nav-label">История</span>
-    </button>
-</nav>
+        <nav class="bottom-nav">
+            <button class="nav-item active" data-view="manual">
+                <img src="/images/чекбокс.jpg" alt="Ручная" class="nav-icon">
+                <span class="nav-label">Ручная</span>
+            </button>
+            <button class="nav-item" data-view="qr">
+                <img src="/images/qr.png" alt="QR" class="nav-icon">
+                <span class="nav-label">QR</span>
+            </button>
+            <button class="nav-item" data-view="ai">
+                <img src="/images/camera-outline.svg" alt="AI" class="nav-icon">
+                <span class="nav-label">AI</span>
+            </button>
+            <button class="nav-item" data-view="history">
+                <img src="/images/история.png" alt="История" class="nav-icon">
+                <span class="nav-label">История</span>
+            </button>
+        </nav>
     </div>
     <div class="modal hidden" id="camera-modal">
         <div class="modal-content">

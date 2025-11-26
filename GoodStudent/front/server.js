@@ -417,6 +417,47 @@ app.get('/form.html', (req, res) => {
 app.get('*', (req, res) => {
   res.redirect('/');
 });
+// 🗑️ ПОЛНАЯ ОЧИСТКА БАЗЫ
+app.delete('/api/debug/clear-database', async (req, res) => {
+  let client;
+  try {
+    client = await pool.connect();
+    
+    console.log('🧹 Начинаем очистку базы...');
+    
+    // 1. Удаляем всех студентов
+    await client.query('DELETE FROM students');
+    console.log('✅ Студенты удалены');
+    
+    // 2. Удаляем все группы
+    await client.query('DELETE FROM groups');
+    console.log('✅ Группы удалены');
+    
+    // 3. Удаляем всю посещаемость
+    await client.query('DELETE FROM attendance');
+    console.log('✅ Посещаемость удалена');
+    
+    // 4. Создаем чистые группы заново
+    await client.query(`
+      INSERT INTO groups ("Id", "number", "profession_id") VALUES 
+      ('1', '231-324', '3fa85f64-5717-4562-b3fc-2c963f66afa6'),
+      ('2', '231-325', '3fa85f64-5717-4562-b3fc-2c963f66afa6'),
+      ('3', '231-326', '3fa85f64-5717-4562-b3fc-2c963f66afa6')
+    `);
+    console.log('✅ Чистые группы созданы');
+    
+    res.json({
+      success: true,
+      message: 'База полностью очищена! Созданы группы 231-324, 231-325, 231-326'
+    });
+    
+  } catch (error) {
+    console.error('❌ Ошибка очистки:', error);
+    res.status(500).json({ error: error.message });
+  } finally {
+    if (client) client.release();
+  }
+});
 app.listen(PORT, () => {
   console.log('='.repeat(60));
   console.log(`Node.js сервер запущен на http://localhost:${PORT}`);

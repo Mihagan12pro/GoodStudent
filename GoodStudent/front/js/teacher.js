@@ -3,49 +3,45 @@ class TeacherApp {
         if (!localStorage.getItem('authToken')) {
             window.location.href = '/form.html';
             return;
-        }        
+        }
         this.currentUser = JSON.parse(localStorage.getItem('user') || '{}');
         this.students = [];
         this.groups = [];
         this.subjects = [];
         this.currentGroupId = 'all';
+        this.currentSubjectId = 'all';
         this.currentView = 'manual';
         this.init();
     }
     async init() {
         console.log('Инициализация приложения преподавателя');
-        
         await this.loadInitialData();
-        this.setupNavigation();
         this.setupEventListeners();
         this.displayCurrentDate();
         this.setupAttendanceButton();
         this.generateCalendar();
     }
     async loadInitialData() {
-    try {
-        console.log('Загружаем данные из бэкенда...');
-        const [students, groups, subjects] = await Promise.all([
-            apiClient.getAllStudents().catch(() => []),
-            apiClient.getAllGroups().catch(() => []),
-            this.loadSubjects().catch(() => [])
-        ]);
-        this.students = this.normalizeStudents(students || []);
-        this.groups = this.fixGroupIds(groups || []); 
-        this.subjects = subjects || [];
-        console.log(`Данные загружены: 
-            Студентов: ${this.students.length}
-            Групп: ${this.groups.length}
-            Предметов: ${this.subjects.length}`);
-        this.debugStudentsAndGroups();
-        this.populateGroupSelector();
-        this.renderStudents();
-        this.updateStats();
-    } catch (error) {
-        console.error('Ошибка загрузки данных:', error);
-        this.showErrorMessage('Не удалось загрузить данные. Проверьте подключение к серверу.');
+        try {
+            console.log('Загружаем данные из бэкенда...');
+            const [students, groups, subjects] = await Promise.all([
+                apiClient.getAllStudents().catch(() => []),
+                apiClient.getAllGroups().catch(() => []),
+                apiClient.getAllSubjects().catch(() => [])
+            ]);
+            this.students = this.normalizeStudents(students || []);
+            this.groups = groups || [];
+            this.subjects = subjects || [];
+            console.log(`Данные загружены: Студентов: ${this.students.length} Групп: ${this.groups.length} Предметов: ${this.subjects.length}`);
+            this.populateSubjectSelector();
+            this.populateGroupSelector();
+            this.renderStudents();
+            this.updateStats();
+        } catch (error) {
+            console.error('Ошибка загрузки данных:', error);
+            this.showErrorMessage('Не удалось загрузить данные.');
+        }
     }
-}
 fixGroupIds(groups) {
     if (!groups || !Array.isArray(groups)) {
         return [];
@@ -454,12 +450,33 @@ fixGroupIds(groups) {
             console.error('Ошибка загрузки истории:', error);
         }
     }
+    populateSubjectSelector() {
+        const select = document.getElementById('subject-select');
+        if (!select) {
+            console.error('Элемент subject-select не найден');
+            return;
+        }
+        select.innerHTML = '<option value="all">Все предметы</option>';
+        this.subjects.forEach(subject => {
+            const option = document.createElement('option');
+            option.value = subject.id;
+            option.textContent = subject.name;
+            select.appendChild(option);
+        });
+        console.log(`Загружено предметов: ${this.subjects.length}`);
+    }
     setupEventListeners() {
         const groupSelect = document.getElementById('group-select');
         if (groupSelect) {
             groupSelect.addEventListener('change', (e) => {
                 this.currentGroupId = e.target.value;
-                console.log(`Выбрана группа: ${this.currentGroupId}`);
+                this.renderStudents();
+            });
+        }
+        const subjectSelect = document.getElementById('subject-select');
+        if (subjectSelect) {
+            subjectSelect.addEventListener('change', (e) => {
+                this.currentSubjectId = e.target.value;
                 this.renderStudents();
             });
         }
@@ -469,22 +486,6 @@ fixGroupIds(groups) {
                 localStorage.removeItem('authToken');
                 localStorage.removeItem('user');
                 window.location.href = 'form.html';
-            });
-        }
-        const loadStudentsBtn = document.querySelector('.btn-mark-attendance');
-        if (loadStudentsBtn) {
-            loadStudentsBtn.addEventListener('click', () => this.loadStudentsForAttendance());
-        }
-        const cameraClose = document.getElementById('camera-close');
-        if (cameraClose) {
-            cameraClose.addEventListener('click', () => {
-                document.getElementById('camera-modal').classList.add('hidden');
-            });
-        }
-        const startCamera = document.getElementById('start-camera');
-        if (startCamera) {
-            startCamera.addEventListener('click', () => {
-                alert('Функция AI-камеры будет доступна в следующем обновлении');
             });
         }
     }

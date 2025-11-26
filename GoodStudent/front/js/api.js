@@ -5,7 +5,7 @@ class ApiClient {
     }
     async request(endpoint, options = {}) {
         const url = `${this.baseUrl}${endpoint}`;
-        console.log(`Node.js API: ${options.method || 'GET'} ${url}`);        
+        console.log(`Node.js API: ${options.method || 'GET'} ${url}`);
         try {
             const config = {
                 headers: {
@@ -17,17 +17,22 @@ class ApiClient {
             if (['POST', 'PUT', 'PATCH'].includes(options.method) && options.body) {
                 config.body = JSON.stringify(options.body);
             }
-            const response = await fetch(url, config);            
+            const response = await fetch(url, config);
             if (!response.ok) {
-                const errorText = await response.text();
-                console.error(`HTTP ${response.status}: ${errorText}`);
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                if (response.status === 500) {
+                    throw new Error('Внутренняя ошибка сервера. Попробуйте позже.');
+                } else {
+                    throw new Error(`Ошибка ${response.status}: ${response.statusText}`);
+                }
             }
             const data = await response.json();
             console.log(`API Success:`, data);
             return data;
         } catch (error) {
             console.error(`API Error [${endpoint}]:`, error.message);
+            if (error.message.includes('Failed to fetch') || error.message.includes('Внутренняя ошибка')) {
+                throw new Error('Сервер недоступен. Проверьте подключение и попробуйте позже.');
+            }
             throw error;
         }
     }
@@ -37,9 +42,48 @@ class ApiClient {
             const students = await this.request('/students');
             return students;
         } catch (error) {
-            console.error('Ошибка загрузки студентов:', error);
+            console.error('Ошибка загрузки студентов:', error.message);
             return this.getFallbackStudents();
         }
+    }
+    async getAllGroups() {
+        try {
+            console.log('Запрос всех групп из PostgreSQL...');
+            const groups = await this.request('/groups');
+            return groups;
+        } catch (error) {
+            console.error('Ошибка загрузки групп:', error.message);
+            return this.getFallbackGroups();
+        }
+    }
+    async getAllSubjects() {
+        try {
+            console.log('Запрос всех предметов...');
+            const subjects = await this.request('/subjects');
+            return subjects;
+        } catch (error) {
+            console.error('Ошибка загрузки предметов:', error.message);
+            return [
+                { id: 1, name: 'Программирование' },
+                { id: 2, name: 'Базы данных' },
+                { id: 3, name: 'Веб-разработка' },
+                { id: 4, name: 'Математика' }
+            ];
+        }
+    }
+    getFallbackStudents() {
+        return [
+            { id: '1', name: 'Иван', surname: 'Иванов', patronymic: 'Иванович', groupId: '1', groupNumber: '231-324' },
+            { id: '2', name: 'Мария', surname: 'Петрова', patronymic: 'Сергеевна', groupId: '1', groupNumber: '231-324' },
+            { id: '3', name: 'Сергей', surname: 'Сидоров', patronymic: 'Алексеевич', groupId: '2', groupNumber: '231-325' }
+        ];
+    }
+    getFallbackGroups() {
+        return [
+            { id: '1', number: '231-324' },
+            { id: '2', number: '231-325' },
+            { id: '3', number: '231-326' }
+        ];
     }
     async getStudentById(id) {
         return await this.request(`/students/${id}`);
@@ -63,16 +107,6 @@ class ApiClient {
         };
         this.createdStudents.push(createdStudent);
         return result;
-    }
-    async getAllGroups() {
-        try {
-            console.log('Запрос всех групп из PostgreSQL');
-            const groups = await this.request('/groups');
-            return groups;
-        } catch (error) {
-            console.error('Ошибка загрузки групп:', error);
-            return this.getFallbackGroups();
-        }
     }
     async getGroupById(id) {
         return await this.request(`/groups/${id}`);
@@ -99,15 +133,6 @@ class ApiClient {
             method: 'POST',
             body: requestData
         });
-    }
-    async getAllSubjects() {
-        try {
-            console.log('Запрос всех предметов...');
-            return await this.request('/subjects');
-        } catch (error) {
-            console.error('Ошибка загрузки предметов:', error);
-            return this.getFallbackSubjects();
-        }
     }
     async getAllInstructors() {
         try {
@@ -300,42 +325,6 @@ class ApiClient {
             console.log(`${result.status} ${result.name}: ${result.responseTime || result.error}`);
         });
         return results;
-    }
-    getFallbackStudents() {
-        console.log('Используем тестовых студентов');
-        return [
-            {
-                id: '29883b0c-6b9b-44ab-997e-8113a0a63c21',
-                name: 'Иван',
-                surname: 'Иванов',
-                patronymic: 'Иванович',
-                groupId: 'b8f78604-7d47-4eb0-9389-6b8eaaa1653b',
-                groupNumber: '231-324'
-            },
-            {
-                id: 'b6ec0b67-b3ac-4c93-becf-22aaa9546b79',
-                name: 'Мария',
-                surname: 'Петрова', 
-                patronymic: 'Сергеевна',
-                groupId: 'b8f78604-7d47-4eb0-9389-6b8eaaa1653b',
-                groupNumber: '231-324'
-            },
-            {
-                id: '928348ec-9ebf-4cfa-bb27-2f6f94276c98',
-                name: 'Сергей',
-                surname: 'Сидоров',
-                patronymic: 'Алексеевич',
-                groupId: '137b8ecb-402d-41fe-979d-3bb5fd02e7c2',
-                groupNumber: '231-325'
-            }
-        ];
-    }
-    getFallbackGroups() {
-        return [
-            { id: 'b8f78604-7d47-4eb0-9389-6b8eaaa1653b', number: '231-324' },
-            { id: '137b8ecb-402d-41fe-979d-3bb5fd02e7c2', number: '231-325' },
-            { id: '73c75851-f1cb-48ce-8c15-af9f4c36f201', number: '231-326' }
-        ];
     }
     getFallbackSubjects() {
         return [
