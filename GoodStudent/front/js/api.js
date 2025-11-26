@@ -322,6 +322,36 @@ async updateGroup(groupId, groupData) {
         return { success: false, error: error.message };
     }
 }
+async getCSharpDepartments() {
+    try {
+        const response = await fetch(`${this.fallbackUrl}/csharp/departments`);
+        if (response.ok) return await response.json();
+        throw new Error('Failed to fetch departments');
+    } catch (error) {
+        console.error('Ошибка загрузки кафедр:', error);
+        return this.getFallbackDepartments();
+    }
+}
+async getCSharpFaculties() {
+    try {
+        const response = await fetch(`${this.fallbackUrl}/csharp/faculties`);
+        if (response.ok) return await response.json();
+        throw new Error('Failed to fetch faculties');
+    } catch (error) {
+        console.error('Ошибка загрузки факультетов:', error);
+        return [];
+    }
+}
+async getCSharpProfessions() {
+    try {
+        const response = await fetch(`${this.fallbackUrl}/csharp/professions`);
+        if (response.ok) return await response.json();
+        throw new Error('Failed to fetch professions');
+    } catch (error) {
+        console.error('Ошибка загрузки специальностей:', error);
+        return [];
+    }
+}
 }
 const apiClient=new ApiClient();
 window.apiClient=apiClient;

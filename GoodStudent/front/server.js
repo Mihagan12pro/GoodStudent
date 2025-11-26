@@ -356,6 +356,48 @@ app.post('/api/sync/csharp', async (req, res) => {
     res.status(500).json({ error: 'Ошибка синхронизации' });
   }
 });
+app.get('/api/csharp/departments', async (req, res) => {
+  try {
+    const response = await fetch('https://localhost:7298/api/sections/Departments');
+    if (response.ok) {
+      const departments = await response.json();
+      res.json(departments);
+    } else {
+      res.status(500).json({ error: 'Ошибка загрузки кафедр' });
+    }
+  } catch (error) {
+    console.error('Ошибка загрузки кафедр:', error);
+    res.status(500).json({ error: 'Ошибка загрузки кафедр' });
+  }
+});
+app.get('/api/csharp/faculties', async (req, res) => {
+  try {
+    const response = await fetch('https://localhost:7298/api/sections/Faculty');
+    if (response.ok) {
+      const faculties = await response.json();
+      res.json(faculties);
+    } else {
+      res.status(500).json({ error: 'Ошибка загрузки факультетов' });
+    }
+  } catch (error) {
+    console.error('Ошибка загрузки факультетов:', error);
+    res.status(500).json({ error: 'Ошибка загрузки факультетов' });
+  }
+});
+app.get('/api/csharp/professions', async (req, res) => {
+  try {
+    const response = await fetch('https://localhost:7298/api/sections/Professions');
+    if (response.ok) {
+      const professions = await response.json();
+      res.json(professions);
+    } else {
+      res.status(500).json({ error: 'Ошибка загрузки специальностей' });
+    }
+  } catch (error) {
+    console.error('Ошибка загрузки специальностей:', error);
+    res.status(500).json({ error: 'Ошибка загрузки специальностей' });
+  }
+});
 app.listen(PORT, () => {
   console.log('='.repeat(60));
   console.log(`Node.js сервер запущен на http://localhost:${PORT}`);

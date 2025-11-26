@@ -27,30 +27,44 @@ await this.loadAdminData();
 await this.loadAssignments();
 this.renderDataTable();
 }
-async loadAdminData(){
-try{
-console.log('Загружаем данные для админки');
-const[students,groups,instructors,departments,subjects]=await Promise.all([
-apiClient.getAllStudents(),
-apiClient.getAllGroups(),
-apiClient.getAllInstructors(),
-apiClient.getAllDepartments(),
-apiClient.getAllSubjects()
-]);
-this.students=students||[];
-this.groups=groups||[];
-this.instructors=instructors||[];
-this.departments=departments||[];
-this.subjects=subjects||[];
-this.filteredStudents=[...this.students];
-console.log('Данные загружены:',this.students.length,'студентов',this.groups.length,'групп');
-this.populateAssignmentSelectors();
-this.updateStats();
-this.renderDataTable();
-}catch(error){
-console.error('Ошибка загрузки данных админки:',error);
-this.useDemoData();
-}
+async loadAdminData() {
+    try {
+        console.log('Загружаем данные для админки из всех источников...');
+        const [students, groups, instructors, subjects] = await Promise.all([
+            apiClient.getAllStudents(),
+            apiClient.getAllGroups(), 
+            apiClient.getAllInstructors(),
+            apiClient.getAllSubjects()
+        ]);
+        const [departments, faculties, professions] = await Promise.all([
+            apiClient.getCSharpDepartments(),
+            apiClient.getCSharpFaculties(),
+            apiClient.getCSharpProfessions()
+        ]);
+        this.students = students || [];
+        this.groups = groups || [];
+        this.instructors = instructors || [];
+        this.subjects = subjects || [];
+        this.departments = departments || [];
+        this.faculties = faculties || [];
+        this.professions = professions || [];       
+        this.filteredStudents = [...this.students];        
+        console.log('Данные загружены:', {
+            students: this.students.length,
+            groups: this.groups.length, 
+            instructors: this.instructors.length,
+            departments: this.departments.length,
+            faculties: this.faculties.length,
+            professions: this.professions.length
+        });        
+        this.populateAssignmentSelectors();
+        this.updateStats();
+        this.renderDataTable();
+        
+    } catch (error) {
+        console.error('Ошибка загрузки данных админки:', error);
+        this.useDemoData();
+    }
 }
 renderDataTable(){
 const tableContainer=document.getElementById('data-table-container');
@@ -232,48 +246,201 @@ return`
 `;
 }).join('');
 }
-populateAssignmentSelectors(){
-const instructorSelect=document.getElementById('instructor-select');
-const subjectSelect=document.getElementById('subject-assign-select');
-const groupAssignSelect=document.getElementById('group-assign-select');
-const departmentSelect=document.getElementById('department-select');
-if(instructorSelect){
-instructorSelect.innerHTML='<option value="">Выберите преподавателя</option>';
-this.instructors.forEach(instructor=>{
-const option=document.createElement('option');
-option.value=instructor.id;
-option.textContent=`${instructor.surname} ${instructor.name}`;
-instructorSelect.appendChild(option);
-});
+populateAssignmentSelectors() {
+    // 1. Селектор преподавателей (из Node.js БД)
+    const instructorSelect = document.getElementById('instructor-select');
+    if (instructorSelect) {
+        instructorSelect.innerHTML = '<option value="">Выберите преподавателя</option>';
+        this.instructors.forEach(instructor => {
+            const option = document.createElement('option');
+            option.value = instructor.id;
+            option.textContent = `${instructor.surname} ${instructor.name} ${instructor.patronymic || ''}`;
+            instructorSelect.appendChild(option);
+        });
+        console.log('Загружено преподавателей:', this.instructors.length);
+    }
+    // 2. Селектор предметов (из Node.js БД)
+    const subjectSelect = document.getElementById('subject-assign-select');
+    if (subjectSelect) {
+        subjectSelect.innerHTML = '<option value="">Выберите предмет</option>';
+        this.subjects.forEach(subject => {
+            const option = document.createElement('option');
+            option.value = subject.id;
+            option.textContent = `${subject.name} (${subject.type || 'Не указан'})`;
+            subjectSelect.appendChild(option);
+        });
+        console.log('Загружено предметов:', this.subjects.length);
+    }
+    // 3. Селектор групп (из Node.js БД)
+    const groupAssignSelect = document.getElementById('group-assign-select');
+    if (groupAssignSelect) {
+        groupAssignSelect.innerHTML = '<option value="">Выберите группу</option>';
+        this.groups.forEach(group => {
+            const option = document.createElement('option');
+            option.value = group.id;
+            option.textContent = group.number;
+            option.title = `ID: ${group.id}`;
+            groupAssign.appendChild(option);
+        });
+        console.log('Загружено групп:', this.groups.length);
+    }
+    // 4. Селектор кафедр (из C# API)
+    const departmentSelect = document.getElementById('department-select');
+    if (departmentSelect) {
+        departmentSelect.innerHTML = '<option value="">Выберите кафедру</option>';
+        
+        if (this.departments && this.departments.length > 0) {
+            this.departments.forEach(dept => {
+                const option = document.createElement('option');
+                option.value = dept.id;
+                // Используем tittle из C# API или name как fallback
+                const displayName = dept.tittle || dept.name || 'Без названия';
+                const description = dept.description ? ` - ${dept.description}` : '';
+                option.textContent = displayName + description;
+                option.title = dept.description || displayName;
+                departmentSelect.appendChild(option);
+            });
+            console.log('Загружено кафедр из C# API:', this.departments.length);
+        } else {
+            // Fallback - кафедры из Node.js БД
+            const nodeJsDepartments = this.getFallbackDepartments();
+            nodeJsDepartments.forEach(dept => {
+                const option = document.createElement('option');
+                option.value = dept.id;
+                option.textContent = dept.tittle || dept.name;
+                departmentSelect.appendChild(option);
+            });
+            console.log('Используются кафедры из Node.js БД:', nodeJsDepartments.length);
+        }
+    }
+    // 5. Селектор факультетов (из C# API) - если есть в интерфейсе
+    const facultySelect = document.getElementById('faculty-select');
+    if (facultySelect) {
+        facultySelect.innerHTML = '<option value="">Выберите факультет</option>';
+        if (this.faculties && this.faculties.length > 0) {
+            this.faculties.forEach(faculty => {
+                const option = document.createElement('option');
+                option.value = faculty.id;
+                option.textContent = faculty.tittle || faculty.name || 'Без названия';
+                facultySelect.appendChild(option);
+            });
+            console.log('Загружено факультетов:', this.faculties.length);
+        }
+    }
+    // 6. Селектор специальностей (из C# API) - если есть в интерфейсе
+    const professionSelect = document.getElementById('profession-select');
+    if (professionSelect) {
+        professionSelect.innerHTML = '<option value="">Выберите специальность</option>';
+        if (this.professions && this.professions.length > 0) {
+            this.professions.forEach(profession => {
+                const option = document.createElement('option');
+                option.value = profession.id;
+                const displayName = profession.tittle || profession.name || 'Без названия';
+                const code = profession.code ? ` (${profession.code})` : '';
+                option.textContent = displayName + code;
+                professionSelect.appendChild(option);
+            });
+            console.log('Загружено специальностей:', this.professions.length);
+        }
+    }
+    // 7. Обновляем фильтры в таблице студентов
+    this.updateTableFilters();
 }
-if(subjectSelect){
-subjectSelect.innerHTML='<option value="">Выберите предмет</option>';
-this.subjects.forEach(subject=>{
-const option=document.createElement('option');
-option.value=subject.id;
-option.textContent=subject.name;
-subjectSelect.appendChild(option);
-});
+// Вспомогательный метод для обновления фильтров в таблице
+updateTableFilters() {
+    // Фильтр по группам в таблице
+    const groupFilter = document.getElementById('group-filter');
+    if (groupFilter) {
+        const currentValue = groupFilter.value;
+        groupFilter.innerHTML = '<option value="all">Все группы</option>';
+        this.groups.forEach(group => {
+            const option = document.createElement('option');
+            option.value = group.id;
+            option.textContent = group.number;
+            groupFilter.appendChild(option);
+        });
+        // Восстанавливаем выбранное значение
+        groupFilter.value = currentValue;
+    }
+    // Фильтр по преподавателям в таблице
+    const instructorFilter = document.getElementById('instructor-filter');
+    if (instructorFilter) {
+        const currentValue = instructorFilter.value;
+        instructorFilter.innerHTML = '<option value="all">Все преподаватели</option>';
+        this.instructors.forEach(instructor => {
+            const option = document.createElement('option');
+            option.value = instructor.id;
+            option.textContent = `${instructor.surname} ${instructor.name}`;
+            instructorFilter.appendChild(option);
+        });
+        // Восстанавливаем выбранное значение
+        instructorFilter.value = currentValue;
+    }
+    // Обновляем column filters в таблице
+    const groupColumnFilter = document.querySelector('.column-filter[onchange*="group"]');
+    if (groupColumnFilter) {
+        groupColumnFilter.innerHTML = '<option value="all">Все группы</option>';
+        this.groups.forEach(group => {
+            const option = document.createElement('option');
+            option.value = group.id;
+            option.textContent = group.number;
+            groupColumnFilter.appendChild(option);
+        });
+    }
+    const instructorColumnFilter = document.querySelector('.column-filter[onchange*="instructor"]');
+    if (instructorColumnFilter) {
+        instructorColumnFilter.innerHTML = '<option value="all">Все преподаватели</option>';
+        this.instructors.forEach(instructor => {
+            const option = document.createElement('option');
+            option.value = instructor.id;
+            option.textContent = `${instructor.surname} ${instructor.name}`;
+            instructorColumnFilter.appendChild(option);
+        });
+    }
 }
-if(groupAssignSelect){
-groupAssignSelect.innerHTML='<option value="">Выберите группу</option>';
-this.groups.forEach(group=>{
-const option=document.createElement('option');
-option.value=group.id;
-option.textContent=group.number;
-groupAssignSelect.appendChild(option);
-});
-}
-if(departmentSelect){
-departmentSelect.innerHTML='<option value="">Выберите кафедру</option>';
-this.departments.forEach(dept=>{
-const option=document.createElement('option');
-option.value=dept.id;
-option.textContent=dept.tittle||dept.name;
-departmentSelect.appendChild(option);
-});
-}
-}
+// populateAssignmentSelectors(){
+// const instructorSelect=document.getElementById('instructor-select');
+// const subjectSelect=document.getElementById('subject-assign-select');
+// const groupAssignSelect=document.getElementById('group-assign-select');
+// const departmentSelect=document.getElementById('department-select');
+// if(instructorSelect){
+// instructorSelect.innerHTML='<option value="">Выберите преподавателя</option>';
+// this.instructors.forEach(instructor=>{
+// const option=document.createElement('option');
+// option.value=instructor.id;
+// option.textContent=`${instructor.surname} ${instructor.name}`;
+// instructorSelect.appendChild(option);
+// });
+// }
+// if(subjectSelect){
+// subjectSelect.innerHTML='<option value="">Выберите предмет</option>';
+// this.subjects.forEach(subject=>{
+// const option=document.createElement('option');
+// option.value=subject.id;
+// option.textContent=subject.name;
+// subjectSelect.appendChild(option);
+// });
+// }
+// if(groupAssignSelect){
+// groupAssignSelect.innerHTML='<option value="">Выберите группу</option>';
+// this.groups.forEach(group=>{
+// const option=document.createElement('option');
+// option.value=group.id;
+// option.textContent=group.number;
+// groupAssignSelect.appendChild(option);
+// });
+// }
+// if(departmentSelect){
+// departmentSelect.innerHTML='<option value="">Выберите кафедру</option>';
+// this.departments.forEach(dept=>{
+// const option=document.createElement('option');
+// option.value=dept.id;
+// option.textContent=dept.tittle||dept.name;
+// departmentSelect.appendChild(option);
+// });
+// }
+// }
+
 async loadAssignments(){
 try{
 const response=await fetch('http://localhost:5000/api/assignments');
@@ -658,12 +825,14 @@ return[
 {id:'4',name:'Ольга',surname:'Макарова',patronymic:'Сергеевна',departmentId:'2'}
 ];
 }
-getFallbackDepartments(){
-return[
-{id:'1',tittle:'Информационные системы',description:'Кафедра информационных систем'},
-{id:'2',tittle:'Программная инженерия',description:'Кафедра программной инженерии'},
-{id:'3',tittle:'Компьютерная безопасность',description:'Кафедра компьютерной безопасности'}
-];
+getFallbackDepartments() {
+    return [
+        { id: '1', tittle: 'Информационные системы', description: 'Кафедра информационных систем' },
+        { id: '2', tittle: 'Программная инженерия', description: 'Кафедра программной инженерии' },
+        { id: '3', tittle: 'Компьютерная безопасность', description: 'Кафедра компьютерной безопасности' },
+        { id: '4', tittle: 'Прикладная математика', description: 'Кафедра прикладной математики' },
+        { id: '5', tittle: 'Системный анализ', description: 'Кафедра системного анализа' }
+    ];
 }
 getFallbackSubjects(){
 return[
