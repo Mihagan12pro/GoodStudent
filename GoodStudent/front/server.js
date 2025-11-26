@@ -358,18 +358,28 @@ app.post('/api/sync/csharp', async (req, res) => {
 });
 app.get('/api/csharp/departments', async (req, res) => {
   try {
-    const response = await fetch('https://localhost:7298/api/sections/Departments');
+    console.log('Загрузка кафедр из C# API...');
+    const response = await fetch('https://localhost:7298/api/sections/Departments', {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      }
+    });    
     if (response.ok) {
       const departments = await response.json();
+      console.log(`Загружено кафедр: ${departments.length}`);
       res.json(departments);
     } else {
-      res.status(500).json({ error: 'Ошибка загрузки кафедр' });
+      console.error('Ошибка C# API:', response.status, response.statusText);
+      res.status(500).json({ error: 'Ошибка загрузки кафедр из C# API' });
     }
   } catch (error) {
-    console.error('Ошибка загрузки кафедр:', error);
-    res.status(500).json({ error: 'Ошибка загрузки кафедр' });
+    console.error('Ошибка подключения к C# API:', error.message);
+    res.status(500).json({ error: 'Не удалось подключиться к C# бэкенду' });
   }
 });
+
 app.get('/api/csharp/faculties', async (req, res) => {
   try {
     const response = await fetch('https://localhost:7298/api/sections/Faculty');

@@ -29,7 +29,7 @@ this.renderDataTable();
 }
 async loadAdminData() {
     try {
-        console.log('Загружаем данные для админки из всех источников...');
+        console.log('Загружаем данные для админки из всех источников');
         const [students, groups, instructors, subjects] = await Promise.all([
             apiClient.getAllStudents(),
             apiClient.getAllGroups(), 
@@ -60,11 +60,31 @@ async loadAdminData() {
         this.populateAssignmentSelectors();
         this.updateStats();
         this.renderDataTable();
-        
+        this.showDataLoadedNotification();
     } catch (error) {
         console.error('Ошибка загрузки данных админки:', error);
         this.useDemoData();
     }
+}
+showDataLoadedNotification() {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #28a745;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 6px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 1000;
+        font-weight: 500;
+    `;
+    notification.textContent = `Данные загружены: ${this.students.length} студентов, ${this.departments.length} кафедр`;
+    document.body.appendChild(notification);    
+    setTimeout(() => {
+        document.body.removeChild(notification);
+    }, 3000);
 }
 renderDataTable(){
 const tableContainer=document.getElementById('data-table-container');
@@ -280,7 +300,7 @@ populateAssignmentSelectors() {
             option.value = group.id;
             option.textContent = group.number;
             option.title = `ID: ${group.id}`;
-            groupAssign.appendChild(option);
+            groupAssignSelect.appendChild(option); 
         });
         console.log('Загружено групп:', this.groups.length);
     }
@@ -712,15 +732,19 @@ this.selectedFile=null;
 const saveBtn=document.getElementById('save-excel-data');
 if(saveBtn)saveBtn.style.display='none';
 }
-updateStats(){
-const totalStudents=document.getElementById('total-students');
-const totalGroups=document.getElementById('total-groups');
-const totalTeachers=document.getElementById('total-teachers');
-const totalAssignments=document.getElementById('total-assignments');
-if(totalStudents)totalStudents.textContent=this.students.length;
-if(totalGroups)totalGroups.textContent=this.groups.length;
-if(totalTeachers)totalTeachers.textContent=this.instructors.length;
-if(totalAssignments)totalAssignments.textContent=this.assignments.length;
+updateStats() {
+    const totalStudents = document.getElementById('total-students');
+    const totalGroups = document.getElementById('total-groups');
+    const totalTeachers = document.getElementById('total-teachers');
+    const totalAssignments = document.getElementById('total-assignments');
+    const totalDepartments = document.getElementById('total-departments');
+    const totalFaculties = document.getElementById('total-faculties');
+    if (totalStudents) totalStudents.textContent = this.students.length;
+    if (totalGroups) totalGroups.textContent = this.groups.length;
+    if (totalTeachers) totalTeachers.textContent = this.instructors.length;
+    if (totalAssignments) totalAssignments.textContent = this.assignments.length;
+    if (totalDepartments) totalDepartments.textContent = this.departments.length;
+    if (totalFaculties) totalFaculties.textContent = this.faculties.length;
 }
 displayCurrentDate(){
 const now=new Date();

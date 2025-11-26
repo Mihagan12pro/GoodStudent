@@ -324,11 +324,16 @@ async updateGroup(groupId, groupData) {
 }
 async getCSharpDepartments() {
     try {
+        console.log('Загрузка кафедр через прокси...');
         const response = await fetch(`${this.fallbackUrl}/csharp/departments`);
-        if (response.ok) return await response.json();
-        throw new Error('Failed to fetch departments');
+        if (response.ok) {
+            const departments = await response.json();
+            console.log('Кафедры загружены:', departments);
+            return departments;
+        }
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     } catch (error) {
-        console.error('Ошибка загрузки кафедр:', error);
+        console.error('Ошибка загрузки кафедр через прокси:', error);
         return this.getFallbackDepartments();
     }
 }
@@ -351,6 +356,13 @@ async getCSharpProfessions() {
         console.error('Ошибка загрузки специальностей:', error);
         return [];
     }
+}
+getFallbackDepartments() {
+    return [
+        { id: '1', tittle: 'Информационные системы', description: 'Кафедра информационных систем' },
+        { id: '2', tittle: 'Программная инженерия', description: 'Кафедра программной инженерии' },
+        { id: '3', tittle: 'Компьютерная безопасность', description: 'Кафедра компьютерной безопасности' }
+    ];
 }
 }
 const apiClient=new ApiClient();
