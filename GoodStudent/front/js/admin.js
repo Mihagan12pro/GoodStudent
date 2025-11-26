@@ -125,8 +125,8 @@ return`
 <td>${statusText}</td>
 <td>${assignedInstructor}</td>
 <td>
-<button class="btn-action btn-edit" onclick="adminApp.editStudent('${student.id}')">✏️</button>
-<button class="btn-action btn-delete" onclick="adminApp.deleteStudent('${student.id}')">🗑️</button>
+<button class="btn-action btn-edit" onclick="adminApp.editStudent('${student.id}')">редактировать</button>
+<button class="btn-action btn-delete" onclick="adminApp.deleteStudent('${student.id}')">удалить</button>
 </td>
 </tr>
 `;

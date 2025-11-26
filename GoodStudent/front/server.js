@@ -11,10 +11,8 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
 const app = express();
 const PORT = 5000;
-
 const poolConfig = {
   user: 'postgres',
   host: 'localhost',
@@ -23,25 +21,21 @@ const poolConfig = {
   port: 5432,
   connectionTimeoutMillis: 5000,
   idleTimeoutMillis: 30000,
-  max: 20
+  max: 20,
+  client_encoding: 'UTF8' 
 };
-
 const pool = new Pool(poolConfig);
-
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
 app.use((req, res, next) => {
     console.log(`${req.method} ${req.url}`);
     next();
 });
-
 app.use('/css', express.static(path.join(__dirname, 'css')));
 app.use('/js', express.static(path.join(__dirname, 'js')));
 app.use('/images', express.static(path.join(__dirname, 'images')));
 app.use('/pages', express.static(path.join(__dirname, 'pages')));
-
 function generateUUID() {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
         const r = Math.random() * 16 | 0;
@@ -49,7 +43,6 @@ function generateUUID() {
         return v.toString(16);
     });
 }
-
 app.get('/api/students', async (req, res) => {
   let client;
   try {
@@ -81,6 +74,7 @@ app.get('/api/groups', async (req, res) => {
 });
 
 app.get('/api/instructors', async (req, res) => {
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
   let client;
   try {
     client = await pool.connect();
@@ -96,6 +90,7 @@ app.get('/api/instructors', async (req, res) => {
 });
 
 app.get('/api/departments', async (req, res) => {
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
   let client;
   try {
     client = await pool.connect();
@@ -292,13 +287,15 @@ app.post('/api/attendance', async (req, res) => {
     if (client) client.release();
   }
 });
-
 app.get('/', (req, res) => {res.sendFile(path.join(__dirname, 'form.html'));});
 app.get('/index.html', (req, res) => {res.sendFile(path.join(__dirname, 'index.html'));});
 app.get('/admin-dashboard.html', (req, res) => {res.sendFile(path.join(__dirname, 'admin-dashboard.html'));});
 app.get('/form.html', (req, res) => {res.sendFile(path.join(__dirname, 'form.html'));});
 app.get('*', (req, res) => {res.redirect('/');});
-
+app.use((req, res, next) => {
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    next();
+});
 app.listen(PORT, () => {
   console.log('='.repeat(60));
   console.log(`Node.js сервер запущен на http://localhost:${PORT}`);
