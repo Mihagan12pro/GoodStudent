@@ -4,6 +4,42 @@ class ApiClient {
         this.fallbackUrl = 'http://localhost:5000/api';
         this.useFallback = true;
     }
+async updateDepartment(departmentId, data) {
+    return await this.request(`/sections/Departments?DepartmentId=${departmentId}`, {
+        method: 'PATCH',
+        body: data
+    });
+}
+async getDepartmentIds() {
+    return await this.request('/sections/Departments/ids');
+}
+async createFaculty(data) {
+    return await this.request('/sections/Faculty', {
+        method: 'POST', 
+        body: data
+    });
+}
+async getFaculties() {
+    return await this.request('/sections/Faculty');
+}
+async createInstructor(data) {
+    return await this.request('/Instructors', {
+        method: 'POST',
+        body: data
+    });
+}
+async updateInstructor(instructorId, data) {
+    return await this.request(`/Instructors/update/${instructorId}`, {
+        method: 'PATCH', 
+        body: data
+    });
+}
+async createProfession(data) {
+    return await this.request('/sections/Professions', {
+        method: 'POST',
+        body: data
+    });
+}
     async request(endpoint, options = {}) {
         const url = `${this.baseUrl}${endpoint}`;
         try {
@@ -25,8 +61,7 @@ class ApiClient {
         }catch(error){
             throw error;
         }
-    }
-    
+    }   
     async requestFallback(endpoint,options={}){
         const url=`${this.fallbackUrl}${endpoint}`;
         try{
@@ -368,6 +403,19 @@ async updateGroup(groupId, groupData) {
     } catch (error) {
         console.error('Ошибка обновления группы:', error);
         return { success: false, error: error.message };
+    }
+}
+async getAllSubjectsFull() {
+    return await this.request('/sections/Subjects'); 
+}
+async getCSharpSubjects() {
+    try {
+        const response = await fetch(`${this.fallbackUrl}/csharp/subjects`);
+        if (response.ok) return await response.json();
+        throw new Error('Failed to fetch subjects');
+    } catch (error) {
+        console.error('Ошибка загрузки предметов из C#:', error);
+        return this.getFallbackSubjects();
     }
 }
 async getCSharpDepartments() {

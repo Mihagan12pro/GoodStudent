@@ -511,6 +511,19 @@ app.get('/api/schedule-details', async (req, res) => {
     if (client) client.release();
   }
 });
+app.get('/api/csharp/subjects', async (req, res) => {
+    try {
+        const response = await fetch('https://localhost:7298/api/Subjects');
+        if (response.ok) {
+            const subjects = await response.json();
+            res.json(subjects);
+        } else {
+            throw new Error('C# API error');
+        }
+    } catch (error) {
+        res.status(500).json({ error: 'Ошибка загрузки предметов' });
+    }
+});
 app.get('/', (req, res) => { res.sendFile(path.join(__dirname, 'form.html')); });
 app.get('/index.html', (req, res) => { res.sendFile(path.join(__dirname, 'index.html')); });
 app.get('/admin-dashboard.html', (req, res) => { res.sendFile(path.join(__dirname, 'admin-dashboard.html')); });

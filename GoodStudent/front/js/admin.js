@@ -35,10 +35,21 @@ const[students,groups,instructors,departments,subjects,faculties]=await Promise.
 apiClient.getAllStudents(),
 apiClient.getAllGroups(),
 apiClient.getAllInstructors(),
-apiClient.getAllDepartments(),
-apiClient.getAllSubjects(),
-apiClient.getFullFaculties()
+// apiClient.getAllDepartments(),
+// apiClient.getAllSubjects(),
+// apiClient.getFullFaculties()
+apiClient.getCSharpDepartments(),   
+apiClient.getAllSubjectsFull(),     
+apiClient.getCSharpFaculties()     
 ]);
+console.log('ДАННЫЕ ИЗ C# API:', {
+            students: students.length,
+            groups: groups.length, 
+            instructors: instructors.length,
+            departments: departments.length,
+            subjects: subjects.length,
+            faculties: faculties.length
+});
 console.log('ДАННЫЕ ПРЕПОДАВАТЕЛЕЙ С СЕРВЕРА:',instructors);
 this.students=students||[];
 this.groups=groups||[];
