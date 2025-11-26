@@ -18,6 +18,7 @@ group:'all',
 instructor:'all',
 status:'all'
 };
+this.currentTab='students';
 this.init();
 }
 async init(){
@@ -27,64 +28,34 @@ await this.loadAdminData();
 await this.loadAssignments();
 this.renderDataTable();
 }
-async loadAdminData() {
-    try {
-        console.log('Загружаем данные для админки из всех источников');
-        const [students, groups, instructors, subjects] = await Promise.all([
-            apiClient.getAllStudents(),
-            apiClient.getAllGroups(), 
-            apiClient.getAllInstructors(),
-            apiClient.getAllSubjects()
-        ]);
-        const [departments, faculties, professions] = await Promise.all([
-            apiClient.getCSharpDepartments(),
-            apiClient.getCSharpFaculties(),
-            apiClient.getCSharpProfessions()
-        ]);
-        this.students = students || [];
-        this.groups = groups || [];
-        this.instructors = instructors || [];
-        this.subjects = subjects || [];
-        this.departments = departments || [];
-        this.faculties = faculties || [];
-        this.professions = professions || [];       
-        this.filteredStudents = [...this.students];        
-        console.log('Данные загружены:', {
-            students: this.students.length,
-            groups: this.groups.length, 
-            instructors: this.instructors.length,
-            departments: this.departments.length,
-            faculties: this.faculties.length,
-            professions: this.professions.length
-        });        
-        this.populateAssignmentSelectors();
-        this.updateStats();
-        this.renderDataTable();
-        this.showDataLoadedNotification();
-    } catch (error) {
-        console.error('Ошибка загрузки данных админки:', error);
-        this.useDemoData();
-    }
+async loadAdminData(){
+try{
+console.log('Загружаем РЕАЛЬНЫЕ данные из базы');
+const[students,groups,instructors,subjects,departments,faculties]=await Promise.all([
+apiClient.getAllStudents(),
+apiClient.getAllGroups(),
+apiClient.getFullInstructors(),
+apiClient.getFullSubjects(),
+apiClient.getFullDepartments(),
+apiClient.getFullFaculties()//загружаем факультеты
+]);
+this.students=students||[];
+this.groups=groups||[];
+this.instructors=instructors||[];
+this.subjects=subjects||[];
+this.departments=departments||[];
+this.faculties=faculties||[];//реальные факультеты
+this.professions=[];
+this.filteredStudents=[...this.students];
+console.log('РЕАЛЬНЫЕ данные загружены:',{students:this.students.length,groups:this.groups.length,instructors:this.instructors.length,subjects:this.subjects.length,departments:this.departments.length,faculties:this.faculties.length});
+this.populateAssignmentSelectors();
+this.updateStats();
+this.renderDataTable();
+this.loadTabData(this.currentTab);
+}catch(error){
+console.error('Ошибка загрузки данных админки:',error);
+this.useDemoData();
 }
-showDataLoadedNotification() {
-    const notification = document.createElement('div');
-    notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: #28a745;
-        color: white;
-        padding: 12px 20px;
-        border-radius: 6px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        z-index: 1000;
-        font-weight: 500;
-    `;
-    notification.textContent = `Данные загружены: ${this.students.length} студентов, ${this.departments.length} кафедр`;
-    document.body.appendChild(notification);    
-    setTimeout(() => {
-        document.body.removeChild(notification);
-    }, 3000);
 }
 renderDataTable(){
 const tableContainer=document.getElementById('data-table-container');
@@ -111,7 +82,7 @@ ${this.groups.map(group=>`<option value="${group.id}">${group.number}</option>`)
 <label>Преподаватель:</label>
 <select id="instructor-filter" class="filter-select">
 <option value="all">Все преподаватели</option>
-${this.instructors.map(instructor=>`<option value="${instructor.id}">${instructor.surname} ${instructor.name}</option>`).join('')}
+${this.instructors.map(instructor=>`<option value="${instructor.id}">${instructor.surname}${instructor.name}</option>`).join('')}
 </select>
 </div>
 <div class="filter-group">
@@ -131,16 +102,16 @@ ${this.instructors.map(instructor=>`<option value="${instructor.id}">${instructo
 <th>ID</th>
 <th>ФИО студента</th>
 <th>
-<select class="column-filter" onchange="adminApp.filterByColumn('group', this.value)">
+<select class="column-filter" onchange="adminApp.filterByColumn('group',this.value)">
 <option value="all">Все группы</option>
 ${this.groups.map(group=>`<option value="${group.id}">${group.number}</option>`).join('')}
 </select>
 </th>
 <th>Статус</th>
 <th>
-<select class="column-filter" onchange="adminApp.filterByColumn('instructor', this.value)">
+<select class="column-filter" onchange="adminApp.filterByColumn('instructor',this.value)">
 <option value="all">Все преподаватели</option>
-${this.instructors.map(instructor=>`<option value="${instructor.id}">${instructor.surname} ${instructor.name}</option>`).join('')}
+${this.instructors.map(instructor=>`<option value="${instructor.id}">${instructor.surname}${instructor.name}</option>`).join('')}
 </select>
 </th>
 <th>Действия</th>
@@ -154,7 +125,7 @@ const assignedInstructor=this.getAssignedInstructor(student.groupId);
 return`
 <tr>
 <td>${student.id}</td>
-<td>${student.surname} ${student.name} ${student.patronymic||''}</td>
+<td>${student.surname}${student.name}${student.patronymic||''}</td>
 <td>${group?group.number:'Не указана'}</td>
 <td>${statusText}</td>
 <td>${assignedInstructor}</td>
@@ -213,7 +184,7 @@ default:return'<span class="status-unknown">Неизвестно</span>';
 }
 getAssignedInstructor(groupId){
 const assignment=this.assignments.find(a=>a.group_id===groupId);
-return assignment?`${assignment.instructor_surname} ${assignment.instructor_name}`:'Не назначен';
+return assignment?`${assignment.instructor_surname}${assignment.instructor_name}`:'Не назначен';
 }
 applyFilters(){
 const groupFilter=document.getElementById('group-filter')?.value||'all';
@@ -254,7 +225,7 @@ const assignedInstructor=this.getAssignedInstructor(student.groupId);
 return`
 <tr>
 <td>${student.id}</td>
-<td>${student.surname} ${student.name} ${student.patronymic||''}</td>
+<td>${student.surname}${student.name}${student.patronymic||''}</td>
 <td>${group?group.number:'Не указана'}</td>
 <td>${statusText}</td>
 <td>${assignedInstructor}</td>
@@ -266,201 +237,48 @@ return`
 `;
 }).join('');
 }
-populateAssignmentSelectors() {
-    // 1. Селектор преподавателей (из Node.js БД)
-    const instructorSelect = document.getElementById('instructor-select');
-    if (instructorSelect) {
-        instructorSelect.innerHTML = '<option value="">Выберите преподавателя</option>';
-        this.instructors.forEach(instructor => {
-            const option = document.createElement('option');
-            option.value = instructor.id;
-            option.textContent = `${instructor.surname} ${instructor.name} ${instructor.patronymic || ''}`;
-            instructorSelect.appendChild(option);
-        });
-        console.log('Загружено преподавателей:', this.instructors.length);
-    }
-    // 2. Селектор предметов (из Node.js БД)
-    const subjectSelect = document.getElementById('subject-assign-select');
-    if (subjectSelect) {
-        subjectSelect.innerHTML = '<option value="">Выберите предмет</option>';
-        this.subjects.forEach(subject => {
-            const option = document.createElement('option');
-            option.value = subject.id;
-            option.textContent = `${subject.name} (${subject.type || 'Не указан'})`;
-            subjectSelect.appendChild(option);
-        });
-        console.log('Загружено предметов:', this.subjects.length);
-    }
-    // 3. Селектор групп (из Node.js БД)
-    const groupAssignSelect = document.getElementById('group-assign-select');
-    if (groupAssignSelect) {
-        groupAssignSelect.innerHTML = '<option value="">Выберите группу</option>';
-        this.groups.forEach(group => {
-            const option = document.createElement('option');
-            option.value = group.id;
-            option.textContent = group.number;
-            option.title = `ID: ${group.id}`;
-            groupAssignSelect.appendChild(option); 
-        });
-        console.log('Загружено групп:', this.groups.length);
-    }
-    // 4. Селектор кафедр (из C# API)
-    const departmentSelect = document.getElementById('department-select');
-    if (departmentSelect) {
-        departmentSelect.innerHTML = '<option value="">Выберите кафедру</option>';
-        
-        if (this.departments && this.departments.length > 0) {
-            this.departments.forEach(dept => {
-                const option = document.createElement('option');
-                option.value = dept.id;
-                // Используем tittle из C# API или name как fallback
-                const displayName = dept.tittle || dept.name || 'Без названия';
-                const description = dept.description ? ` - ${dept.description}` : '';
-                option.textContent = displayName + description;
-                option.title = dept.description || displayName;
-                departmentSelect.appendChild(option);
-            });
-            console.log('Загружено кафедр из C# API:', this.departments.length);
-        } else {
-            // Fallback - кафедры из Node.js БД
-            const nodeJsDepartments = this.getFallbackDepartments();
-            nodeJsDepartments.forEach(dept => {
-                const option = document.createElement('option');
-                option.value = dept.id;
-                option.textContent = dept.tittle || dept.name;
-                departmentSelect.appendChild(option);
-            });
-            console.log('Используются кафедры из Node.js БД:', nodeJsDepartments.length);
-        }
-    }
-    // 5. Селектор факультетов (из C# API) - если есть в интерфейсе
-    const facultySelect = document.getElementById('faculty-select');
-    if (facultySelect) {
-        facultySelect.innerHTML = '<option value="">Выберите факультет</option>';
-        if (this.faculties && this.faculties.length > 0) {
-            this.faculties.forEach(faculty => {
-                const option = document.createElement('option');
-                option.value = faculty.id;
-                option.textContent = faculty.tittle || faculty.name || 'Без названия';
-                facultySelect.appendChild(option);
-            });
-            console.log('Загружено факультетов:', this.faculties.length);
-        }
-    }
-    // 6. Селектор специальностей (из C# API) - если есть в интерфейсе
-    const professionSelect = document.getElementById('profession-select');
-    if (professionSelect) {
-        professionSelect.innerHTML = '<option value="">Выберите специальность</option>';
-        if (this.professions && this.professions.length > 0) {
-            this.professions.forEach(profession => {
-                const option = document.createElement('option');
-                option.value = profession.id;
-                const displayName = profession.tittle || profession.name || 'Без названия';
-                const code = profession.code ? ` (${profession.code})` : '';
-                option.textContent = displayName + code;
-                professionSelect.appendChild(option);
-            });
-            console.log('Загружено специальностей:', this.professions.length);
-        }
-    }
-    // 7. Обновляем фильтры в таблице студентов
-    this.updateTableFilters();
+populateAssignmentSelectors(){
+const instructorSelect=document.getElementById('instructor-select');
+const subjectSelect=document.getElementById('subject-assign-select');
+const groupAssignSelect=document.getElementById('group-assign-select');
+const departmentSelect=document.getElementById('department-select');
+if(instructorSelect){
+instructorSelect.innerHTML='<option value="">Выберите преподавателя</option>';
+this.instructors.forEach(instructor=>{
+const option=document.createElement('option');
+option.value=instructor.id;
+option.textContent=`${instructor.surname}${instructor.name}`;
+instructorSelect.appendChild(option);
+});
 }
-// Вспомогательный метод для обновления фильтров в таблице
-updateTableFilters() {
-    // Фильтр по группам в таблице
-    const groupFilter = document.getElementById('group-filter');
-    if (groupFilter) {
-        const currentValue = groupFilter.value;
-        groupFilter.innerHTML = '<option value="all">Все группы</option>';
-        this.groups.forEach(group => {
-            const option = document.createElement('option');
-            option.value = group.id;
-            option.textContent = group.number;
-            groupFilter.appendChild(option);
-        });
-        // Восстанавливаем выбранное значение
-        groupFilter.value = currentValue;
-    }
-    // Фильтр по преподавателям в таблице
-    const instructorFilter = document.getElementById('instructor-filter');
-    if (instructorFilter) {
-        const currentValue = instructorFilter.value;
-        instructorFilter.innerHTML = '<option value="all">Все преподаватели</option>';
-        this.instructors.forEach(instructor => {
-            const option = document.createElement('option');
-            option.value = instructor.id;
-            option.textContent = `${instructor.surname} ${instructor.name}`;
-            instructorFilter.appendChild(option);
-        });
-        // Восстанавливаем выбранное значение
-        instructorFilter.value = currentValue;
-    }
-    // Обновляем column filters в таблице
-    const groupColumnFilter = document.querySelector('.column-filter[onchange*="group"]');
-    if (groupColumnFilter) {
-        groupColumnFilter.innerHTML = '<option value="all">Все группы</option>';
-        this.groups.forEach(group => {
-            const option = document.createElement('option');
-            option.value = group.id;
-            option.textContent = group.number;
-            groupColumnFilter.appendChild(option);
-        });
-    }
-    const instructorColumnFilter = document.querySelector('.column-filter[onchange*="instructor"]');
-    if (instructorColumnFilter) {
-        instructorColumnFilter.innerHTML = '<option value="all">Все преподаватели</option>';
-        this.instructors.forEach(instructor => {
-            const option = document.createElement('option');
-            option.value = instructor.id;
-            option.textContent = `${instructor.surname} ${instructor.name}`;
-            instructorColumnFilter.appendChild(option);
-        });
-    }
+if(subjectSelect){
+subjectSelect.innerHTML='<option value="">Выберите предмет</option>';
+this.subjects.forEach(subject=>{
+const option=document.createElement('option');
+option.value=subject.id;
+option.textContent=subject.name;
+subjectSelect.appendChild(option);
+});
 }
-// populateAssignmentSelectors(){
-// const instructorSelect=document.getElementById('instructor-select');
-// const subjectSelect=document.getElementById('subject-assign-select');
-// const groupAssignSelect=document.getElementById('group-assign-select');
-// const departmentSelect=document.getElementById('department-select');
-// if(instructorSelect){
-// instructorSelect.innerHTML='<option value="">Выберите преподавателя</option>';
-// this.instructors.forEach(instructor=>{
-// const option=document.createElement('option');
-// option.value=instructor.id;
-// option.textContent=`${instructor.surname} ${instructor.name}`;
-// instructorSelect.appendChild(option);
-// });
-// }
-// if(subjectSelect){
-// subjectSelect.innerHTML='<option value="">Выберите предмет</option>';
-// this.subjects.forEach(subject=>{
-// const option=document.createElement('option');
-// option.value=subject.id;
-// option.textContent=subject.name;
-// subjectSelect.appendChild(option);
-// });
-// }
-// if(groupAssignSelect){
-// groupAssignSelect.innerHTML='<option value="">Выберите группу</option>';
-// this.groups.forEach(group=>{
-// const option=document.createElement('option');
-// option.value=group.id;
-// option.textContent=group.number;
-// groupAssignSelect.appendChild(option);
-// });
-// }
-// if(departmentSelect){
-// departmentSelect.innerHTML='<option value="">Выберите кафедру</option>';
-// this.departments.forEach(dept=>{
-// const option=document.createElement('option');
-// option.value=dept.id;
-// option.textContent=dept.tittle||dept.name;
-// departmentSelect.appendChild(option);
-// });
-// }
-// }
-
+if(groupAssignSelect){
+groupAssignSelect.innerHTML='<option value="">Выберите группу</option>';
+this.groups.forEach(group=>{
+const option=document.createElement('option');
+option.value=group.id;
+option.textContent=group.number;
+groupAssignSelect.appendChild(option);
+});
+}
+if(departmentSelect){
+departmentSelect.innerHTML='<option value="">Выберите кафедру</option>';
+this.departments.forEach(dept=>{
+const option=document.createElement('option');
+option.value=dept.id;
+option.textContent=dept.tittle||dept.name;
+departmentSelect.appendChild(option);
+});
+}
+}
 async loadAssignments(){
 try{
 const response=await fetch('http://localhost:5000/api/assignments');
@@ -505,7 +323,7 @@ body:JSON.stringify(assignmentData)
 });
 if(response.ok){
 const result=await response.json();
-alert(`Предмет "${subject.name}" успешно назначен преподавателю ${instructor.surname} ${instructor.name} для группы ${group.number}`);
+alert(`Предмет"${subject.name}"успешно назначен преподавателю${instructor.surname}${instructor.name}для группы${group.number}`);
 await this.loadAssignments();
 this.clearAssignmentForm();
 this.renderDataTable();
@@ -555,10 +373,10 @@ assignmentsContainer.innerHTML=this.assignments.map(assignment=>`
 <button class="btn-remove" onclick="adminApp.removeAssignment('${assignment.id}')">×</button>
 </div>
 <div class="assignment-details">
-<p><strong>Преподаватель:</strong> ${assignment.instructor_surname} ${assignment.instructor_name}</p>
-<p><strong>Группа:</strong> ${assignment.group_number}</p>
-<p><strong>Кафедра:</strong> ${assignment.department_name}</p>
-<small>Назначено: ${new Date(assignment.created_at).toLocaleDateString('ru-RU')}</small>
+<p><strong>Преподаватель:</strong>${assignment.instructor_surname}${assignment.instructor_name}</p>
+<p><strong>Группа:</strong>${assignment.group_number}</p>
+<p><strong>Кафедра:</strong>${assignment.department_name}</p>
+<small>Назначено:${new Date(assignment.created_at).toLocaleDateString('ru-RU')}</small>
 </div>
 </div>
 `).join('');
@@ -612,6 +430,127 @@ localStorage.removeItem('user');
 window.location.href='form.html';
 });
 }
+const tabBtns=document.querySelectorAll('.tab-btn');
+tabBtns.forEach(btn=>{
+btn.addEventListener('click',(e)=>{
+const tabName=e.target.dataset.tab;
+this.switchTab(tabName);
+});
+});
+const addDeptBtn=document.getElementById('add-department-btn');
+if(addDeptBtn){
+addDeptBtn.addEventListener('click',()=>{
+this.addNewDepartment();
+});
+}
+}
+switchTab(tabName){
+console.log('Переключаем на вкладку:',tabName);
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+btn.classList.remove('active');
+});
+document.querySelectorAll('.tab-content').forEach(content=>{
+content.classList.remove('active');
+});
+const activeTabBtn=document.querySelector(`[data-tab="${tabName}"]`);
+const activeTabContent=document.getElementById(`${tabName}-tab`);
+if(activeTabBtn&&activeTabContent){
+activeTabBtn.classList.add('active');
+activeTabContent.classList.add('active');
+this.currentTab=tabName;
+this.loadTabData(tabName);
+}
+}
+loadTabData(tabName){
+switch(tabName){
+case'departments':
+this.renderDepartmentsTab();
+break;
+case'assignments':
+break;
+case'upload':
+break;
+case'students':
+break;
+}
+}
+renderDepartmentsTab(){
+this.renderDepartmentsCards();
+this.renderFacultiesCards();
+}
+renderDepartmentsCards(){
+const container=document.getElementById('departments-cards');
+if(!container)return;
+if(this.departments.length===0){
+container.innerHTML=`
+<div class="empty-state" style="grid-column:1/-1;">
+<h4>В базе нет кафедр</h4>
+<p>Кафедры не найдены в таблице departments</p>
+</div>
+`;
+return;
+}
+container.innerHTML=this.departments.map(dept=>`
+<div class="department-card">
+<div class="card-header">
+<h4>${dept.tittle||'Без названия'}</h4>
+<div class="card-actions">
+<button class="btn-action btn-edit" onclick="adminApp.editDepartment('${dept.id}')">редактировать</button>
+<button class="btn-action btn-delete" onclick="adminApp.deleteDepartment('${dept.id}')">удалить</button>
+</div>
+</div>
+<div class="card-body">
+<p>${dept.description||'Описание отсутствует'}</p>
+<div class="department-stats">
+<span>Преподавателей:${this.getInstructorsCount(dept.id)}</span>
+<span>Предметов:${this.getSubjectsCount(dept.id)}</span>
+</div>
+</div>
+</div>
+`).join('');
+}
+getSubjectsCount(departmentId){
+return this.subjects.filter(subject=>subject.department_id===departmentId).length;
+}
+renderFacultiesCards(){
+const container=document.getElementById('faculties-cards');
+if(!container)return;
+if(this.faculties.length===0){
+container.innerHTML=`
+<div class="empty-state" style="grid-column:1/-1;">
+<h4>Нет данных о факультетах</h4>
+<p>Факультеты не загружены</p>
+</div>
+`;
+return;
+}
+container.innerHTML=this.faculties.map(faculty=>`
+<div class="department-card">
+<div class="card-header">
+<h4>${faculty.tittle||faculty.name||'Без названия'}</h4>
+</div>
+<div class="card-body">
+<p>${faculty.description||'Описание отсутствует'}</p>
+<div class="department-stats">
+<span>ID:${faculty.id.substring(0,8)}...</span>
+</div>
+</div>
+</div>
+`).join('');
+}
+getInstructorsCount(departmentId){
+return this.instructors.filter(instructor=>instructor.departmentId===departmentId).length;
+}
+addNewDepartment(){
+alert('Добавление новой кафедры будет реализовано в следующем обновлении');
+}
+editDepartment(departmentId){
+alert(`Редактирование кафедры${departmentId}будет реализовано в следующем обновлении`);
+}
+deleteDepartment(departmentId){
+if(confirm('Удалить эту кафедру?')){
+alert(`Удаление кафедры${departmentId}будет реализовано в следующем обновлении`);
+}
 }
 handleFileSelect(file){
 if(!file.name.match(/\.(xlsx|xls)$/)){
@@ -620,7 +559,7 @@ return;
 }
 const uploadArea=document.getElementById('upload-area');
 if(uploadArea){
-uploadArea.innerHTML=`<p style="color:green; font-weight:bold;">✓ Выбран файл: ${file.name}</p>`;
+uploadArea.innerHTML=`<p style="color:green;font-weight:bold;">✓Выбран файл:${file.name}</p>`;
 }
 this.selectedFile=file;
 document.getElementById('upload-btn').disabled=false;
@@ -639,13 +578,13 @@ method:'POST',
 body:formData
 });
 if(!response.ok){
-throw new Error(`HTTP ${response.status}:${response.statusText}`);
+throw new Error(`HTTP${response.status}:${response.statusText}`);
 }
 const result=await response.json();
 console.log('Результат загрузки:',result);
 if(result.success){
 this.uploadedData=result;
-alert(`Файл успешно загружен! Найдено ${result.students.length} студентов в ${result.groups.length} группах`);
+alert(`Файл успешно загружен!Найдено${result.students.length}студентов в${result.groups.length}группах`);
 this.showSaveButton();
 this.showUploadedStudentsPreview(result.students);
 }else{
@@ -660,11 +599,11 @@ showUploadedStudentsPreview(students){
 const previewContainer=document.createElement('div');
 previewContainer.className='upload-preview';
 previewContainer.innerHTML=`
-<h4>Предпросмотр загруженных студентов (${students.length}):</h4>
+<h4>Предпросмотр загруженных студентов(${students.length}):</h4>
 <div style="max-height:200px;overflow-y:auto;margin:10px 0;">
 ${students.map(student=>`
 <div style="padding:5px;border-bottom:1px solid #eee;">
-<strong>${student.fullName}</strong> - Группа: ${student.group}
+<strong>${student.fullName}</strong>-Группа:${student.group}
 </div>
 `).join('')}
 </div>
@@ -699,7 +638,7 @@ const results=await apiClient.uploadExcelToBackend(this.uploadedData.students);
 const successCount=results.filter(r=>r.success).length;
 const errorCount=results.filter(r=>!r.success).length;
 if(successCount>0){
-alert(`Успешно сохранено: ${successCount} студентов${errorCount>0?', ошибок: '+errorCount:''}`);
+alert(`Успешно сохранено:${successCount}студентов${errorCount>0?',ошибок:'+errorCount:''}`);
 const preview=document.querySelector('.upload-preview');
 if(preview)preview.remove();
 await this.loadAdminData();
@@ -710,7 +649,7 @@ alert('Не удалось сохранить ни одного студента
 }
 }catch(error){
 console.error('Ошибка сохранения:',error);
-alert('Ошибка при сохранении данных: '+error.message);
+alert('Ошибка при сохранении данных:'+error.message);
 }
 }
 resetUploadForm(){
@@ -720,7 +659,7 @@ uploadArea.innerHTML=`
 <div class="upload-placeholder">
 <div class="upload-icon"></div>
 <p>Перетащите Excel файл сюда или нажмите для выбора</p>
-<small>Поддерживаются файлы .xlsx, .xls</small>
+<small>Поддерживаются файлы .xlsx,.xls</small>
 </div>
 `;
 }
@@ -732,19 +671,19 @@ this.selectedFile=null;
 const saveBtn=document.getElementById('save-excel-data');
 if(saveBtn)saveBtn.style.display='none';
 }
-updateStats() {
-    const totalStudents = document.getElementById('total-students');
-    const totalGroups = document.getElementById('total-groups');
-    const totalTeachers = document.getElementById('total-teachers');
-    const totalAssignments = document.getElementById('total-assignments');
-    const totalDepartments = document.getElementById('total-departments');
-    const totalFaculties = document.getElementById('total-faculties');
-    if (totalStudents) totalStudents.textContent = this.students.length;
-    if (totalGroups) totalGroups.textContent = this.groups.length;
-    if (totalTeachers) totalTeachers.textContent = this.instructors.length;
-    if (totalAssignments) totalAssignments.textContent = this.assignments.length;
-    if (totalDepartments) totalDepartments.textContent = this.departments.length;
-    if (totalFaculties) totalFaculties.textContent = this.faculties.length;
+updateStats(){
+const totalStudents=document.getElementById('total-students');
+const totalGroups=document.getElementById('total-groups');
+const totalTeachers=document.getElementById('total-teachers');
+const totalAssignments=document.getElementById('total-assignments');
+const totalDepartments=document.getElementById('total-departments');
+const totalFaculties=document.getElementById('total-faculties');
+if(totalStudents)totalStudents.textContent=this.students.length;
+if(totalGroups)totalGroups.textContent=this.groups.length;
+if(totalTeachers)totalTeachers.textContent=this.instructors.length;
+if(totalAssignments)totalAssignments.textContent=this.assignments.length;
+if(totalDepartments)totalDepartments.textContent=this.departments.length;
+if(totalFaculties)totalFaculties.textContent=this.faculties.length;
 }
 displayCurrentDate(){
 const now=new Date();
@@ -758,59 +697,47 @@ day:'numeric'
 });
 }
 }
-// editStudent(studentId){
-// alert('Редактирование студента будет доступно в следующей версии');
-// }
-// deleteStudent(studentId){
-// if(confirm('Удалить этого студента?')){
-// this.students=this.students.filter(s=>s.id!==studentId);
-// this.filteredStudents=this.filteredStudents.filter(s=>s.id!==studentId);
-// this.renderDataTable();
-// this.updateStats();
-// }
-// }
-editStudent(studentId) {
-    const student = this.students.find(s => s.id === studentId);
-    if (!student) return;
-    const newName = prompt('Имя:', student.name);
-    const newSurname = prompt('Фамилия:', student.surname);
-    const newPatronymic = prompt('Отчество:', student.patronymic || '');
-    let groupOptions = this.groups.map(g => `${g.id}:${g.number}`).join('\n');
-    const groupInput = prompt(`Группа (${groupOptions}):`, student.groupId);
-    const statusInput = prompt('Статус (0-активный, 1-академ, 2-отчислен):', student.status);
-    if (newName && newSurname) {
-        const updateData = {
-            name: newName,
-            surname: newSurname,
-            patronymic: newPatronymic,
-            groupId: groupInput || student.groupId,
-            status: parseInt(statusInput) || student.status
-        };
-        apiClient.updateStudent(studentId, updateData)
-            .then(result => {
-                if (result.success) {
-                    Object.assign(student, updateData);
-                    this.renderDataTable();
-                    alert('Студент успешно обновлен!');
-                } else {
-                    alert('Ошибка при обновлении студента: ' + result.error);
-                }
-            })
-            .catch(error => {
-                alert('Ошибка при обновлении студента: ' + error.message);
-            });
-    }
+editStudent(studentId){
+const student=this.students.find(s=>s.id===studentId);
+if(!student)return;
+const newName=prompt('Имя:',student.name);
+const newSurname=prompt('Фамилия:',student.surname);
+const newPatronymic=prompt('Отчество:',student.patronymic||'');
+let groupOptions=this.groups.map(g=>`${g.id}:${g.number}`).join('\n');
+const groupInput=prompt(`Группа(${groupOptions}):`,student.groupId);
+const statusInput=prompt('Статус(0-активный,1-академ,2-отчислен):',student.status);
+if(newName&&newSurname){
+const updateData={
+name:newName,
+surname:newSurname,
+patronymic:newPatronymic,
+groupId:groupInput||student.groupId,
+status:parseInt(statusInput)||student.status
+};
+apiClient.updateStudent(studentId,updateData)
+.then(result=>{
+if(result.success){
+Object.assign(student,updateData);
+this.renderDataTable();
+alert('Студент успешно обновлен!');
+}else{
+alert('Ошибка при обновлении студента:'+result.error);
 }
-deleteStudent(studentId) {
-    if (confirm('Удалить этого студента?')) {
-        this.students = this.students.filter(s => s.id !== studentId);
-        this.filteredStudents = this.filteredStudents.filter(s => s.id !== studentId);
-        this.renderDataTable();
-        this.updateStats();
-        alert('Студент удален (пока только локально)');
-    }
+})
+.catch(error=>{
+alert('Ошибка при обновлении студента:'+error.message);
+});
 }
-////
+}
+deleteStudent(studentId){
+if(confirm('Удалить этого студента?')){
+this.students=this.students.filter(s=>s.id!==studentId);
+this.filteredStudents=this.filteredStudents.filter(s=>s.id!==studentId);
+this.renderDataTable();
+this.updateStats();
+alert('Студент удален(пока только локально)');
+}
+}
 useDemoData(){
 console.log('Используем демо-данные для админки');
 this.students=this.getFallbackStudents();
@@ -844,19 +771,17 @@ return[
 getFallbackInstructors(){
 return[
 {id:'1',name:'Петр',surname:'Иванов',patronymic:'Сергеевич',departmentId:'1'},
-{id:'2',name:'Мария',surname:'Петрова',patronymic:'Ивановна',departmentId:'1'},
+{id:'2',name:'Мария',surname:'Петрова',patronymic:'Ивановna',departmentId:'1'},
 {id:'3',name:'Алексей',surname:'Сидоров',patronymic:'Владимирович',departmentId:'2'},
 {id:'4',name:'Ольга',surname:'Макарова',patronymic:'Сергеевна',departmentId:'2'}
 ];
 }
-getFallbackDepartments() {
-    return [
-        { id: '1', tittle: 'Информационные системы', description: 'Кафедра информационных систем' },
-        { id: '2', tittle: 'Программная инженерия', description: 'Кафедра программной инженерии' },
-        { id: '3', tittle: 'Компьютерная безопасность', description: 'Кафедра компьютерной безопасности' },
-        { id: '4', tittle: 'Прикладная математика', description: 'Кафедра прикладной математики' },
-        { id: '5', tittle: 'Системный анализ', description: 'Кафедра системного анализа' }
-    ];
+getFallbackDepartments(){
+return[
+{id:'1',tittle:'Информационные системы',description:'Кафедра информационных систем'},
+{id:'2',tittle:'Программная инженерия',description:'Кафедра программной инженерии'},
+{id:'3',tittle:'Компьютерная безопасность',description:'Кафедра компьютерной безопасности'}
+];
 }
 getFallbackSubjects(){
 return[
@@ -870,6 +795,46 @@ getFallbackAssignments(){
 return[
 {id:'1',instructor_id:'1',instructor_name:'Иванов',instructor_surname:'Петр',subject_id:'1',subject_name:'Системы инженерного анализа',group_id:'1',group_number:'231-324',department_id:'1',department_name:'Информационные системы',created_at:new Date()}
 ];
+}
+renderSubjectsTab(){
+this.renderSubjectsCards();
+}
+
+renderSubjectsCards(){
+const container=document.getElementById('subjects-cards');
+if(!container)return;
+
+if(this.subjects.length===0){
+container.innerHTML=`
+<div class="empty-state" style="grid-column:1/-1;">
+<h4>В базе нет предметов</h4>
+<p>Предметы не найдены в таблице subjects</p>
+</div>
+`;
+return;
+}
+
+container.innerHTML=this.subjects.map(subject=>{
+const department=this.departments.find(d=>d.id===subject.department_id);
+return`
+<div class="department-card">
+<div class="card-header">
+<h4>${subject.name||'Без названия'}</h4>
+<div class="card-actions">
+<button class="btn-action btn-edit" onclick="adminApp.editSubject('${subject.id}')">✏️</button>
+<button class="btn-action btn-delete" onclick="adminApp.deleteSubject('${subject.id}')">🗑️</button>
+</div>
+</div>
+<div class="card-body">
+<p>Тип: ${subject.type||'Не указан'}</p>
+<p>Кафедра: ${department?department.tittle:'Не назначена'}</p>
+<div class="department-stats">
+<span>📊ID:${subject.id}</span>
+</div>
+</div>
+</div>
+`;
+}).join('');
 }
 }
 const adminApp=new AdminApp();

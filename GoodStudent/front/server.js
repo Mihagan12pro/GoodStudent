@@ -170,6 +170,65 @@ app.get('/api/departments', async (req, res) => {
     if (client) client.release();
   }
 });
+app.get('/api/departments-full', async (req, res) => {
+  let client;
+  try {
+    client = await pool.connect();
+    const result = await client.query('SELECT * FROM departments ORDER BY "tittle"');
+    const departments = result.rows.map(row => ({
+      id: row.Id,
+      tittle: row.tittle,
+      description: row.description,
+      faculty_id: row.faculty_id
+    }));
+    res.json(departments);
+  } catch (error) {
+    console.error('Ошибка загрузки кафедр:', error);
+    res.status(500).json({ error: 'Ошибка загрузки кафедр' });
+  } finally {
+    if (client) client.release();
+  }
+});
+app.get('/api/subjects-full', async (req, res) => {
+  let client;
+  try {
+    client = await pool.connect();
+    const result = await client.query('SELECT * FROM subjects ORDER BY "name"');
+    const subjects = result.rows.map(row => ({
+      id: row.Id,
+      name: row.name,
+      type: row.type,
+      department_id: row.department_id
+    }));
+    res.json(subjects);
+  } catch (error) {
+    console.error('Ошибка загрузки предметов:', error);
+    res.status(500).json({ error: 'Ошибка загрузки предметов' });
+  } finally {
+    if (client) client.release();
+  }
+});
+app.get('/api/instructors-full', async (req, res) => {
+  let client;
+  try {
+    client = await pool.connect();
+    const result = await client.query('SELECT * FROM instructors ORDER BY "surname", "name"');
+    const instructors = result.rows.map(row => ({
+      id: row.Id,
+      name: row.name,
+      surname: row.surname,
+      patronymic: row.patronymic,
+      department_id: row.department_id,
+      email: row.email
+    }));
+    res.json(instructors);
+  } catch (error) {
+    console.error('Ошибка загрузки преподавателей:', error);
+    res.status(500).json({ error: 'Ошибка загрузки преподавателей' });
+  } finally {
+    if (client) client.release();
+  }
+});
 app.get('/api/subjects', async (req, res) => {
   let client;
   try {
@@ -194,6 +253,24 @@ app.get('/api/assignments', async (req, res) => {
   } catch (error) {
     console.error('Ошибка загрузки назначений:', error);
     res.status(500).json({ error: 'Ошибка загрузки назначений' });
+  } finally {
+    if (client) client.release();
+  }
+});
+app.get('/api/faculties-full', async (req, res) => {
+  let client;
+  try {
+    client = await pool.connect();
+    const result = await client.query('SELECT * FROM faculties ORDER BY "tittle"');
+    const faculties = result.rows.map(row => ({
+      id: row.Id,
+      tittle: row.tittle,
+      description: row.description
+    }));
+    res.json(faculties);
+  } catch (error) {
+    console.error('Ошибка загрузки факультетов:', error);
+    res.status(500).json({ error: 'Ошибка загрузки факультетов' });
   } finally {
     if (client) client.release();
   }

@@ -26,6 +26,7 @@ class ApiClient {
             throw error;
         }
     }
+    
     async requestFallback(endpoint,options={}){
         const url=`${this.fallbackUrl}${endpoint}`;
         try{
@@ -285,6 +286,46 @@ return[
             return{success:true,id:`attendance_${Date.now()}`};
         }
     }
+    async getFullDepartments(){
+try{
+const response=await fetch(`${this.fallbackUrl}/departments-full`);
+if(response.ok)return await response.json();
+throw new Error('Failed to fetch departments');
+}catch(error){
+console.error('Ошибка загрузки кафедр:',error);
+return[];
+}
+}
+async getFullSubjects(){
+try{
+const response=await fetch(`${this.fallbackUrl}/subjects-full`);
+if(response.ok)return await response.json();
+throw new Error('Failed to fetch subjects');
+}catch(error){
+console.error('Ошибка загрузки предметов:',error);
+return[];
+}
+}
+async getFullFaculties(){
+try{
+const response=await fetch(`${this.fallbackUrl}/faculties-full`);
+if(response.ok)return await response.json();
+throw new Error('Failed to fetch faculties');
+}catch(error){
+console.error('Ошибка загрузки факультетов:',error);
+return[];
+}
+}
+async getFullInstructors(){
+try{
+const response=await fetch(`${this.fallbackUrl}/instructors-full`);
+if(response.ok)return await response.json();
+throw new Error('Failed to fetch instructors');
+}catch(error){
+console.error('Ошибка загрузки преподавателей:',error);
+return[];
+}
+}
     ////////
     async updateStudent(studentId, studentData) {
     try {
