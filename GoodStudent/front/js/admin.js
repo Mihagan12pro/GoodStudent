@@ -478,18 +478,22 @@ renderDepartmentsTab(){
 this.renderDepartmentsCards();
 this.renderFacultiesCards();
 }
+fixEncoding(text) {
+    if (!text) return text;
+    return text
+        .replace(/Љ/g, 'К')
+        .replace(/дҐ¤а/g, 'афедра')
+        .replace(/Ёд®а¬/g, 'информ')
+        .replace(/вҐе®«®Ј/g, 'технолог')
+        .replace(/Їа®Ја/g, 'прогр')
+        .replace(/¬ /g, 'м')
+        .replace(/Ґ/g, 'е')
+        .replace(/®/g, 'о')
+        .replace(/Є/g, 'к');
+}
 renderDepartmentsCards(){
 const container=document.getElementById('departments-cards');
 if(!container)return;
-if(this.departments.length===0){
-container.innerHTML=`
-<div class="empty-state" style="grid-column:1/-1;">
-<h4>В базе нет кафедр</h4>
-<p>Кафедры не найдены в таблице departments</p>
-</div>
-`;
-return;
-}
 container.innerHTML=this.departments.map(dept=>`
 <div class="department-card">
 <div class="card-header">
@@ -500,7 +504,7 @@ container.innerHTML=this.departments.map(dept=>`
 </div>
 </div>
 <div class="card-body">
-<p>${dept.description||'Описание отсутствует'}</p>
+<p>${this.fixEncoding(dept.description)||'Описание отсутствует'}</p>
 <div class="department-stats">
 <span>Преподавателей:${this.getInstructorsCount(dept.id)}</span>
 <span>Предметов:${this.getSubjectsCount(dept.id)}</span>
@@ -527,10 +531,10 @@ return;
 container.innerHTML=this.faculties.map(faculty=>`
 <div class="department-card">
 <div class="card-header">
-<h4>${faculty.tittle||faculty.name||'Без названия'}</h4>
+<h4>${faculty.tittle||'Без названия'}</h4>
 </div>
 <div class="card-body">
-<p>${faculty.description||'Описание отсутствует'}</p>
+<p>${this.fixEncoding(faculty.description)||'Описание отсутствует'}</p>
 <div class="department-stats">
 <span>ID:${faculty.id.substring(0,8)}...</span>
 </div>
