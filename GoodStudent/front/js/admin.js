@@ -135,7 +135,7 @@ const assignedInstructor=this.getAssignedInstructor(student.groupId);
 return`
 <tr>
 <td>${student.id}</td>
-<td>${student.surname}${student.name}${student.patronymic||''}</td>
+<td>${student.surname} ${student.name} ${student.patronymic || ''}</td>
 <td>${group?group.number:'Не указана'}</td>
 <td>${statusText}</td>
 <td>${assignedInstructor}</td>
@@ -192,17 +192,14 @@ case 2:return'<span class="status-expelled">Отчислен</span>';
 default:return'<span class="status-unknown">Неизвестно</span>';
 }
 }
-getAssignedInstructor(groupId){
-const assignment=this.assignments.find(a=>a.group_id===groupId);
-if(!assignment)return'Не назначен';
-const instructor=this.instructors.find(i=>i.id===assignment.instructor_id);
-if(instructor){
-return`${instructor.surname}${instructor.name}${instructor.patronymic||''}`.trim();
-}
-if(assignment.instructor_surname&&assignment.instructor_name){
-return`${assignment.instructor_surname}${assignment.instructor_name}`;
-}
-return'Не назначен';
+getAssignedInstructor(groupId) {
+    const assignment = this.assignments.find(a => a.group_id === groupId);
+    if (!assignment) return 'Не назначен';
+    const instructor = this.instructors.find(i => i.id === assignment.instructor_id);
+    if (instructor) {
+        return `${instructor.surname} ${instructor.name} ${instructor.patronymic || ''}`.trim();
+    }
+    return 'Не назначен';
 }
 applyFilters(){
 const groupFilter=document.getElementById('group-filter')?.value||'all';
@@ -243,7 +240,7 @@ const assignedInstructor=this.getAssignedInstructor(student.groupId);
 return`
 <tr>
 <td>${student.id}</td>
-<td>${student.surname}${student.name}${student.patronymic||''}</td>
+<td>${student.surname} ${student.name} ${student.patronymic || ''}</td>
 <td>${group?group.number:'Не указана'}</td>
 <td>${statusText}</td>
 <td>${assignedInstructor}</td>
