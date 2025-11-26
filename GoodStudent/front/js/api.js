@@ -4,7 +4,6 @@ class ApiClient {
         this.fallbackUrl = 'http://localhost:5000/api';
         this.useFallback = true;
     }
-
     async request(endpoint, options = {}) {
         const url = `${this.baseUrl}${endpoint}`;
         try {
@@ -27,7 +26,6 @@ class ApiClient {
             throw error;
         }
     }
-
     async requestFallback(endpoint,options={}){
         const url=`${this.fallbackUrl}${endpoint}`;
         try{
@@ -46,7 +44,6 @@ class ApiClient {
             throw error;
         }
     }
-
     async getAllStudents(){
         try{
             const response=await fetch(`${this.fallbackUrl}/students`);
@@ -57,7 +54,6 @@ class ApiClient {
             return this.getFallbackStudents();
         }
     }
-
     async getAllGroups(){
         try{
             const response=await fetch(`${this.fallbackUrl}/groups`);
@@ -88,7 +84,6 @@ console.log('Using fallback departments data');
 return this.getFallbackDepartments();
 }
 }
-
     getFallbackStudents(){
         return[
             {id:'1',name:'Иван',surname:'Иванов',patronymic:'Иванович',groupId:'1',status:0},
@@ -98,7 +93,6 @@ return this.getFallbackDepartments();
             {id:'5',name:'Дмитрий',surname:'Фролов',patronymic:'Петрович',groupId:'3',status:0}
         ];
     }
-
     getFallbackGroups(){
         return[
             {id:'1',number:'231-324',professionId:'1'},
@@ -130,10 +124,8 @@ return[
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(studentData)
-            });
-            
-            const result = await response.json();
-            
+            });            
+            const result = await response.json();           
             if (!response.ok) {
                 if (result.existingId) {
                     return { 
@@ -144,8 +136,7 @@ return[
                     };
                 }
                 throw new Error(result.error || 'Ошибка создания студента');
-            }
-            
+            }            
             return { success: true, id: result.id };
         } catch (error) {
             console.error('Ошибка создания студента:', error);
@@ -163,10 +154,8 @@ return[
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(cleanGroupData)
-        });
-        
-        const result = await response.json();
-        
+        });       
+        const result = await response.json();        
         if (!response.ok) {
             if (result.exists) {
                 return { 
@@ -188,10 +177,8 @@ return[
         const results = [];
         for (const excelStudent of excelStudents) {
             try {
-                console.log('Обработка студента:', excelStudent.fullName);
-                
-                let groupId = await this.findOrCreateGroup(excelStudent.group);
-                
+                console.log('Обработка студента:', excelStudent.fullName);                
+                let groupId = await this.findOrCreateGroup(excelStudent.group);                
                 const studentData = {
                     name: excelStudent.name,
                     surname: excelStudent.surname,
@@ -199,10 +186,8 @@ return[
                     startYear: 2024,
                     groupId: groupId,
                     status: 0
-                };
-                
-                const result = await this.createStudent(studentData);
-                
+                };                
+                const result = await this.createStudent(studentData);                
                 if (result.success) {
                     results.push({
                         success: true,
@@ -247,8 +232,7 @@ return[
         }
         const result=await this.createGroup({
             number:groupNumber
-        });
-        
+        });        
         if(result.success){
             return result.id;
         }else{
@@ -270,16 +254,14 @@ return[
 {id:2,name:'Нормативное регулирование',type:'Лекция'},
 {id:3,name:'Базы данных',type:'Практика'},
 {id:4,name:'Веб-программирование',type:'Лаб. работа'},
-{id:5,name:'Математика',type:'Лекция'},
-{id:6,name:'Программирование',type:'Лаб. работа'}
+{id:5,name:'Линейная алгебра',type:'Лекция'},
+{id:6,name:'Программирование в САПР',type:'Лаб. работа'}
 ];
 }
 }
-
     async assignSubjectToInstructor(assignmentData){
         return this.saveAssignmentToLocalStorage(assignmentData);
     }
-
     saveAssignmentToLocalStorage(assignmentData){
         const assignments=JSON.parse(localStorage.getItem('instructor_assignments')||'[]');
         const newAssignment={
@@ -303,6 +285,43 @@ return[
             return{success:true,id:`attendance_${Date.now()}`};
         }
     }
+    ////////
+    async updateStudent(studentId, studentData) {
+    try {
+        const response = await fetch(`${this.fallbackUrl}/students/${studentId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(studentData)
+        });       
+        if (!response.ok) {
+            throw new Error('Ошибка обновления студента');
+        }        
+        return await response.json();
+    } catch (error) {
+        console.error('Ошибка обновления студента:', error);
+        return { success: false, error: error.message };
+    }
+}
+async updateGroup(groupId, groupData) {
+    try {
+        const response = await fetch(`${this.fallbackUrl}/groups/${groupId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(groupData)
+        });        
+        if (!response.ok) {
+            throw new Error('Ошибка обновления группы');
+        }        
+        return await response.json();
+    } catch (error) {
+        console.error('Ошибка обновления группы:', error);
+        return { success: false, error: error.message };
+    }
+}
 }
 const apiClient=new ApiClient();
 window.apiClient=apiClient;

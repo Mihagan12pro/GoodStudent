@@ -6,7 +6,6 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import pg from 'pg';
 const { Pool } = pg;
-
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 const __filename = fileURLToPath(import.meta.url);
@@ -57,7 +56,6 @@ app.get('/api/students', async (req, res) => {
     if (client) client.release();
   }
 });
-
 app.get('/api/groups', async (req, res) => {
   let client;
   try {
@@ -72,7 +70,76 @@ app.get('/api/groups', async (req, res) => {
     if (client) client.release();
   }
 });
-
+app.put('/api/students/:id', async (req, res) => {
+  let client;
+  try {
+    const studentId = req.params.id;
+    const { name, surname, patronymic, groupId, status } = req.body;    
+    console.log('Обновление студента:', studentId, { name, surname, groupId, status });    
+    client = await pool.connect();    
+    const result = await client.query(
+      `UPDATE students SET "name" = $1, "surname" = $2, "patronymic" = $3, "GroupId" = $4, "status" = $5 
+      WHERE "Id" = $6 RETURNING "Id"`,
+      [name, surname, patronymic || '', groupId, status || 0, studentId]
+    );    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Студент не найден' });
+    }    
+    res.json({ success: true, id: studentId });
+  } catch (error) {
+    console.error('Ошибка обновления студента:', error);
+    res.status(500).json({ error: 'Ошибка обновления студента: ' + error.message });
+  } finally {
+    if (client) client.release();
+  }
+});
+app.put('/api/groups/:id', async (req, res) => {
+  let client;
+  try {
+    const groupId = req.params.id;
+    const { number } = req.body;   
+    console.log('Обновление группы:', groupId, { number });    
+    client = await pool.connect();
+    const checkQuery = 'SELECT "Id" FROM groups WHERE "number" = $1 AND "Id" != $2';
+    const checkResult = await client.query(checkQuery, [number, groupId]);
+    
+    if (checkResult.rows.length > 0) {
+      return res.status(400).json({ error: 'Группа с таким номером уже существует' });
+    }    
+    const result = await client.query(
+      `UPDATE groups SET "number" = $1 WHERE "Id" = $2 RETURNING "Id"`,
+      [number, groupId]
+    );    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Группа не найдена' });
+    }    
+    res.json({ success: true, id: groupId });
+  } catch (error) {
+    console.error('Ошибка обновления группы:', error);
+    res.status(500).json({ error: 'Ошибка обновления группы: ' + error.message });
+  } finally {
+    if (client) client.release();
+  }
+});
+app.delete('/api/students/:id', async (req, res) => {
+  let client;
+  try {
+    const studentId = req.params.id;    
+    console.log('Удаление студента:', studentId);    
+    client = await pool.connect();    
+    const result = await client.query('DELETE FROM students WHERE "Id" = $1 RETURNING "Id"', [studentId]);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Студент не найден' });
+    }    
+    res.json({ success: true, message: 'Студент удален' });
+  } catch (error) {
+    console.error('Ошибка удаления студента:', error);
+    res.status(500).json({ error: 'Ошибка удаления студента: ' + error.message });
+  } finally {
+    if (client) client.release();
+  }
+});
 app.get('/api/instructors', async (req, res) => {
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
   let client;
@@ -88,7 +155,6 @@ app.get('/api/instructors', async (req, res) => {
     if (client) client.release();
   }
 });
-
 app.get('/api/departments', async (req, res) => {
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
   let client;
@@ -104,7 +170,6 @@ app.get('/api/departments', async (req, res) => {
     if (client) client.release();
   }
 });
-
 app.get('/api/subjects', async (req, res) => {
   let client;
   try {
@@ -119,7 +184,6 @@ app.get('/api/subjects', async (req, res) => {
     if (client) client.release();
   }
 });
-
 app.get('/api/assignments', async (req, res) => {
   let client;
   try {
@@ -134,7 +198,6 @@ app.get('/api/assignments', async (req, res) => {
     if (client) client.release();
   }
 });
-
 app.post('/api/assignments', async (req, res) => {
   let client;
   try {
@@ -151,7 +214,6 @@ app.post('/api/assignments', async (req, res) => {
     if (client) client.release();
   }
 });
-
 app.get('/api/instructors/:id/assignments', async (req, res) => {
   let client;
   try {
@@ -167,7 +229,6 @@ app.get('/api/instructors/:id/assignments', async (req, res) => {
     if (client) client.release();
   }
 });
-
 app.delete('/api/assignments/:id', async (req, res) => {
   let client;
   try {
@@ -182,7 +243,6 @@ app.delete('/api/assignments/:id', async (req, res) => {
     if (client) client.release();
   }
 });
-
 app.post('/api/students', async (req, res) => {
   let client;
   try {
@@ -203,38 +263,31 @@ app.post('/api/groups', async (req, res) => {
   let client;
   try {
     const { number } = req.body;
-    console.log('Создание группы:', { number });
-    
-    client = await pool.connect();
-    
+    console.log('Создание группы:', { number });    
+    client = await pool.connect();    
     const checkQuery = 'SELECT "Id" FROM groups WHERE "number" = $1';
-    const checkResult = await client.query(checkQuery, [number]);
-    
+    const checkResult = await client.query(checkQuery, [number]);    
     if (checkResult.rows.length > 0) {
       return res.json({ 
         id: checkResult.rows[0].Id,
         exists: true 
       });
-    }
-    
+    }    
     const query = `
       INSERT INTO groups ("Id", "number", "profession_id")
       VALUES ($1, $2, $3)
       RETURNING "Id"
-    `;    
-    
+    `;       
     const groupId = generateUUID();
     const result = await client.query(query, [
       groupId,
       number, 
       "3fa85f64-5717-4562-b3fc-2c963f66afa6" 
-    ]);   
-    
+    ]);       
     res.json({ 
       id: groupId,
       success: true 
-    });    
-    
+    });        
   } catch (error) {
     console.error('Ошибка создания группы:', error);
     res.status(500).json({ error: 'Ошибка создания группы: ' + error.message });
@@ -267,7 +320,6 @@ app.post('/api/upload-schedule', upload.single('excelFile'), async (req, res) =>
     res.status(500).json({ error: 'Ошибка обработки файла: ' + error.message });
   }
 });
-
 app.post('/api/attendance', async (req, res) => {
   let client;
   try {
@@ -295,6 +347,14 @@ app.get('*', (req, res) => {res.redirect('/');});
 app.use((req, res, next) => {
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
     next();
+});
+app.post('/api/sync/csharp', async (req, res) => {
+  try {    
+    res.json({ success: true, message: 'Синхронизация завершена' });
+  } catch (error) {
+    console.error('Ошибка синхронизации:', error);
+    res.status(500).json({ error: 'Ошибка синхронизации' });
+  }
 });
 app.listen(PORT, () => {
   console.log('='.repeat(60));

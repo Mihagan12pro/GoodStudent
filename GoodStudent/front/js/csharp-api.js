@@ -2,10 +2,8 @@ class CSharpApiClient {
     constructor() {
         this.baseUrl = 'https://localhost:7298/api';
     }
-
     async request(endpoint, options = {}) {
-        const url = `${this.baseUrl}${endpoint}`;
-        
+        const url = `${this.baseUrl}${endpoint}`;       
         try {
             const config = {
                 headers: {
@@ -14,32 +12,26 @@ class CSharpApiClient {
                 },
                 ...options
             };
-
             if (['POST', 'PUT', 'PATCH'].includes(options.method) && options.body) {
                 config.body = JSON.stringify(options.body);
             }
-
             const response = await fetch(url, config);
             
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
-
             return await response.json();
         } catch (error) {
             console.error(`C# API Error [${endpoint}]:`, error);
             throw error;
         }
     }
-
     async getAllStudents() {
         return await this.request('/Students');
     }
-
     async getStudentById(id) {
         return await this.request(`/Students/${id}`);
     }
-
     async createStudent(studentData) {
         return await this.request('/Students', {
             method: 'POST',
@@ -53,19 +45,15 @@ class CSharpApiClient {
             }
         });
     }
-
     async getAllGroups() {
         return await this.request('/Groups');
     }
-
     async getGroupById(id) {
         return await this.request(`/Groups/${id}`);
     }
-
     async getGroupStudents(groupId) {
         return await this.request(`/Groups/students/${groupId}`);
     }
-
     async createGroup(groupData) {
         return await this.request('/Groups', {
             method: 'POST',
@@ -75,11 +63,9 @@ class CSharpApiClient {
             }
         });
     }
-
     async getAllInstructors() {
         return await this.request('/Instructors');
     }
-
     async createInstructor(instructorData) {
         return await this.request('/Instructors', {
             method: 'POST',
@@ -93,7 +79,6 @@ class CSharpApiClient {
             }
         });
     }
-
     async getSubjects() {
         try {
             const response = await fetch('http://localhost:5000/api/subjects');
@@ -102,7 +87,6 @@ class CSharpApiClient {
             return this.getFallbackSubjects();
         }
     }
-
     getFallbackSubjects() {
         return [
             { id: 1, name: 'Системы инженерного анализа', type: 'Лаб. работа' },

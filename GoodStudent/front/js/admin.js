@@ -567,17 +567,59 @@ day:'numeric'
 });
 }
 }
-editStudent(studentId){
-alert('Редактирование студента будет доступно в следующей версии');
+// editStudent(studentId){
+// alert('Редактирование студента будет доступно в следующей версии');
+// }
+// deleteStudent(studentId){
+// if(confirm('Удалить этого студента?')){
+// this.students=this.students.filter(s=>s.id!==studentId);
+// this.filteredStudents=this.filteredStudents.filter(s=>s.id!==studentId);
+// this.renderDataTable();
+// this.updateStats();
+// }
+// }
+editStudent(studentId) {
+    const student = this.students.find(s => s.id === studentId);
+    if (!student) return;
+    const newName = prompt('Имя:', student.name);
+    const newSurname = prompt('Фамилия:', student.surname);
+    const newPatronymic = prompt('Отчество:', student.patronymic || '');
+    let groupOptions = this.groups.map(g => `${g.id}:${g.number}`).join('\n');
+    const groupInput = prompt(`Группа (${groupOptions}):`, student.groupId);
+    const statusInput = prompt('Статус (0-активный, 1-академ, 2-отчислен):', student.status);
+    if (newName && newSurname) {
+        const updateData = {
+            name: newName,
+            surname: newSurname,
+            patronymic: newPatronymic,
+            groupId: groupInput || student.groupId,
+            status: parseInt(statusInput) || student.status
+        };
+        apiClient.updateStudent(studentId, updateData)
+            .then(result => {
+                if (result.success) {
+                    Object.assign(student, updateData);
+                    this.renderDataTable();
+                    alert('Студент успешно обновлен!');
+                } else {
+                    alert('Ошибка при обновлении студента: ' + result.error);
+                }
+            })
+            .catch(error => {
+                alert('Ошибка при обновлении студента: ' + error.message);
+            });
+    }
 }
-deleteStudent(studentId){
-if(confirm('Удалить этого студента?')){
-this.students=this.students.filter(s=>s.id!==studentId);
-this.filteredStudents=this.filteredStudents.filter(s=>s.id!==studentId);
-this.renderDataTable();
-this.updateStats();
+deleteStudent(studentId) {
+    if (confirm('Удалить этого студента?')) {
+        this.students = this.students.filter(s => s.id !== studentId);
+        this.filteredStudents = this.filteredStudents.filter(s => s.id !== studentId);
+        this.renderDataTable();
+        this.updateStats();
+        alert('Студент удален (пока только локально)');
+    }
 }
-}
+////
 useDemoData(){
 console.log('Используем демо-данные для админки');
 this.students=this.getFallbackStudents();
