@@ -185,28 +185,42 @@ getAssignedInstructor(groupId){
 const assignment=this.assignments.find(a=>a.groupId===groupId);
 return assignment?assignment.instructorName:'Не назначен';
 }
-applyFilters(){
-const groupFilter=this.currentFilters.group;
-const instructorFilter=this.currentFilters.instructor;
-const statusFilter=document.getElementById('status-filter')?.value||'all';
-this.filteredStudents=this.students.filter(student=>{
-let passGroup=true;
-let passInstructor=true;
-let passStatus=true;
-if(groupFilter!=='all'){
-passGroup=student.groupId===groupFilter;
-}
-if(instructorFilter!=='all'){
-const assignment=this.assignments.find(a=>a.groupId===student.groupId&&a.instructorId===instructorFilter);
-passInstructor=!!assignment;
-}
-if(statusFilter!=='all'){
-passStatus=student.status==statusFilter;
-}
-return passGroup&&passInstructor&&passStatus;
-});
-this.renderTableBody();
-this.updateStats();
+applyFilters() {
+    const groupFilter = document.getElementById('group-filter')?.value || 'all';
+    const instructorFilter = document.getElementById('instructor-filter')?.value || 'all';
+    const statusFilter = document.getElementById('status-filter')?.value || 'all';
+    
+    this.currentFilters = {
+        group: groupFilter,
+        instructor: instructorFilter,
+        status: statusFilter
+    };
+    
+    console.log('Применяем фильтры:', this.currentFilters);
+    
+    this.filteredStudents = this.students.filter(student => {
+        let passGroup = true;
+        let passInstructor = true;
+        let passStatus = true;
+        
+        if (this.currentFilters.group !== 'all') {
+            passGroup = student.groupId === this.currentFilters.group;
+        }
+        
+        if (this.currentFilters.instructor !== 'all') {
+            const assignment = this.assignments.find(a => a.groupId === student.groupId && a.instructorId === this.currentFilters.instructor);
+            passInstructor = !!assignment;
+        }
+        
+        if (this.currentFilters.status !== 'all') {
+            passStatus = student.status == this.currentFilters.status;
+        }
+        
+        return passGroup && passInstructor && passStatus;
+    });
+    
+    this.renderTableBody();
+    this.updateStats();
 }
 renderTableBody(){
 const tbody=document.querySelector('.data-table tbody');

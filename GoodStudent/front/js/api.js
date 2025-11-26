@@ -113,63 +113,120 @@ class ApiClient {
         ];
     }
 
-    async createStudent(studentData){
-        try{
-            const response=await fetch(`${this.fallbackUrl}/students`,{
-                method:'POST',
-                headers:{'Content-Type':'application/json'},
-                body:JSON.stringify(studentData)
+    async createStudent(studentData) {
+        try {
+            const response = await fetch(`${this.fallbackUrl}/students`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(studentData)
             });
-            return await response.json();
-        }catch(error){
-            return{id:`student_${Date.now()}`,success:true};
+            
+            const result = await response.json();
+            
+            if (!response.ok) {
+                if (result.existingId) {
+                    return { 
+                        success: true, 
+                        exists: true, 
+                        existingId: result.existingId,
+                        message: 'Студент уже существует'
+                    };
+                }
+                throw new Error(result.error || 'Ошибка создания студента');
+            }
+            
+            return { success: true, id: result.id };
+        } catch (error) {
+            console.error('Ошибка создания студента:', error);
+            return { success: false, error: error.message };
         }
     }
-
-    async createGroup(groupData){
-        try{
-            const response=await fetch(`${this.fallbackUrl}/groups`,{
-                method:'POST',
-                headers:{'Content-Type':'application/json'},
-                body:JSON.stringify(groupData)
+    async createGroup(groupData) {
+        try {
+            const response = await fetch(`${this.fallbackUrl}/groups`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(groupData)
             });
-            return await response.json();
-        }catch(error){
-            return{id:`group_${Date.now()}`,success:true};
+            
+            const result = await response.json();
+            
+            if (!response.ok) {
+                if (result.exists) {
+                    return { 
+                        success: true, 
+                        exists: true, 
+                        id: result.id,
+                        message: 'Группа уже существует'
+                    };
+                }
+                throw new Error(result.error || 'Ошибка создания группы');
+            }
+            
+            return { success: true, id: result.id };
+        } catch (error) {
+            console.error('Ошибка создания группы:', error);
+            return { success: false, error: error.message };
         }
     }
-
-    async uploadExcelToBackend(excelStudents){
-        const results=[];
-        for(const excelStudent of excelStudents){
-            try{
-                let groupId=await this.findOrCreateGroup(excelStudent.group);
-                const studentData={
-                    name:excelStudent.name,
-                    surname:excelStudent.surname,
-                    patronymic:excelStudent.patronymic||'',
-                    startYear:2024,
-                    groupId:groupId,
-                    status:0
+    async uploadExcelToBackend(excelStudents) {
+        const results = [];
+        for (const excelStudent of excelStudents) {
+            try {
+                console.log('Обработка студента:', excelStudent.fullName);
+                
+                let groupId = await this.findOrCreateGroup(excelStudent.group);
+                
+                const studentData = {
+                    name: excelStudent.name,
+                    surname: excelStudent.surname,
+                    patronymic: excelStudent.patronymic || '',
+                    startYear: 2024,
+                    groupId: groupId,
+                    status: 0
                 };
-                const result=await this.createStudent(studentData);
+                
+                const result = await this.createStudent(studentData);
+                
+                if (result.success) {
+                    results.push({
+                        success: true,
+                        student: excelStudent.fullName,
+                        id: result.id,
+                        group: excelStudent.group,
+                        message: 'Успешно создан'
+                    });
+                } else if (result.exists) {
+                    results.push({
+                        success: true,
+                        student: excelStudent.fullName,
+                        id: result.existingId,
+                        group: excelStudent.group,
+                        message: 'Уже существует',
+                        exists: true
+                    });
+                } else {
+                    results.push({
+                        success: false,
+                        student: excelStudent.fullName,
+                        error: result.error || 'Неизвестная ошибка'
+                    });
+                }
+            } catch (error) {
+                console.error('Ошибка при обработке студента:', excelStudent.fullName, error);
                 results.push({
-                    success:true,
-                    student:excelStudent.fullName,
-                    id:result,
-                    group:excelStudent.group
-                });
-            }catch(error){
-                results.push({
-                    success:false,
-                    student:excelStudent.fullName,
-                    error:error.message
+                    success: false,
+                    student: excelStudent.fullName,
+                    error: error.message
                 });
             }
         }
         return results;
     }
-
     async findOrCreateGroup(groupNumber){
         try{
             const groups=await this.getAllGroups();
