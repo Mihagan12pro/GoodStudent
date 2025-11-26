@@ -92,7 +92,7 @@ ${this.groups.map(group=>`<option value="${group.id}">${group.number}</option>`)
 <label>Преподаватель:</label>
 <select id="instructor-filter" class="filter-select">
 <option value="all">Все преподаватели</option>
-${this.instructors.map(instructor=>`<option value="${instructor.id}">${instructor.surname}${instructor.name}</option>`).join('')}
+${this.instructors.map(instructor=>`<option value="${instructor.id}">${instructor.surname} ${instructor.name}</option>`).join('')}
 </select>
 </div>
 <div class="filter-group">
@@ -131,7 +131,7 @@ ${this.instructors.map(instructor=>`<option value="${instructor.id}">${instructo
 ${this.filteredStudents.map(student=>{
 const group=this.groups.find(g=>g.id===student.groupId);
 const statusText=this.getStatusText(student.status);
-const assignedInstructor=this.getAssignedInstructor(student.groupId);
+const assignedInstructor = this.getAssignedInstructors(student.groupId);
 return`
 <tr>
 <td>${student.id}</td>
@@ -192,14 +192,34 @@ case 2:return'<span class="status-expelled">Отчислен</span>';
 default:return'<span class="status-unknown">Неизвестно</span>';
 }
 }
-getAssignedInstructor(groupId) {
-    const assignment = this.assignments.find(a => a.group_id === groupId);
-    if (!assignment) return 'Не назначен';
-    const instructor = this.instructors.find(i => i.id === assignment.instructor_id);
-    if (instructor) {
-        return `${instructor.surname} ${instructor.name} ${instructor.patronymic || ''}`.trim();
-    }
-    return 'Не назначен';
+getAssignedInstructors(groupId) {
+    const assignments = this.assignments.filter(a => a.group_id === groupId);
+    if (assignments.length === 0) return 'Не назначены';
+    const instructorNames = [];
+    assignments.forEach(assignment => {
+        const instructor = this.instructors.find(i => i.id === assignment.instructor_id);
+        const subject = this.subjects.find(s => s.id === assignment.subject_id);
+        if (instructor && subject) {
+            instructorNames.push(`${instructor.surname} ${instructor.name} (${subject.name})`);
+        }
+    });    
+    return instructorNames.join(', ');
+}
+getAssignedInstructors(groupId) {
+    const assignments = this.assignments.filter(a => a.group_id === groupId);
+    if (assignments.length === 0) return 'Не назначены';
+    
+    // Собираем ВСЕХ преподавателей этой группы
+    const instructorNames = [];
+    assignments.forEach(assignment => {
+        const instructor = this.instructors.find(i => i.id === assignment.instructor_id);
+        const subject = this.subjects.find(s => s.id === assignment.subject_id);
+        if (instructor && subject) {
+            instructorNames.push(`${instructor.surname} ${instructor.name} (${subject.name})`);
+        }
+    });
+    
+    return instructorNames.join(', ');
 }
 applyFilters(){
 const groupFilter=document.getElementById('group-filter')?.value||'all';
@@ -243,7 +263,7 @@ return`
 <td>${student.surname} ${student.name} ${student.patronymic || ''}</td>
 <td>${group?group.number:'Не указана'}</td>
 <td>${statusText}</td>
-<td>${assignedInstructor}</td>
+<td>${this.getAssignedInstructors(student.groupId)}</td>
 <td>
 <button class="btn-action btn-edit" onclick="adminApp.editStudent('${student.id}')">редактировать</button>
 <button class="btn-action btn-delete" onclick="adminApp.deleteStudent('${student.id}')">удалить</button>
@@ -276,7 +296,7 @@ instructorSelect.innerHTML='<option value="">Выберите преподава
 this.instructors.forEach(instructor=>{
 const option=document.createElement('option');
 option.value=instructor.id;
-const displayName=`${instructor.surname}${instructor.name}${instructor.patronymic||''}`.trim();
+const displayName = `${instructor.surname} ${instructor.name} ${instructor.patronymic || ''}`.trim();
 option.textContent=displayName;
 console.log('Добавляем преподавателя:',displayName,'ID:',instructor.id);
 instructorSelect.appendChild(option);
@@ -371,49 +391,50 @@ this.assignments=JSON.parse(localStorage.getItem('instructor_assignments')||'[]'
 this.displayAssignments();
 }
 }
-async assignSubjectToInstructor(){
-const instructorId=document.getElementById('instructor-select').value;
-const subjectId=document.getElementById('subject-assign-select').value;
-const groupId=document.getElementById('group-assign-select').value;
-const departmentId=document.getElementById('department-select').value;
-if(!instructorId||!subjectId||!groupId||!departmentId){
-alert('Заполните все поля');
-return;
-}
-try{
-const instructor=this.instructors.find(i=>i.id===instructorId);
-const subject=this.subjects.find(s=>s.id==subjectId);
-const group=this.groups.find(g=>g.id===groupId);
-const department=this.departments.find(d=>d.id===departmentId);
-const assignmentData={
-instructorId:instructorId,
-subjectId:subjectId,
-groupId:groupId,
-departmentId:departmentId
-};
-const response=await fetch('http://localhost:5000/api/assignments',{
-method:'POST',
-headers:{'Content-Type':'application/json'},
-body:JSON.stringify(assignmentData)
-});
-if(response.ok){
-const result=await response.json();
-alert(`Предмет"${subject.name}"успешно назначен преподавателю${instructor.surname}${instructor.name}для группы${group.number}`);
-await this.loadAssignments();
-this.clearAssignmentForm();
-this.renderDataTable();
-}else{
-const errorData=await response.json();
-if(errorData.existingId){
-alert('Такое назначение уже существует');
-}else{
-alert('Ошибка при назначении предмета');
-}
-}
-}catch(error){
-console.error('Ошибка назначения предмета:',error);
-alert('Ошибка при назначении предмета');
-}
+async assignSubjectToInstructor() {
+    const instructorId = document.getElementById('instructor-select').value;
+    const subjectId = document.getElementById('subject-assign-select').value;
+    const groupId = document.getElementById('group-assign-select').value;
+    const departmentId = document.getElementById('department-select').value;    
+    if (!instructorId || !subjectId || !groupId || !departmentId) {
+        alert('Заполните все поля');
+        return;
+    }    
+    try {
+        const instructor = this.instructors.find(i => i.id === instructorId);
+        const subject = this.subjects.find(s => s.id == subjectId);
+        const group = this.groups.find(g => g.id === groupId);
+        const department = this.departments.find(d => d.id === departmentId);
+        
+        const assignmentData = {
+            instructorId: instructorId,
+            subjectId: subjectId,
+            groupId: groupId,
+            departmentId: departmentId
+        };        
+        const response = await fetch('http://localhost:5000/api/assignments', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(assignmentData)
+        });      
+        if (response.ok) {
+            const result = await response.json();
+            alert(`Предмет "${subject.name}" успешно назначен преподавателю ${instructor.surname} ${instructor.name} для группы ${group.number}`);
+            await this.loadAssignments();
+            this.clearAssignmentForm();
+            this.renderDataTable();
+        } else {
+            const errorData = await response.json();
+            if (errorData.existingId) {
+                alert('Такое назначение уже существует');
+            } else {
+                alert('Ошибка при назначении предмета');
+            }
+        }
+    } catch (error) {
+        console.error('Ошибка назначения предмета:', error);
+        alert('Ошибка при назначении предмета');
+    }
 }
 async removeAssignment(assignmentId){
 if(confirm('Удалить это назначение?')){
@@ -1022,7 +1043,7 @@ html+=`</td>
 <td>`;
 departmentInstructors.forEach(instructor=>{
 html+=`<div class="subject-item">
-${instructor.surname}${instructor.name}
+${instructor.surname} ${instructor.name}
 </div>`;
 });
 if(departmentInstructors.length===0){
