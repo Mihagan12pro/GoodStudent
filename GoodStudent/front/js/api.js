@@ -65,25 +65,25 @@ class ApiClient {
             return this.getFallbackGroups();
         }
     }
-    async getAllInstructors(){
-try{
-const response=await fetch(`${this.fallbackUrl}/instructors`);
-if(response.ok)return await response.json();
-throw new Error('Failed to fetch instructors');
-}catch(error){
-console.log('Using fallback instructors data');
-return this.getFallbackInstructors();
-}
+   async getAllInstructors(){
+  try{
+    const response = await fetch(`${this.fallbackUrl}/instructors`);
+    if(response.ok) return await response.json();
+    throw new Error('Failed to fetch instructors');
+  }catch(error){
+    console.log('Using fallback instructors data');
+    return this.getFallbackInstructors();
+  }
 }
     async getAllDepartments(){
-try{
-const response=await fetch(`${this.fallbackUrl}/departments`);
-if(response.ok)return await response.json();
-throw new Error('Failed to fetch departments');
-}catch(error){
-console.log('Using fallback departments data');
-return this.getFallbackDepartments();
-}
+  try{
+    const response = await fetch(`${this.fallbackUrl}/departments`);
+    if(response.ok) return await response.json();
+    throw new Error('Failed to fetch departments');
+  }catch(error){
+    console.log('Using fallback departments data');
+    return this.getFallbackDepartments();
+  }
 }
     getFallbackStudents(){
         return[
@@ -245,20 +245,14 @@ return[
     }
 }
     async getAllSubjects(){
-try{
-const response=await fetch(`${this.fallbackUrl}/subjects`);
-if(response.ok)return await response.json();
-throw new Error('Failed to fetch subjects');
-}catch(error){
-return[
-{id:1,name:'Системы инженерного анализа',type:'Лаб. работа'},
-{id:2,name:'Нормативное регулирование',type:'Лекция'},
-{id:3,name:'Базы данных',type:'Практика'},
-{id:4,name:'Веб-программирование',type:'Лаб. работа'},
-{id:5,name:'Линейная алгебра',type:'Лекция'},
-{id:6,name:'Программирование в САПР',type:'Лаб. работа'}
-];
-}
+  try{
+    const response = await fetch(`${this.fallbackUrl}/subjects`);
+    if(response.ok) return await response.json();
+    throw new Error('Failed to fetch subjects');
+  }catch(error){
+    console.log('Using fallback subjects data');
+    return this.getFallbackSubjects();
+  }
 }
     async assignSubjectToInstructor(assignmentData){
         return this.saveAssignmentToLocalStorage(assignmentData);
@@ -307,14 +301,14 @@ return[];
 }
 }
 async getFullFaculties(){
-try{
-const response=await fetch(`${this.fallbackUrl}/faculties-full`);
-if(response.ok)return await response.json();
-throw new Error('Failed to fetch faculties');
-}catch(error){
-console.error('Ошибка загрузки факультетов:',error);
-return[];
-}
+  try{
+    const response = await fetch(`${this.fallbackUrl}/faculties-full`);
+    if(response.ok) return await response.json();
+    throw new Error('Failed to fetch faculties');
+  }catch(error){
+    console.log('Using fallback faculties data');
+    return this.getFallbackFaculties();
+  }
 }
 async getFullInstructors(){
 try{
@@ -326,7 +320,20 @@ console.error('Ошибка загрузки преподавателей:',erro
 return[];
 }
 }
-    ////////
+getFallbackFaculties() {
+  return [
+    { id: '1', tittle: 'Факультет информационных технологий', description: 'ФИТ' },
+    { id: '2', tittle: 'Факультет кибербезопасности', description: 'ФКБ' }
+  ];
+}
+getFallbackSubjects() {
+  return [
+    { id: '1', name: 'Системы инженерного анализа', type: 'Лаб. работа', department_id: '1' },
+    { id: '2', name: 'Базы данных', type: 'Лекция', department_id: '1' },
+    { id: '3', name: 'Веб-программирование', type: 'Практика', department_id: '2' },
+    { id: '4', name: 'Математический анализ', type: 'Лекция', department_id: '3' }
+  ];
+}
     async updateStudent(studentId, studentData) {
     try {
         const response = await fetch(`${this.fallbackUrl}/students/${studentId}`, {
@@ -404,6 +411,36 @@ getFallbackDepartments() {
         { id: '2', tittle: 'Программная инженерия', description: 'Кафедра программной инженерии' },
         { id: '3', tittle: 'Компьютерная безопасность', description: 'Кафедра компьютерной безопасности' }
     ];
+}
+async getSectionsDepartments(){
+try{
+const response=await fetch(`${this.fallbackUrl}/sections/departments`);
+if(response.ok)return await response.json();
+throw new Error('Failed to fetch sections departments');
+}catch(error){
+console.error('Ошибка загрузки кафедр из sections:',error);
+return[];
+}
+}
+async getSectionsFaculties(){
+try{
+const response=await fetch(`${this.fallbackUrl}/sections/faculties`);
+if(response.ok)return await response.json();
+throw new Error('Failed to fetch sections faculties');
+}catch(error){
+console.error('Ошибка загрузки факультетов из sections:',error);
+return[];
+}
+}
+async getCSharpInstructors(){
+try{
+const response=await fetch(`${this.fallbackUrl}/instructors/all`);
+if(response.ok)return await response.json();
+throw new Error('Failed to fetch C# instructors');
+}catch(error){
+console.error('Ошибка загрузки преподавателей из C#:',error);
+return[];
+}
 }
 }
 const apiClient=new ApiClient();

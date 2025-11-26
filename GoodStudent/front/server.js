@@ -5,6 +5,7 @@ import XLSX from 'xlsx';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import pg from 'pg';
+import iconv from 'iconv-lite';
 const { Pool } = pg;
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
@@ -21,9 +22,14 @@ const poolConfig = {
   connectionTimeoutMillis: 5000,
   idleTimeoutMillis: 30000,
   max: 20,
-  client_encoding: 'UTF8' 
+  client_encoding: 'WIN1251'
 };
-const pool = new Pool(poolConfig);
+const pools = {
+  students: new Pool({ ...poolConfig, database: 'goodStudent_studentsDb' }),
+  instructors: new Pool({ ...poolConfig, database: 'goodStudent_instructorsDb' }),
+  events: new Pool({ ...poolConfig, database: 'goodStudents_eventsDb' }),
+  sections: new Pool({ ...poolConfig, database: 'goodStudents_sectionsDb' })
+};
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -45,27 +51,21 @@ function generateUUID() {
 app.get('/api/students', async (req, res) => {
   let client;
   try {
-    client = await pool.connect();
+    client = await pools.students.connect();
     const result = await client.query(`SELECT s."Id", s."name", s."surname", s."patronymic", s."GroupId", s."status", g."number" as "group_number" FROM students s LEFT JOIN groups g ON s."GroupId" = g."Id" ORDER BY s."surname", s."name" LIMIT 100`);
-    const students = result.rows.map(student => ({id: student.Id, name: student.name, surname: student.surname, patronymic: student.patronymic, groupId: student.GroupId, groupName: student.group_number || 'Не указана', status: student.status}));
+    const students = result.rows.map(student => ({
+      id: student.Id, 
+      name: student.name, 
+      surname: student.surname, 
+      patronymic: student.patronymic, 
+      groupId: student.GroupId, 
+      groupName: student.group_number || 'Не указана', 
+      status: student.status
+    }));
     res.json(students);
   } catch (error) {
     console.error('Ошибка загрузки студентов:', error);
     res.status(500).json({ error: 'Ошибка загрузки студентов' });
-  } finally {
-    if (client) client.release();
-  }
-});
-app.get('/api/groups', async (req, res) => {
-  let client;
-  try {
-    client = await pool.connect();
-    const result = await client.query(`SELECT "Id", "number", "profession_id" FROM groups ORDER BY "number" LIMIT 50`);
-    const groups = result.rows.map(row => ({id: row.Id, number: row.number, professionId: row.profession_id}));
-    res.json(groups);
-  } catch (error) {
-    console.error('Ошибка загрузки групп:', error);
-    res.status(500).json({ error: 'Ошибка загрузки групп' });
   } finally {
     if (client) client.release();
   }
@@ -76,7 +76,7 @@ app.put('/api/students/:id', async (req, res) => {
     const studentId = req.params.id;
     const { name, surname, patronymic, groupId, status } = req.body;    
     console.log('Обновление студента:', studentId, { name, surname, groupId, status });    
-    client = await pool.connect();    
+    client = await pools.students.connect();    
     const result = await client.query(
       `UPDATE students SET "name" = $1, "surname" = $2, "patronymic" = $3, "GroupId" = $4, "status" = $5 
       WHERE "Id" = $6 RETURNING "Id"`,
@@ -93,16 +93,68 @@ app.put('/api/students/:id', async (req, res) => {
     if (client) client.release();
   }
 });
+app.delete('/api/students/:id', async (req, res) => {
+  let client;
+  try {
+    const studentId = req.params.id;    
+    console.log('Удаление студента:', studentId);    
+    client = await pools.students.connect();    
+    const result = await client.query('DELETE FROM students WHERE "Id" = $1 RETURNING "Id"', [studentId]);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Студент не найден' });
+    }    
+    res.json({ success: true, message: 'Студент удален' });
+  } catch (error) {
+    console.error('Ошибка удаления студента:', error);
+    res.status(500).json({ error: 'Ошибка удаления студента: ' + error.message });
+  } finally {
+    if (client) client.release();
+  }
+});
+app.post('/api/students', async (req, res) => {
+  let client;
+  try {
+    const { name, surname, patronymic, groupId, status } = req.body;
+    console.log('Создание студента:', { name, surname, groupId });
+    client = await pools.students.connect();
+    const studentId = generateUUID();
+    const result = await client.query(`INSERT INTO students ("Id", "name", "surname", "patronymic", "GroupId", "status") VALUES ($1, $2, $3, $4, $5, $6) RETURNING "Id"`, [studentId, name, surname, patronymic || '', groupId, status || 0]);
+    res.json({ id: studentId, success: true });
+  } catch (error) {
+    console.error('Ошибка создания студента:', error);
+    res.status(500).json({ error: 'Ошибка создания студента: ' + error.message });
+  } finally {
+    if (client) client.release();
+  }
+});
+app.get('/api/groups', async (req, res) => {
+  let client;
+  try {
+    client = await pools.students.connect();
+    const result = await client.query(`SELECT "Id", "number", "profession_id" FROM groups ORDER BY "number" LIMIT 50`);
+    const groups = result.rows.map(row => ({
+      id: row.Id, 
+      number: row.number, 
+      professionId: row.profession_id
+    }));
+    res.json(groups);
+  } catch (error) {
+    console.error('Ошибка загрузки групп:', error);
+    res.status(500).json({ error: 'Ошибка загрузки групп' });
+  } finally {
+    if (client) client.release();
+  }
+});
 app.put('/api/groups/:id', async (req, res) => {
   let client;
   try {
     const groupId = req.params.id;
     const { number } = req.body;   
     console.log('Обновление группы:', groupId, { number });    
-    client = await pool.connect();
+    client = await pools.students.connect();
     const checkQuery = 'SELECT "Id" FROM groups WHERE "number" = $1 AND "Id" != $2';
-    const checkResult = await client.query(checkQuery, [number, groupId]);
-    
+    const checkResult = await client.query(checkQuery, [number, groupId]);    
     if (checkResult.rows.length > 0) {
       return res.status(400).json({ error: 'Группа с таким номером уже существует' });
     }    
@@ -121,227 +173,12 @@ app.put('/api/groups/:id', async (req, res) => {
     if (client) client.release();
   }
 });
-app.delete('/api/students/:id', async (req, res) => {
-  let client;
-  try {
-    const studentId = req.params.id;    
-    console.log('Удаление студента:', studentId);    
-    client = await pool.connect();    
-    const result = await client.query('DELETE FROM students WHERE "Id" = $1 RETURNING "Id"', [studentId]);
-    
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Студент не найден' });
-    }    
-    res.json({ success: true, message: 'Студент удален' });
-  } catch (error) {
-    console.error('Ошибка удаления студента:', error);
-    res.status(500).json({ error: 'Ошибка удаления студента: ' + error.message });
-  } finally {
-    if (client) client.release();
-  }
-});
-app.get('/api/instructors', async (req, res) => {
-  res.setHeader('Content-Type', 'application/json; charset=utf-8');
-  let client;
-  try {
-    client = await pool.connect();
-    const result = await client.query(`SELECT "Id", "name", "surname", "patronymic", "department_id", "email" FROM instructors ORDER BY "surname", "name"`);
-    const instructors = result.rows.map(row => ({id: row.Id, name: row.name, surname: row.surname, patronymic: row.patronymic, departmentId: row.department_id, email: row.email}));
-    res.json(instructors);
-  } catch (error) {
-    console.error('Ошибка загрузки преподавателей:', error);
-    res.status(500).json({ error: 'Ошибка загрузки преподавателей' });
-  } finally {
-    if (client) client.release();
-  }
-});
-app.get('/api/departments', async (req, res) => {
-  res.setHeader('Content-Type', 'application/json; charset=utf-8');
-  let client;
-  try {
-    client = await pool.connect();
-    const result = await client.query(`SELECT "Id", "tittle", "description", "faculty_id" FROM departments ORDER BY "tittle"`);
-    const departments = result.rows.map(row => ({id: row.Id, tittle: row.tittle, description: row.description, facultyId: row.faculty_id}));
-    res.json(departments);
-  } catch (error) {
-    console.error('Ошибка загрузки кафедр:', error);
-    res.status(500).json({ error: 'Ошибка загрузки кафедр' });
-  } finally {
-    if (client) client.release();
-  }
-});
-app.get('/api/departments-full', async (req, res) => {
-  let client;
-  try {
-    client = await pool.connect();
-    const result = await client.query('SELECT * FROM departments ORDER BY "tittle"');
-    const departments = result.rows.map(row => ({
-      id: row.Id,
-      tittle: row.tittle,
-      description: row.description,
-      faculty_id: row.faculty_id
-    }));
-    res.json(departments);
-  } catch (error) {
-    console.error('Ошибка загрузки кафедр:', error);
-    res.status(500).json({ error: 'Ошибка загрузки кафедр' });
-  } finally {
-    if (client) client.release();
-  }
-});
-app.get('/api/subjects-full', async (req, res) => {
-  let client;
-  try {
-    client = await pool.connect();
-    const result = await client.query('SELECT * FROM subjects ORDER BY "name"');
-    const subjects = result.rows.map(row => ({
-      id: row.Id,
-      name: row.name,
-      type: row.type,
-      department_id: row.department_id
-    }));
-    res.json(subjects);
-  } catch (error) {
-    console.error('Ошибка загрузки предметов:', error);
-    res.status(500).json({ error: 'Ошибка загрузки предметов' });
-  } finally {
-    if (client) client.release();
-  }
-});
-app.get('/api/instructors-full', async (req, res) => {
-  let client;
-  try {
-    client = await pool.connect();
-    const result = await client.query('SELECT * FROM instructors ORDER BY "surname", "name"');
-    const instructors = result.rows.map(row => ({
-      id: row.Id,
-      name: row.name,
-      surname: row.surname,
-      patronymic: row.patronymic,
-      department_id: row.department_id,
-      email: row.email
-    }));
-    res.json(instructors);
-  } catch (error) {
-    console.error('Ошибка загрузки преподавателей:', error);
-    res.status(500).json({ error: 'Ошибка загрузки преподавателей' });
-  } finally {
-    if (client) client.release();
-  }
-});
-app.get('/api/subjects', async (req, res) => {
-  let client;
-  try {
-    client = await pool.connect();
-    const result = await client.query(`SELECT "Id", "name", "type", "department_id" FROM subjects ORDER BY "name"`);
-    const subjects = result.rows.map(row => ({id: row.Id, name: row.name, type: row.type, departmentId: row.department_id}));
-    res.json(subjects);
-  } catch (error) {
-    console.error('Ошибка загрузки предметов:', error);
-    res.status(500).json({ error: 'Ошибка загрузки предметов' });
-  } finally {
-    if (client) client.release();
-  }
-});
-app.get('/api/assignments', async (req, res) => {
-  let client;
-  try {
-    client = await pool.connect();
-    const result = await client.query(`SELECT ia."Id", ia."instructor_id", ia."subject_id", ia."group_id", ia."department_id", ia."created_at", i."name" as "instructor_name", i."surname" as "instructor_surname", i."patronymic" as "instructor_patronymic", s."name" as "subject_name", g."number" as "group_number", d."tittle" as "department_name" FROM instructor_assignments ia LEFT JOIN instructors i ON ia."instructor_id" = i."Id" LEFT JOIN subjects s ON ia."subject_id" = s."Id" LEFT JOIN groups g ON ia."group_id" = g."Id" LEFT JOIN departments d ON ia."department_id" = d."Id" ORDER BY ia."created_at" DESC`);
-    const assignments = result.rows.map(row => ({id: row.Id, instructor_id: row.instructor_id, instructor_name: row.instructor_name, instructor_surname: row.instructor_surname, instructor_patronymic: row.instructor_patronymic, subject_id: row.subject_id, subject_name: row.subject_name, group_id: row.group_id, group_number: row.group_number, department_id: row.department_id, department_name: row.department_name, created_at: row.created_at}));
-    res.json(assignments);
-  } catch (error) {
-    console.error('Ошибка загрузки назначений:', error);
-    res.status(500).json({ error: 'Ошибка загрузки назначений' });
-  } finally {
-    if (client) client.release();
-  }
-});
-app.get('/api/faculties-full', async (req, res) => {
-  let client;
-  try {
-    client = await pool.connect();
-    const result = await client.query('SELECT * FROM faculties ORDER BY "tittle"');
-    const faculties = result.rows.map(row => ({
-      id: row.Id,
-      tittle: row.tittle,
-      description: row.description
-    }));
-    res.json(faculties);
-  } catch (error) {
-    console.error('Ошибка загрузки факультетов:', error);
-    res.status(500).json({ error: 'Ошибка загрузки факультетов' });
-  } finally {
-    if (client) client.release();
-  }
-});
-app.post('/api/assignments', async (req, res) => {
-  let client;
-  try {
-    const { instructorId, subjectId, groupId, departmentId } = req.body;
-    console.log('Создание назначения:', { instructorId, subjectId, groupId, departmentId });
-    client = await pool.connect();
-    const assignmentId = generateUUID();
-    const result = await client.query(`INSERT INTO instructor_assignments ("Id", "instructor_id", "subject_id", "group_id", "department_id") VALUES ($1, $2, $3, $4, $5) RETURNING "Id"`, [assignmentId, instructorId, subjectId, groupId, departmentId]);
-    res.json({ id: assignmentId, success: true });
-  } catch (error) {
-    console.error('Ошибка создания назначения:', error);
-    res.status(500).json({ error: 'Ошибка создания назначения: ' + error.message });
-  } finally {
-    if (client) client.release();
-  }
-});
-app.get('/api/instructors/:id/assignments', async (req, res) => {
-  let client;
-  try {
-    const instructorId = req.params.id;
-    client = await pool.connect();
-    const result = await client.query(`SELECT ia."Id", ia."subject_id", ia."group_id", s."name" as "subject_name", g."number" as "group_number" FROM instructor_assignments ia LEFT JOIN subjects s ON ia."subject_id" = s."Id" LEFT JOIN groups g ON ia."group_id" = g."Id" WHERE ia."instructor_id" = $1`, [instructorId]);
-    const assignments = result.rows.map(row => ({id: row.Id, subject_id: row.subject_id, subject_name: row.subject_name, group_id: row.group_id, group_number: row.group_number}));
-    res.json(assignments);
-  } catch (error) {
-    console.error('Ошибка загрузки назначений преподавателя:', error);
-    res.status(500).json({ error: 'Ошибка загрузки назначений' });
-  } finally {
-    if (client) client.release();
-  }
-});
-app.delete('/api/assignments/:id', async (req, res) => {
-  let client;
-  try {
-    const assignmentId = req.params.id;
-    client = await pool.connect();
-    await client.query('DELETE FROM instructor_assignments WHERE "Id" = $1', [assignmentId]);
-    res.json({ success: true, message: 'Назначение удалено' });
-  } catch (error) {
-    console.error('Ошибка удаления назначения:', error);
-    res.status(500).json({ error: 'Ошибка удаления назначения' });
-  } finally {
-    if (client) client.release();
-  }
-});
-app.post('/api/students', async (req, res) => {
-  let client;
-  try {
-    const { name, surname, patronymic, groupId, status } = req.body;
-    console.log('Создание студента:', { name, surname, groupId });
-    client = await pool.connect();
-    const studentId = generateUUID();
-    const result = await client.query(`INSERT INTO students ("Id", "name", "surname", "patronymic", "GroupId", "status") VALUES ($1, $2, $3, $4, $5, $6) RETURNING "Id"`, [studentId, name, surname, patronymic || '', groupId, status || 0]);
-    res.json({ id: studentId, success: true });
-  } catch (error) {
-    console.error('Ошибка создания студента:', error);
-    res.status(500).json({ error: 'Ошибка создания студента: ' + error.message });
-  } finally {
-    if (client) client.release();
-  }
-});
 app.post('/api/groups', async (req, res) => {
   let client;
   try {
     const { number } = req.body;
     console.log('Создание группы:', { number });    
-    client = await pool.connect();    
+    client = await pools.students.connect();    
     const checkQuery = 'SELECT "Id" FROM groups WHERE "number" = $1';
     const checkResult = await client.query(checkQuery, [number]);    
     if (checkResult.rows.length > 0) {
@@ -372,6 +209,160 @@ app.post('/api/groups', async (req, res) => {
     if (client) client.release();
   }
 });
+app.get('/api/instructors', async (req, res) => {
+  let client;
+  try {
+    client = await pools.instructors.connect();
+    const result = await client.query(`SELECT "Id", "name", "surname", "patronymic", "DepartmentId" FROM "Instructors" ORDER BY "surname", "name"`);    
+    console.log('ДАННЫЕ ИЗ БАЗЫ ПРЕПОДАВАТЕЛЕЙ:', result.rows);
+    const fixEncoding = (text) => {
+      if (!text) return text;
+      try {
+        return text
+          .replace(/Љ/g, 'К')
+          .replace(/дҐ¤а/g, 'афедра')
+          .replace(/Ёд®а¬/g, 'информ')
+          .replace(/вҐе®«®Ј/g, 'технолог')
+          .replace(/Їа®Ја/g, 'прогр')
+          .replace(/¬/g, 'м')
+          .replace(/Ґ/g, 'е')
+          .replace(/®/g, 'о')
+          .replace(/Є/g, 'к');
+      } catch (e) {
+        return text;
+      }
+    };
+    const instructors = result.rows.map(row => ({
+      id: row.Id,
+      name: fixEncoding(row.name),
+      surname: fixEncoding(row.surname),
+      patronymic: fixEncoding(row.patronymic),
+      departmentId: row.DepartmentId
+    }));    
+    console.log('ПРЕПОДАВАТЕЛИ ПОСЛЕ ИСПРАВЛЕНИЯ:', instructors);
+    res.json(instructors);
+    
+  } catch (error) {
+    console.error('Ошибка загрузки преподавателей:', error);
+    res.status(500).json({ error: 'Ошибка загрузки преподавателей' });
+  } finally {
+    if (client) client.release();
+  }
+});
+app.get('/api/departments', async (req, res) => {
+  let client;
+  try {
+    client = await pools.sections.connect();
+    const result = await client.query(`SELECT "Id", "Tittle", "Description", "FacultyId" FROM "Departments" ORDER BY "Tittle"`);
+    const departments = result.rows.map(row => ({
+      id: row.Id,
+      tittle: row.Tittle,
+      description: row.Description,
+      facultyId: row.FacultyId
+    }));
+    res.json(departments);
+  } catch (error) {
+    console.error('Ошибка загрузки кафедр:', error);
+    res.status(500).json({ error: 'Ошибка загрузки кафедр' });
+  } finally {
+    if (client) client.release();
+  }
+});
+app.get('/api/subjects', async (req, res) => {
+  let client;
+  try {
+    client = await pools.events.connect();
+    const result = await client.query(`SELECT "Id", "Tittle", "Description", "DepartmentId" FROM "Subjects" ORDER BY "Tittle"`);
+    const subjects = result.rows.map(row => ({
+      id: row.Id,
+      name: row.Tittle,
+      description: row.Description,
+      departmentId: row.DepartmentId
+    }));
+    res.json(subjects);
+  } catch (error) {
+    console.error('Ошибка загрузки предметов:', error);
+    res.status(500).json({ error: 'Ошибка загрузки предметов' });
+  } finally {
+    if (client) client.release();
+  }
+});
+app.get('/api/faculties-full', async (req, res) => {
+  let client;
+  try {
+    client = await pools.sections.connect();
+    const result = await client.query('SELECT "Id", "Tittle", "Description" FROM "Faculties" ORDER BY "Tittle"');
+    const faculties = result.rows.map(row => ({
+      id: row.Id,
+      tittle: row.Tittle,
+      description: row.Description
+    }));
+    res.json(faculties);
+  } catch (error) {
+    console.error('Ошибка загрузки факультетов:', error);
+    res.status(500).json({ error: 'Ошибка загрузки факультетов' });
+  } finally {
+    if (client) client.release();
+  }
+});
+app.get('/api/assignments', async (req, res) => {
+  let client;
+  try {
+    client = await pools.students.connect();
+    const tableExists = await client.query(`SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'instructor_assignments')`);
+    
+    if (!tableExists.rows[0].exists) {
+      await client.query(`CREATE TABLE instructor_assignments ("Id" UUID PRIMARY KEY DEFAULT gen_random_uuid(), "instructor_id" UUID, "subject_id" UUID, "group_id" UUID, "department_id" UUID, "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`);
+      res.json([]);
+      return;
+    }    
+    const result = await client.query(`SELECT * FROM instructor_assignments ORDER BY "created_at" DESC`);
+    const assignments = result.rows.map(row => ({
+      id: row.Id, 
+      instructor_id: row.instructor_id,
+      subject_id: row.subject_id,
+      group_id: row.group_id,
+      department_id: row.department_id,
+      created_at: row.created_at
+    }));
+    res.json(assignments);
+  } catch (error) {
+    console.error('Ошибка загрузки назначений:', error);
+    res.status(500).json({ error: 'Ошибка загрузки назначений' });
+  } finally {
+    if (client) client.release();
+  }
+});
+app.post('/api/assignments', async (req, res) => {
+  let client;
+  try {
+    const { instructorId, subjectId, groupId, departmentId } = req.body;
+    console.log('Создание назначения:', { instructorId, subjectId, groupId, departmentId });
+    client = await pools.students.connect();
+    const assignmentId = generateUUID();
+    const result = await client.query(`INSERT INTO instructor_assignments ("Id", "instructor_id", "subject_id", "group_id", "department_id") VALUES ($1, $2, $3, $4, $5) RETURNING "Id"`, [assignmentId, instructorId, subjectId, groupId, departmentId]);
+    res.json({ id: assignmentId, success: true });
+  } catch (error) {
+    console.error('Ошибка создания назначения:', error);
+    res.status(500).json({ error: 'Ошибка создания назначения: ' + error.message });
+  } finally {
+    if (client) client.release();
+  }
+});
+app.delete('/api/assignments/:id', async (req, res) => {
+  let client;
+  try {
+    const assignmentId = req.params.id;
+    client = await pools.students.connect();
+    await client.query('DELETE FROM instructor_assignments WHERE "Id" = $1', [assignmentId]);
+    res.json({ success: true, message: 'Назначение удалено' });
+  } catch (error) {
+    console.error('Ошибка удаления назначения:', error);
+    res.status(500).json({ error: 'Ошибка удаления назначения' });
+  } finally {
+    if (client) client.release();
+  }
+});
 app.post('/api/upload-schedule', upload.single('excelFile'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'Файл не загружен' });
@@ -379,19 +370,41 @@ app.post('/api/upload-schedule', upload.single('excelFile'), async (req, res) =>
     const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
     const sheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[sheetName];
-    const jsonData = XLSX.utils.sheet_to_json(worksheet);
+    const jsonData = XLSX.utils.sheet_to_json(worksheet);    
     const students = jsonData.map((row, index) => {
       const name = row['name'] || row['Name'] || row['ФИО'] || row['ФИО студента'] || row['Студент'] || 'Неизвестный';
       const group = row['group'] || row['Group'] || row['Группа'] || 'Неизвестная группа';
       const nameParts = name.split(' ').filter(part => part.trim() !== '');
-      let surname = '', firstName = '', patronymic = '';
-      if (nameParts.length >= 3) {surname = nameParts[0] || ''; firstName = nameParts[1] || ''; patronymic = nameParts.slice(2).join(' ') || '';} 
-      else if (nameParts.length === 2) {surname = nameParts[0] || ''; firstName = nameParts[1] || '';} 
-      else if (nameParts.length === 1) {surname = nameParts[0] || ''; firstName = name;}
-      return {name: firstName, surname: surname, patronymic: patronymic, group: group, fullName: name, rowIndex: index + 2};
-    }).filter(student => student.surname && student.name);
-    const uniqueGroups = [...new Set(students.map(s => s.group))];
-    res.json({success: true, students: students, groups: uniqueGroups, totalRows: jsonData.length, processedRows: students.length, message: `Найдено ${students.length} студентов в ${uniqueGroups.length} группах`});
+      let surname = '', firstName = '', patronymic = '';      
+      if (nameParts.length >= 3) {
+        surname = nameParts[0] || ''; 
+        firstName = nameParts[1] || ''; 
+        patronymic = nameParts.slice(2).join(' ') || '';
+      } else if (nameParts.length === 2) {
+        surname = nameParts[0] || ''; 
+        firstName = nameParts[1] || '';
+      } else if (nameParts.length === 1) {
+        surname = nameParts[0] || ''; 
+        firstName = name;
+      }      
+      return {
+        name: firstName, 
+        surname: surname, 
+        patronymic: patronymic, 
+        group: group, 
+        fullName: name, 
+        rowIndex: index + 2
+      };
+    }).filter(student => student.surname && student.name);    
+    const uniqueGroups = [...new Set(students.map(s => s.group))];    
+    res.json({
+      success: true, 
+      students: students, 
+      groups: uniqueGroups, 
+      totalRows: jsonData.length, 
+      processedRows: students.length, 
+      message: `Найдено ${students.length} студентов в ${uniqueGroups.length} группах`
+    });
   } catch (error) {
     console.error('Ошибка парсинга Excel:', error);
     res.status(500).json({ error: 'Ошибка обработки файла: ' + error.message });
@@ -402,13 +415,25 @@ app.post('/api/attendance', async (req, res) => {
   try {
     const { date, subject, group, presentStudents, absentStudents, presentCount, totalCount } = req.body;
     console.log('Сохранение посещаемости в базу...');
-    client = await pool.connect();
-    const tableExists = await client.query(`SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'attendance')`);
+    client = await pools.students.connect();
+    const tableExists = await client.query(`SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'attendance')`);    
     if (!tableExists.rows[0].exists) {
       await client.query(`CREATE TABLE attendance ("Id" SERIAL PRIMARY KEY, "Date" TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "Subject" TEXT, "GroupName" TEXT, "PresentStudents" JSONB, "AbsentStudents" JSONB, "PresentCount" INTEGER, "TotalCount" INTEGER, "CreatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`);
-    }
-    const result = await client.query(`INSERT INTO attendance ("Date", "Subject", "GroupName", "PresentStudents", "AbsentStudents", "PresentCount", "TotalCount") VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING "Id"`, [date || new Date().toISOString(), subject || 'Неизвестный предмет', group || 'Неизвестная группа', JSON.stringify(presentStudents || []), JSON.stringify(absentStudents || []), presentCount || 0, totalCount || 0]);
-    res.json({success: true, message: `Посещаемость сохранена: ${presentCount} из ${totalCount} студентов`, id: result.rows[0].Id});
+    }    
+    const result = await client.query(`INSERT INTO attendance ("Date", "Subject", "GroupName", "PresentStudents", "AbsentStudents", "PresentCount", "TotalCount") VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING "Id"`, [
+      date || new Date().toISOString(), 
+      subject || 'Неизвестный предмет', 
+      group || 'Неизвестная группа', 
+      JSON.stringify(presentStudents || []), 
+      JSON.stringify(absentStudents || []), 
+      presentCount || 0, 
+      totalCount || 0
+    ]);    
+    res.json({
+      success: true, 
+      message: `Посещаемость сохранена: ${presentCount} из ${totalCount} студентов`, 
+      id: result.rows[0].Id
+    });
   } catch (error) {
     console.error('Ошибка сохранения посещаемости:', error);
     res.status(500).json({ error: 'Ошибка сохранения посещаемости' });
@@ -416,100 +441,11 @@ app.post('/api/attendance', async (req, res) => {
     if (client) client.release();
   }
 });
-app.get('/', (req, res) => {res.sendFile(path.join(__dirname, 'form.html'));});
-app.get('/index.html', (req, res) => {res.sendFile(path.join(__dirname, 'index.html'));});
-app.get('/admin-dashboard.html', (req, res) => {res.sendFile(path.join(__dirname, 'admin-dashboard.html'));});
-app.get('/form.html', (req, res) => {res.sendFile(path.join(__dirname, 'form.html'));});
-app.get('*', (req, res) => {res.redirect('/');});
-app.use((req, res, next) => {
-    res.setHeader('Content-Type', 'application/json; charset=utf-8');
-    next();
-});
-app.post('/api/sync/csharp', async (req, res) => {
-  try {    
-    res.json({ success: true, message: 'Синхронизация завершена' });
-  } catch (error) {
-    console.error('Ошибка синхронизации:', error);
-    res.status(500).json({ error: 'Ошибка синхронизации' });
-  }
-});
-app.get('/api/csharp/departments', async (req, res) => {
-  try {
-    console.log('Загрузка кафедр из C# API...');
-    const response = await fetch('https://localhost:7298/api/sections/Departments', {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      }
-    });    
-    if (response.ok) {
-      const departments = await response.json();
-      console.log(`Загружено кафедр: ${departments.length}`);
-      res.json(departments);
-    } else {
-      console.error('Ошибка C# API:', response.status, response.statusText);
-      res.status(500).json({ error: 'Ошибка загрузки кафедр из C# API' });
-    }
-  } catch (error) {
-    console.error('Ошибка подключения к C# API:', error.message);
-    res.status(500).json({ error: 'Не удалось подключиться к C# бэкенду' });
-  }
-});
-
-app.get('/api/csharp/faculties', async (req, res) => {
-  try {
-    const response = await fetch('https://localhost:7298/api/sections/Faculty');
-    if (response.ok) {
-      const faculties = await response.json();
-      res.json(faculties);
-    } else {
-      res.status(500).json({ error: 'Ошибка загрузки факультетов' });
-    }
-  } catch (error) {
-    console.error('Ошибка загрузки факультетов:', error);
-    res.status(500).json({ error: 'Ошибка загрузки факультетов' });
-  }
-});
-app.get('/api/csharp/professions', async (req, res) => {
-  try {
-    const response = await fetch('https://localhost:7298/api/sections/Professions');
-    if (response.ok) {
-      const professions = await response.json();
-      res.json(professions);
-    } else {
-      res.status(500).json({ error: 'Ошибка загрузки специальностей' });
-    }
-  } catch (error) {
-    console.error('Ошибка загрузки специальностей:', error);
-    res.status(500).json({ error: 'Ошибка загрузки специальностей' });
-  }
-});
-app.use((req, res, next) => {
-    res.setHeader('Content-Type', 'application/json; charset=utf-8');
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    next();
-});
-app.get('/api/departments-full', async (req, res) => {
-  let client;
-  try {
-    client = await pool.connect();
-    const result = await client.query('SELECT * FROM departments ORDER BY "tittle"');
-    const departments = result.rows.map(row => ({
-      id: row.Id,
-      tittle: row.tittle,
-      description: row.description,
-      faculty_id: row.faculty_id
-    }));
-    res.setHeader('Content-Type', 'application/json; charset=utf-8');
-    res.json(departments);
-  } catch (error) {
-    console.error('Ошибка загрузки кафедр:', error);
-    res.status(500).json({ error: 'Ошибка загрузки кафедр' });
-  } finally {
-    if (client) client.release();
-  }
-});
+app.get('/', (req, res) => { res.sendFile(path.join(__dirname, 'form.html')); });
+app.get('/index.html', (req, res) => { res.sendFile(path.join(__dirname, 'index.html')); });
+app.get('/admin-dashboard.html', (req, res) => { res.sendFile(path.join(__dirname, 'admin-dashboard.html')); });
+app.get('/form.html', (req, res) => { res.sendFile(path.join(__dirname, 'form.html')); });
+app.get('*', (req, res) => { res.redirect('/'); });
 app.listen(PORT, () => {
   console.log('='.repeat(60));
   console.log(`Node.js сервер запущен на http://localhost:${PORT}`);
