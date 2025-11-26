@@ -37,24 +37,51 @@ this.useDemoData();
 }
 async loadAssignments(){
 try{
+const instructorId=this.getCurrentInstructorId();
+if(instructorId){
+const response=await fetch(`http://localhost:5000/api/instructors/${instructorId}/assignments`);
+if(response.ok){
+this.assignments=await response.json();
+console.log('Назначения преподавателя:',this.assignments);
+}else{
+const allAssignments=JSON.parse(localStorage.getItem('instructor_assignments')||'[]');
+this.assignments=allAssignments.filter(a=>a.instructor_id===instructorId);
+}
+}else{
 const allAssignments=JSON.parse(localStorage.getItem('instructor_assignments')||'[]');
 const userName=this.currentUser.name.toLowerCase();
 this.assignments=allAssignments.filter(assignment=>{
 const instructorName=assignment.instructorName.toLowerCase();
 return instructorName.includes(userName);
 });
-console.log('Назначения преподавателя:',this.assignments);
+}
 this.populateSubjectSelector();
 }catch(error){
 console.error('Ошибка загрузки назначений:',error);
 this.assignments=[];
 }
 }
+getCurrentInstructorId(){
+const user=this.currentUser;
+if(user&&user.email){
+const instructor=this.getInstructorByEmail(user.email);
+return instructor?instructor.id:null;
+}
+return null;
+}
+getInstructorByEmail(email){
+return{
+id:'1',
+name:'Преподаватель',
+surname:'Тестовый',
+email:email
+};
+}
 async loadAssignedStudents(){
 try{
 const students=await apiClient.getAllStudents();
 const groups=await apiClient.getAllGroups();
-const assignedGroupIds=this.assignments.map(a=>a.groupId);
+const assignedGroupIds=this.assignments.map(a=>a.group_id);
 this.students=this.normalizeStudents(students||[],groups||[])
 .filter(student=>assignedGroupIds.includes(student.groupId));
 this.groups=groups||[];
@@ -118,17 +145,13 @@ populateSubjectSelector(){
 const select=document.getElementById('subject-select');
 if(!select)return;
 select.innerHTML='<option value="all">Все предметы</option>';
-const assignedSubjects=this.assignments.map(assignment=>({
-id:assignment.subjectId,
-name:assignment.subjectName
-}));
-const uniqueSubjects=assignedSubjects.filter((subject,index,self)=>
-index===self.findIndex(s=>s.id===subject.id)
+const uniqueSubjects=this.assignments.filter((assignment,index,self)=>
+index===self.findIndex(a=>a.subject_id===assignment.subject_id)
 );
-uniqueSubjects.forEach(subject=>{
+uniqueSubjects.forEach(assignment=>{
 const option=document.createElement('option');
-option.value=subject.id;
-option.textContent=subject.name;
+option.value=assignment.subject_id;
+option.textContent=assignment.subject_name;
 select.appendChild(option);
 });
 console.log('Загружено предметов:',uniqueSubjects.length);
@@ -140,14 +163,13 @@ console.error('Элемент group-select не найден');
 return;
 }
 select.innerHTML='<option value="all">Все группы</option>';
-const assignedGroups=this.assignments.map(a=>a.groupId);
-const uniqueGroupIds=[...new Set(assignedGroups)];
+const uniqueGroupIds=[...new Set(this.assignments.map(a=>a.group_id))];
 uniqueGroupIds.forEach(groupId=>{
-const group=this.groups.find(g=>g.id===groupId);
-if(group){
+const assignment=this.assignments.find(a=>a.group_id===groupId);
+if(assignment){
 const option=document.createElement('option');
-option.value=group.id;
-option.textContent=group.number;
+option.value=assignment.group_id;
+option.textContent=assignment.group_number;
 select.appendChild(option);
 }
 });
@@ -181,8 +203,8 @@ student.groupId===this.currentGroupId
 );
 }
 if(this.currentSubjectId&&this.currentSubjectId!=='all'){
-const assignmentsForSubject=this.assignments.filter(a=>a.subjectId==this.currentSubjectId);
-const groupIdsForSubject=assignmentsForSubject.map(a=>a.groupId);
+const assignmentsForSubject=this.assignments.filter(a=>a.subject_id==this.currentSubjectId);
+const groupIdsForSubject=assignmentsForSubject.map(a=>a.group_id);
 filteredStudents=filteredStudents.filter(student=>
 groupIdsForSubject.includes(student.groupId)
 );
@@ -220,11 +242,13 @@ if(totalElement)totalElement.textContent=totalCount;
 }
 async saveAttendance(){
 const presentStudents=this.students.filter(s=>s.present);
+const currentSubject=this.subjects.find(s=>s.id==this.currentSubjectId);
+const currentGroup=this.groups.find(g=>g.id===this.currentGroupId);
 try{
 const result=await apiClient.markAttendance({
 date:new Date().toISOString(),
-subject:this.getCurrentSubject(),
-group:this.getCurrentGroupName(),
+subject:currentSubject?currentSubject.name:this.getCurrentSubject(),
+group:currentGroup?currentGroup.number:this.getCurrentGroupName(),
 presentStudents:presentStudents,
 presentCount:presentStudents.length,
 totalCount:this.students.length
@@ -329,11 +353,11 @@ this.groups=[
 ];
 this.assignments=[
 {
-instructorId:'1',
-subjectId:'1',
-groupId:'1',
-subjectName:'Системы инженерного анализа',
-groupName:'231-324',
+instructor_id:'1',
+subject_id:'1',
+group_id:'1',
+subject_name:'Системы инженерного анализа',
+group_number:'231-324',
 instructorName:this.currentUser.name||'Преподаватель'
 }
 ];

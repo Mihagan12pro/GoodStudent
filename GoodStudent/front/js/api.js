@@ -68,14 +68,26 @@ class ApiClient {
             return this.getFallbackGroups();
         }
     }
-
     async getAllInstructors(){
-        return this.getFallbackInstructors();
-    }
-
+try{
+const response=await fetch(`${this.fallbackUrl}/instructors`);
+if(response.ok)return await response.json();
+throw new Error('Failed to fetch instructors');
+}catch(error){
+console.log('Using fallback instructors data');
+return this.getFallbackInstructors();
+}
+}
     async getAllDepartments(){
-        return this.getFallbackDepartments();
-    }
+try{
+const response=await fetch(`${this.fallbackUrl}/departments`);
+if(response.ok)return await response.json();
+throw new Error('Failed to fetch departments');
+}catch(error){
+console.log('Using fallback departments data');
+return this.getFallbackDepartments();
+}
+}
 
     getFallbackStudents(){
         return[
@@ -95,24 +107,21 @@ class ApiClient {
             {id:'4',number:'231-327',professionId:'2'}
         ];
     }
-
-    getFallbackInstructors(){
-        return[
-            {id:'1',name:'Петр',surname:'Иванов',patronymic:'Сергеевич',departmentId:'1'},
-            {id:'2',name:'Мария',surname:'Петрова',patronymic:'Ивановна',departmentId:'1'},
-            {id:'3',name:'Алексей',surname:'Сидоров',patronymic:'Владимирович',departmentId:'2'},
-            {id:'4',name:'Ольга',surname:'Макарова',patronymic:'Сергеевна',departmentId:'2'}
-        ];
-    }
-
+getFallbackInstructors(){
+return[
+{id:'1',name:'Петр',surname:'Иванов',patronymic:'Сергеевич',departmentId:'1'},
+{id:'2',name:'Мария',surname:'Петрова',patronymic:'Ивановна',departmentId:'1'},
+{id:'3',name:'Алексей',surname:'Сидоров',patronymic:'Владимирович',departmentId:'2'},
+{id:'4',name:'Ольга',surname:'Макарова',patronymic:'Сергеевна',departmentId:'2'}
+];
+}
     getFallbackDepartments(){
-        return[
-            {id:'1',tittle:'Информационные системы',description:'Кафедра информационных систем'},
-            {id:'2',tittle:'Программная инженерия',description:'Кафедра программной инженерии'},
-            {id:'3',tittle:'Компьютерная безопасность',description:'Кафедра компьютерной безопасности'}
-        ];
-    }
-
+return[
+{id:'1',tittle:'Информационные системы',description:'Кафедра информационных систем'},
+{id:'2',tittle:'Программная инженерия',description:'Кафедра программной инженерии'},
+{id:'3',tittle:'Компьютерная безопасность',description:'Кафедра компьютерной безопасности'}
+];
+}
     async createStudent(studentData) {
         try {
             const response = await fetch(`${this.fallbackUrl}/students`, {
@@ -144,35 +153,37 @@ class ApiClient {
         }
     }
     async createGroup(groupData) {
-        try {
-            const response = await fetch(`${this.fallbackUrl}/groups`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(groupData)
-            });
-            
-            const result = await response.json();
-            
-            if (!response.ok) {
-                if (result.exists) {
-                    return { 
-                        success: true, 
-                        exists: true, 
-                        id: result.id,
-                        message: 'Группа уже существует'
-                    };
-                }
-                throw new Error(result.error || 'Ошибка создания группы');
+    try {
+        const cleanGroupData = {
+            number: groupData.number
+        };        
+        const response = await fetch(`${this.fallbackUrl}/groups`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(cleanGroupData)
+        });
+        
+        const result = await response.json();
+        
+        if (!response.ok) {
+            if (result.exists) {
+                return { 
+                    success: true, 
+                    exists: true, 
+                    id: result.id,
+                    message: 'Группа уже существует'
+                };
             }
-            
-            return { success: true, id: result.id };
-        } catch (error) {
-            console.error('Ошибка создания группы:', error);
-            return { success: false, error: error.message };
-        }
+            throw new Error(result.error || 'Ошибка создания группы');
+        }        
+        return { success: true, id: result.id };
+    } catch (error) {
+        console.error('Ошибка создания группы:', error);
+        return { success: false, error: error.message };
     }
+}
     async uploadExcelToBackend(excelStudents) {
         const results = [];
         for (const excelStudent of excelStudents) {
@@ -228,36 +239,42 @@ class ApiClient {
         return results;
     }
     async findOrCreateGroup(groupNumber){
-        try{
-            const groups=await this.getAllGroups();
-            const existingGroup=groups.find(g=>g.number===groupNumber);
-            if(existingGroup){return existingGroup.id;}
-            const newGroupId=await this.createGroup({
-                number:groupNumber,
-                professionId:"1"
-            });
-            return newGroupId;
-        }catch(error){
-            return`group_${Date.now()}`;
+    try{
+        const groups=await this.getAllGroups();
+        const existingGroup=groups.find(g=>g.number===groupNumber);
+        if(existingGroup){
+            return existingGroup.id;
         }
+        const result=await this.createGroup({
+            number:groupNumber
+        });
+        
+        if(result.success){
+            return result.id;
+        }else{
+            throw new Error(result.error);
+        }
+    }catch(error){
+        console.error('Ошибка поиска/создания группы:',error);
+        return null;
     }
-
+}
     async getAllSubjects(){
-        try{
-            const response=await fetch(`${this.fallbackUrl}/subjects`);
-            if(!response.ok)throw new Error('Failed to fetch subjects');
-            return await response.json();
-        }catch(error){
-            return[
-                {id:1,name:'Системы инженерного анализа',type:'Лаб. работа'},
-                {id:2,name:'Нормативное регулирование',type:'Лекция'},
-                {id:3,name:'Базы данных',type:'Практика'},
-                {id:4,name:'Веб-программирование',type:'Лаб. работа'},
-                {id:5,name:'Математика',type:'Лекция'},
-                {id:6,name:'Программирование',type:'Лаб. работа'}
-            ];
-        }
-    }
+try{
+const response=await fetch(`${this.fallbackUrl}/subjects`);
+if(response.ok)return await response.json();
+throw new Error('Failed to fetch subjects');
+}catch(error){
+return[
+{id:1,name:'Системы инженерного анализа',type:'Лаб. работа'},
+{id:2,name:'Нормативное регулирование',type:'Лекция'},
+{id:3,name:'Базы данных',type:'Практика'},
+{id:4,name:'Веб-программирование',type:'Лаб. работа'},
+{id:5,name:'Математика',type:'Лекция'},
+{id:6,name:'Программирование',type:'Лаб. работа'}
+];
+}
+}
 
     async assignSubjectToInstructor(assignmentData){
         return this.saveAssignmentToLocalStorage(assignmentData);
@@ -274,7 +291,6 @@ class ApiClient {
         localStorage.setItem('instructor_assignments',JSON.stringify(assignments));
         return{id:newAssignment.id,success:true};
     }
-
     async markAttendance(attendanceData){
         try{
             const response=await fetch(`${this.fallbackUrl}/attendance`,{
@@ -288,6 +304,5 @@ class ApiClient {
         }
     }
 }
-
 const apiClient=new ApiClient();
 window.apiClient=apiClient;

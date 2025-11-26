@@ -1822,6 +1822,43 @@ body {
 .stat-card {
     animation: fadeIn 0.5s ease-out;
 }
+.assignment-item{
+background:#f8f9fa;
+border-radius:8px;
+padding:15px;
+margin-bottom:10px;
+border-left:4px solid #667eea;
+}
+.assignment-header{
+display:flex;
+justify-content:space-between;
+align-items:flex-start;
+margin-bottom:10px;
+}
+.assignment-header h4{
+margin:0;
+color:#333;
+}
+.btn-remove{
+background:#dc3545;
+color:white;
+border:none;
+border-radius:50%;
+width:24px;
+height:24px;
+cursor:pointer;
+font-size:14px;
+display:flex;
+align-items:center;
+justify-content:center;
+}
+.assignment-details p{
+margin:5px 0;
+color:#666;
+}
+.assignment-details small{
+color:#999;
+}
 @media (max-width: 768px) {
     .form-row {
         grid-template-columns: 1fr;

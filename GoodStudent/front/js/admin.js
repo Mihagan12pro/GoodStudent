@@ -55,7 +55,6 @@ this.useDemoData();
 renderDataTable(){
 const tableContainer=document.getElementById('data-table-container');
 if(!tableContainer)return;
-
 if(this.students.length===0){
 tableContainer.innerHTML=`
 <div class="empty-state">
@@ -65,7 +64,6 @@ tableContainer.innerHTML=`
 `;
 return;
 }
-
 tableContainer.innerHTML=`
 <div class="table-filters">
 <div class="filter-group">
@@ -127,8 +125,8 @@ return`
 <td>${statusText}</td>
 <td>${assignedInstructor}</td>
 <td>
-<button class="btn-action btn-edit" onclick="adminApp.editStudent('${student.id}')">редактировать</button>
-<button class="btn-action btn-delete" onclick="adminApp.deleteStudent('${student.id}')">удалить</button>
+<button class="btn-action btn-edit" onclick="adminApp.editStudent('${student.id}')">✏️</button>
+<button class="btn-action btn-delete" onclick="adminApp.deleteStudent('${student.id}')">🗑️</button>
 </td>
 </tr>
 `;
@@ -137,8 +135,6 @@ return`
 </table>
 </div>
 `;
-
-// Добавляем обработчики событий для фильтров
 this.setupFilterListeners();
 }
 setupFilterListeners(){
@@ -182,45 +178,37 @@ default:return'<span class="status-unknown">Неизвестно</span>';
 }
 }
 getAssignedInstructor(groupId){
-const assignment=this.assignments.find(a=>a.groupId===groupId);
-return assignment?assignment.instructorName:'Не назначен';
+const assignment=this.assignments.find(a=>a.group_id===groupId);
+return assignment?`${assignment.instructor_surname} ${assignment.instructor_name}`:'Не назначен';
 }
-applyFilters() {
-    const groupFilter = document.getElementById('group-filter')?.value || 'all';
-    const instructorFilter = document.getElementById('instructor-filter')?.value || 'all';
-    const statusFilter = document.getElementById('status-filter')?.value || 'all';
-    
-    this.currentFilters = {
-        group: groupFilter,
-        instructor: instructorFilter,
-        status: statusFilter
-    };
-    
-    console.log('Применяем фильтры:', this.currentFilters);
-    
-    this.filteredStudents = this.students.filter(student => {
-        let passGroup = true;
-        let passInstructor = true;
-        let passStatus = true;
-        
-        if (this.currentFilters.group !== 'all') {
-            passGroup = student.groupId === this.currentFilters.group;
-        }
-        
-        if (this.currentFilters.instructor !== 'all') {
-            const assignment = this.assignments.find(a => a.groupId === student.groupId && a.instructorId === this.currentFilters.instructor);
-            passInstructor = !!assignment;
-        }
-        
-        if (this.currentFilters.status !== 'all') {
-            passStatus = student.status == this.currentFilters.status;
-        }
-        
-        return passGroup && passInstructor && passStatus;
-    });
-    
-    this.renderTableBody();
-    this.updateStats();
+applyFilters(){
+const groupFilter=document.getElementById('group-filter')?.value||'all';
+const instructorFilter=document.getElementById('instructor-filter')?.value||'all';
+const statusFilter=document.getElementById('status-filter')?.value||'all';
+this.currentFilters={
+group:groupFilter,
+instructor:instructorFilter,
+status:statusFilter
+};
+console.log('Применяем фильтры:',this.currentFilters);
+this.filteredStudents=this.students.filter(student=>{
+let passGroup=true;
+let passInstructor=true;
+let passStatus=true;
+if(this.currentFilters.group!=='all'){
+passGroup=student.groupId===this.currentFilters.group;
+}
+if(this.currentFilters.instructor!=='all'){
+const assignment=this.assignments.find(a=>a.group_id===student.groupId&&a.instructor_id===this.currentFilters.instructor);
+passInstructor=!!assignment;
+}
+if(this.currentFilters.status!=='all'){
+passStatus=student.status==this.currentFilters.status;
+}
+return passGroup&&passInstructor&&passStatus;
+});
+this.renderTableBody();
+this.updateStats();
 }
 renderTableBody(){
 const tbody=document.querySelector('.data-table tbody');
@@ -237,8 +225,8 @@ return`
 <td>${statusText}</td>
 <td>${assignedInstructor}</td>
 <td>
-<button class="btn-action btn-edit" onclick="adminApp.editStudent('${student.id}')">✏️</button>
-<button class="btn-action btn-delete" onclick="adminApp.deleteStudent('${student.id}')">🗑️</button>
+<button class="btn-action btn-edit" onclick="adminApp.editStudent('${student.id}')">редактировать</button>
+<button class="btn-action btn-delete" onclick="adminApp.deleteStudent('${student.id}')">удалить</button>
 </td>
 </tr>
 `;
@@ -288,12 +276,19 @@ departmentSelect.appendChild(option);
 }
 async loadAssignments(){
 try{
-const allAssignments=JSON.parse(localStorage.getItem('instructor_assignments')||'[]');
-this.assignments=allAssignments;
+const response=await fetch('http://localhost:5000/api/assignments');
+if(response.ok){
+this.assignments=await response.json();
+console.log('Назначения загружены:',this.assignments);
+}else{
+this.assignments=JSON.parse(localStorage.getItem('instructor_assignments')||'[]');
+}
 this.displayAssignments();
 this.updateStats();
 }catch(error){
 console.error('Ошибка загрузки назначений:',error);
+this.assignments=JSON.parse(localStorage.getItem('instructor_assignments')||'[]');
+this.displayAssignments();
 }
 }
 async assignSubjectToInstructor(){
@@ -314,24 +309,49 @@ const assignmentData={
 instructorId:instructorId,
 subjectId:subjectId,
 groupId:groupId,
-departmentId:departmentId,
-instructorName:`${instructor.surname} ${instructor.name} ${instructor.patronymic||''}`.trim(),
-subjectName:subject.name,
-groupName:group.number,
-departmentName:department.tittle||department.name
+departmentId:departmentId
 };
-const result=await apiClient.assignSubjectToInstructor(assignmentData);
-if(result.success||result.id){
-alert(`Предмет "${subject.name}" успешно назначен преподавателю ${assignmentData.instructorName} для группы ${group.number}`);
+const response=await fetch('http://localhost:5000/api/assignments',{
+method:'POST',
+headers:{'Content-Type':'application/json'},
+body:JSON.stringify(assignmentData)
+});
+if(response.ok){
+const result=await response.json();
+alert(`Предмет "${subject.name}" успешно назначен преподавателю ${instructor.surname} ${instructor.name} для группы ${group.number}`);
 await this.loadAssignments();
 this.clearAssignmentForm();
 this.renderDataTable();
 }else{
+const errorData=await response.json();
+if(errorData.existingId){
+alert('Такое назначение уже существует');
+}else{
 alert('Ошибка при назначении предмета');
+}
 }
 }catch(error){
 console.error('Ошибка назначения предмета:',error);
 alert('Ошибка при назначении предмета');
+}
+}
+async removeAssignment(assignmentId){
+if(confirm('Удалить это назначение?')){
+try{
+const response=await fetch(`http://localhost:5000/api/assignments/${assignmentId}`,{
+method:'DELETE'
+});
+if(response.ok){
+await this.loadAssignments();
+this.renderDataTable();
+alert('Назначение удалено');
+}else{
+alert('Ошибка при удалении назначения');
+}
+}catch(error){
+console.error('Ошибка удаления назначения:',error);
+alert('Ошибка при удалении назначения');
+}
 }
 }
 displayAssignments(){
@@ -344,26 +364,17 @@ return;
 assignmentsContainer.innerHTML=this.assignments.map(assignment=>`
 <div class="assignment-item">
 <div class="assignment-header">
-<h4>${assignment.subjectName}</h4>
+<h4>${assignment.subject_name}</h4>
 <button class="btn-remove" onclick="adminApp.removeAssignment('${assignment.id}')">×</button>
 </div>
 <div class="assignment-details">
-<p><strong>Преподаватель:</strong> ${assignment.instructorName}</p>
-<p><strong>Группа:</strong> ${assignment.groupName}</p>
-<p><strong>Кафедра:</strong> ${assignment.departmentName}</p>
-<small>Назначено: ${new Date(assignment.createdAt).toLocaleDateString('ru-RU')}</small>
+<p><strong>Преподаватель:</strong> ${assignment.instructor_surname} ${assignment.instructor_name}</p>
+<p><strong>Группа:</strong> ${assignment.group_number}</p>
+<p><strong>Кафедра:</strong> ${assignment.department_name}</p>
+<small>Назначено: ${new Date(assignment.created_at).toLocaleDateString('ru-RU')}</small>
 </div>
 </div>
 `).join('');
-}
-async removeAssignment(assignmentId){
-if(confirm('Удалить это назначение?')){
-const assignments=JSON.parse(localStorage.getItem('instructor_assignments')||'[]');
-const updatedAssignments=assignments.filter(a=>a.id!==assignmentId);
-localStorage.setItem('instructor_assignments',JSON.stringify(updatedAssignments));
-await this.loadAssignments();
-this.renderDataTable();
-}
 }
 clearAssignmentForm(){
 document.getElementById('instructor-select').value='';
@@ -449,7 +460,6 @@ if(result.success){
 this.uploadedData=result;
 alert(`Файл успешно загружен! Найдено ${result.students.length} студентов в ${result.groups.length} группах`);
 this.showSaveButton();
-// Показываем preview загруженных студентов
 this.showUploadedStudentsPreview(result.students);
 }else{
 alert('Ошибка при обработке файла:'+result.error);
@@ -503,13 +513,10 @@ const successCount=results.filter(r=>r.success).length;
 const errorCount=results.filter(r=>!r.success).length;
 if(successCount>0){
 alert(`Успешно сохранено: ${successCount} студентов${errorCount>0?', ошибок: '+errorCount:''}`);
-// Очищаем preview
 const preview=document.querySelector('.upload-preview');
 if(preview)preview.remove();
-// Обновляем данные и таблицу
 await this.loadAdminData();
 this.renderDataTable();
-// Сбрасываем форму загрузки
 this.resetUploadForm();
 }else{
 alert('Не удалось сохранить ни одного студента');
@@ -521,6 +528,7 @@ alert('Ошибка при сохранении данных: '+error.message);
 }
 resetUploadForm(){
 const uploadArea=document.getElementById('upload-area');
+if(uploadArea){
 uploadArea.innerHTML=`
 <div class="upload-placeholder">
 <div class="upload-icon"></div>
@@ -528,8 +536,11 @@ uploadArea.innerHTML=`
 <small>Поддерживаются файлы .xlsx, .xls</small>
 </div>
 `;
-document.getElementById('excel-file').value='';
-document.getElementById('upload-btn').disabled=true;
+}
+const fileInput=document.getElementById('excel-file');
+if(fileInput)fileInput.value='';
+const uploadBtn=document.getElementById('upload-btn');
+if(uploadBtn)uploadBtn.disabled=true;
 this.selectedFile=null;
 const saveBtn=document.getElementById('save-excel-data');
 if(saveBtn)saveBtn.style.display='none';
@@ -574,6 +585,7 @@ this.groups=this.getFallbackGroups();
 this.instructors=this.getFallbackInstructors();
 this.departments=this.getFallbackDepartments();
 this.subjects=this.getFallbackSubjects();
+this.assignments=this.getFallbackAssignments();
 this.filteredStudents=[...this.students];
 this.populateAssignmentSelectors();
 this.updateStats();
@@ -617,6 +629,11 @@ return[
 {id:2,name:'Нормативное регулирование',type:'Лекция'},
 {id:3,name:'Базы данных',type:'Практика'},
 {id:4,name:'Веб-программирование',type:'Лаб. работа'}
+];
+}
+getFallbackAssignments(){
+return[
+{id:'1',instructor_id:'1',instructor_name:'Иванов',instructor_surname:'Петр',subject_id:'1',subject_name:'Системы инженерного анализа',group_id:'1',group_number:'231-324',department_id:'1',department_name:'Информационные системы',created_at:new Date()}
 ];
 }
 }
