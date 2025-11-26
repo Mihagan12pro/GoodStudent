@@ -441,6 +441,76 @@ app.post('/api/attendance', async (req, res) => {
     if (client) client.release();
   }
 });
+app.post('/api/schedule-details', async (req, res) => {
+  let client;
+  try {
+    const { assignment_id, classroom, assignment_date, start_time, end_time } = req.body;    
+    client = await pools.students.connect();
+    const scheduleId = generateUUID();    
+    const result = await client.query(
+      `INSERT INTO schedule_details 
+      ("id", "assignment_id", "classroom", "assignment_date", "start_time", "end_time") 
+      VALUES ($1, $2, $3, $4, $5, $6) RETURNING "id"`, 
+      [scheduleId, assignment_id, classroom, assignment_date, start_time, end_time]
+    );    
+    res.json({ id: scheduleId, success: true });
+  } catch (error) {
+    console.error('Ошибка создания расписания:', error);
+    res.status(500).json({ error: 'Ошибка создания расписания: ' + error.message });
+  } finally {
+    if (client) client.release();
+  }
+});
+app.get('/api/schedule-details/:assignmentId', async (req, res) => {
+  let client;
+  try {
+    const { assignmentId } = req.params;    
+    client = await pools.students.connect();
+    const result = await client.query(
+      `SELECT * FROM schedule_details WHERE "assignment_id" = $1 ORDER BY "created_at" DESC`,
+      [assignmentId]
+    );    
+    const scheduleDetails = result.rows.map(row => ({
+      id: row.id,
+      assignment_id: row.assignment_id,
+      classroom: row.classroom,
+      assignment_date: row.assignment_date,
+      start_time: row.start_time,
+      end_time: row.end_time,
+      created_at: row.created_at
+    }));    
+    res.json(scheduleDetails);
+  } catch (error) {
+    console.error('Ошибка загрузки расписания:', error);
+    res.status(500).json({ error: 'Ошибка загрузки расписания' });
+  } finally {
+    if (client) client.release();
+  }
+});
+app.get('/api/schedule-details', async (req, res) => {
+  let client;
+  try {
+    client = await pools.students.connect();
+    const result = await client.query(
+      `SELECT * FROM schedule_details ORDER BY "created_at" DESC`
+    );    
+    const scheduleDetails = result.rows.map(row => ({
+      id: row.id,
+      assignment_id: row.assignment_id,
+      classroom: row.classroom,
+      assignment_date: row.assignment_date,
+      start_time: row.start_time,
+      end_time: row.end_time,
+      created_at: row.created_at
+    }));    
+    res.json(scheduleDetails);
+  } catch (error) {
+    console.error('Ошибка загрузки расписания:', error);
+    res.status(500).json({ error: 'Ошибка загрузки расписания' });
+  } finally {
+    if (client) client.release();
+  }
+});
 app.get('/', (req, res) => { res.sendFile(path.join(__dirname, 'form.html')); });
 app.get('/index.html', (req, res) => { res.sendFile(path.join(__dirname, 'index.html')); });
 app.get('/admin-dashboard.html', (req, res) => { res.sendFile(path.join(__dirname, 'admin-dashboard.html')); });

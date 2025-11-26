@@ -396,6 +396,10 @@ async assignSubjectToInstructor() {
     const subjectId = document.getElementById('subject-assign-select').value;
     const groupId = document.getElementById('group-assign-select').value;
     const departmentId = document.getElementById('department-select').value;    
+    const classroom = document.getElementById('classroom-input').value;
+    const assignmentDate = document.getElementById('assignment-date').value;
+    const startTime = document.getElementById('start-time').value;
+    const endTime = document.getElementById('end-time').value;
     if (!instructorId || !subjectId || !groupId || !departmentId) {
         alert('Заполните все поля');
         return;
@@ -419,6 +423,23 @@ async assignSubjectToInstructor() {
         });      
         if (response.ok) {
             const result = await response.json();
+            if (classroom || assignmentDate || startTime || endTime) {
+                const scheduleResponse = await fetch('http://localhost:5000/api/schedule-details', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        assignment_id: result.id,
+                        classroom: classroom,
+                        assignment_date: assignmentDate,
+                        start_time: startTime,
+                        end_time: endTime
+                    })
+                });
+                
+                if (scheduleResponse.ok) {
+                    console.log('Расписание создано');
+                }
+            }
             alert(`Предмет "${subject.name}" успешно назначен преподавателю ${instructor.surname} ${instructor.name} для группы ${group.number}`);
             await this.loadAssignments();
             this.clearAssignmentForm();
@@ -482,6 +503,10 @@ document.getElementById('instructor-select').value='';
 document.getElementById('subject-assign-select').value='';
 document.getElementById('group-assign-select').value='';
 document.getElementById('department-select').value='';
+document.getElementById('classroom-input').value = '';
+document.getElementById('assignment-date').value = '';
+document.getElementById('start-time').value = '';
+document.getElementById('end-time').value = '';
 }
 setupEventListeners(){
 const uploadArea=document.getElementById('upload-area');
