@@ -1,6 +1,7 @@
 class ApiClient {
     constructor() {
-        this.baseUrl = 'http://localhost:5000/api';
+        //this.baseUrl = 'https://localhost:7298/api'; // C# бэкенд
+        this.baseUrl = 'http://localhost:5000/api'; // Node.js fallback
         this.createdStudents = [];
     }
     async request(endpoint, options = {}) {
@@ -194,63 +195,63 @@ class ApiClient {
         }
     }
     async createStudentsFromExcel(excelStudents) {
-        const results = [];
-        const groupsMap = new Map();
+    const results = [];
+    const groupsMap = new Map();
+    
+    try {
+        const existingGroups = await this.getAllGroups();
+        existingGroups.forEach(group => groupsMap.set(group.number, group));
+    } catch (error) {
+        console.warn('Не удалось загрузить группы, создаем новые...');
+    }    
+    for (const excelStudent of excelStudents) {
         try {
-            const existingGroups = await this.getAllGroups();
-            existingGroups.forEach(group => groupsMap.set(group.number, group));
+            let targetGroup = groupsMap.get(excelStudent.group);
+            
+            if (!targetGroup) {
+                try {
+                    const groupId = await this.createGroup({
+                        number: excelStudent.group,
+                        professionId: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                    });
+                    targetGroup = { id: groupId, number: excelStudent.group };
+                    groupsMap.set(excelStudent.group, targetGroup);
+                    console.log(`Создана новая группа: ${excelStudent.group}`);
+                } catch (error) {
+                    console.error(`Ошибка создания группы ${excelStudent.group}:`, error);
+                    targetGroup = {
+                        id: this.generateUUID(),
+                        number: excelStudent.group
+                    };
+                    groupsMap.set(excelStudent.group, targetGroup);
+                }
+            }            
+            const studentData = {
+                name: excelStudent.name,
+                surname: excelStudent.surname,
+                patronymic: excelStudent.patronymic || '',
+                groupId: targetGroup.id
+            };            
+            const result = await this.createStudent(studentData);            
+            results.push({
+                success: true,
+                student: excelStudent.fullName,
+                id: result,
+                group: targetGroup.number
+            });           
+            console.log(`Создан студент: ${excelStudent.fullName} в группе ${targetGroup.number}`);
+            await new Promise(resolve => setTimeout(resolve, 100));            
         } catch (error) {
-            console.warn('Не удалось загрузить группы, создаем новые...');
-        }        
-        for (const excelStudent of excelStudents) {
-            try {
-                let targetGroup = groupsMap.get(excelStudent.group);                
-                if (!targetGroup) {
-                    try {
-                        const groupId = await this.createGroup({
-                            number: excelStudent.group,
-                            professionId: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
-                        });
-                        targetGroup = { id: groupId, number: excelStudent.group };
-                        groupsMap.set(excelStudent.group, targetGroup);
-                        console.log(`Создана новая группа: ${excelStudent.group}`);
-                    } catch (error) {
-                        console.error(`Ошибка создания группы ${excelStudent.group}:`, error);
-                        targetGroup = {
-                            id: this.generateUUID(),
-                            number: excelStudent.group
-                        };
-                        groupsMap.set(excelStudent.group, targetGroup);
-                    }
-                }                
-                const studentData = {
-                    name: excelStudent.name,
-                    surname: excelStudent.surname,
-                    patronymic: excelStudent.patronymic || '',
-                    startYear: 2024,
-                    groupId: targetGroup.id
-                };                
-                const result = await this.createStudent(studentData);                
-                results.push({
-                    success: true,
-                    student: excelStudent.fullName,
-                    id: result,
-                    group: targetGroup.number
-                });               
-                console.log(`Создан студент: ${excelStudent.fullName} в группе ${targetGroup.number}`);
-                await new Promise(resolve => setTimeout(resolve, 100));
-                
-            } catch (error) {
-                results.push({
-                    success: false,
-                    student: excelStudent.fullName,
-                    error: error.message
-                });
-                console.error(`Ошибка создания студента ${excelStudent.fullName}:`, error);
-            }
-        }        
-        return results;
-    }
+            results.push({
+                success: false,
+                student: excelStudent.fullName,
+                error: error.message
+            });
+            console.error(`Ошибка создания студента ${excelStudent.fullName}:`, error);
+        }
+    }    
+    return results;
+}
     async saveExcelData(excelData) {
         try {
             console.log('Сохранение Excel данных в базу...');
@@ -272,7 +273,6 @@ class ApiClient {
         };
         return groupMap[groupId] || `Группа ${groupId}`;
     }
-
     generateUUID() {
         return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
             const r = Math.random() * 16 | 0;

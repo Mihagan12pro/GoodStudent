@@ -22,93 +22,114 @@ class TeacherApp {
         this.generateCalendar();
     }
     async loadInitialData() {
+    try {
+        console.log('Загружаем данные из Node.js бэкенда...');
+        await this.loadFromNodeBackend();
+    } catch (error) {
+        console.error('Ошибка загрузки из всех источников:', error);
+        this.useDemoData();
+    }
+    }
+    // async loadInitialData() {
+    //     try {
+    //         console.log('Загружаем данные из C# бэкенда...');
+    //         // const [students, groups, subjects] = await Promise.all([
+    //         //     csharpApi.getAllStudents(),
+    //         //     csharpApi.getAllGroups(),
+    //         //     csharpApi.getSubjects()
+    //         // ]);
+    //         await this.loadFromNodeBackend();
+    //         this.students = this.normalizeStudents(students || []);
+    //         this.groups = this.fixGroupIds(groups || []);
+    //         this.subjects = subjects || [];
+    //         console.log(`Данные загружены: Студентов: ${this.students.length} Групп: ${this.groups.length} Предметов: ${this.subjects.length}`);
+    //         this.populateSubjectSelector();
+    //         this.populateGroupSelector();
+    //         this.renderStudents();
+    //         this.updateStats();
+    //     } catch (error) {
+    //         console.error('Ошибка загрузки из C# бэкенда, пробуем Node.js...', error);
+    //         await this.loadFromNodeBackend();
+    //     }
+    // }
+    async loadFromNodeBackend() {
         try {
-            console.log('Загружаем данные из бэкенда...');
-            const students = await apiClient.getAllStudents();
-            const groups = await apiClient.getAllGroups();
-            const subjects = await apiClient.getAllSubjects();
+            const [students, groups, subjects] = await Promise.all([
+                apiClient.getAllStudents(),
+                apiClient.getAllGroups(),
+                apiClient.getAllSubjects()
+            ]);
             this.students = students || [];
             this.groups = groups || [];
             this.subjects = subjects || [];
-            console.log(`Данные загружены: Студентов: ${this.students.length} Групп: ${this.groups.length} Предметов: ${this.subjects.length}`);            
+            console.log('Данные загружены из Node.js бэкенда');
             this.populateSubjectSelector();
             this.populateGroupSelector();
             this.renderStudents();
             this.updateStats();
         } catch (error) {
-            console.error('Ошибка загрузки данных:', error);
-            this.showErrorMessage('Не удалось загрузить данные с сервера.');
+            console.error('Ошибка загрузки из всех источников:', error);
+            this.useDemoData();
         }
-    }
-fixGroupIds(groups) {
-    if (!groups || !Array.isArray(groups)) {
-        return [];
-    }
-    const groupNameToId = {
-        '231-324': '1',
-        '231-325': '2', 
-        '231-326': '3',
-        'ПППП': '4',
-        '666-666': '5',
-        'Нани': '6'
-    };
-    return groups.map((group, index) => {
-        let fixedId = group.id;
-        
-        if (!fixedId || fixedId === 'undefined') {
-            fixedId = groupNameToId[group.number] || `group-${index + 1}`;
-        }
-        return {
-            ...group,
-            id: fixedId
-        };
-    });
-}
-    debugStudentsAndGroups() {
-        console.log('ДЕБАГ СТУДЕНТОВ И ГРУПП ===');
-        console.log('Все группы:', this.groups);
-        console.log('Все студенты:', this.students);
-        
-        this.students.forEach(student => {
-            console.log(`${student.fullName}: groupId=${student.groupId}, groupName=${student.groupName}`);
-        });        
-        console.log(`Текущая выбранная группа ID: ${this.currentGroupId}`);
     }
     normalizeStudents(students) {
-    if (!students || !Array.isArray(students)) {
-        console.warn('Некорректные данные студентов:', students);
-        return [];
-    }
-    return students.map(student => {
-        const id = student.id || student.Id || this.generateTempId();
-        const name = student.name || student.Name || '';
-        const surname = student.surname || student.Surname || '';
-        const patronymic = student.patronymic || student.Patronymic || '';
-        let groupId = student.groupId || student.group_id || student.group?.id;
-        if (typeof groupId === 'number') {
-            groupId = groupId.toString();
+        if (!students || !Array.isArray(students)) {
+            console.warn('Некорректные данные студентов:', students);
+            return [];
         }
-        if (!groupId && student.groupName) {
-            const groupMap = {
-                '231-324': '1',
-                '231-325': '2',
-                '231-326': '3'
+        return students.map(student => {
+            const id = student.id || student.Id || this.generateTempId();
+            const name = student.name || student.Name || '';
+            const surname = student.surname || student.Surname || '';
+            const patronymic = student.patronymic || student.Patronymic || '';
+            let groupId = student.groupId || student.group_id || student.group?.id;
+            if (typeof groupId === 'number') {
+                groupId = groupId.toString();
+            }
+            if (!groupId && student.groupName) {
+                const groupMap = {
+                    '231-324': '1',
+                    '231-325': '2',
+                    '231-326': '3'
+                };
+                groupId = groupMap[student.groupName];
+            }
+            const groupNumber = student.groupNumber || student.group?.number || this.getGroupNameById(groupId);
+            return {
+                id: id,
+                name: name,
+                surname: surname,
+                patronymic: patronymic,
+                fullName: `${surname} ${name} ${patronymic}`.trim(),
+                groupId: groupId,
+                groupName: groupNumber,
+                present: false
             };
-            groupId = groupMap[student.groupName];
+        });
+    }
+    fixGroupIds(groups) {
+        if (!groups || !Array.isArray(groups)) {
+            return [];
         }
-        const groupNumber = student.groupNumber || student.group?.number || this.getGroupNameById(groupId);
-        return {
-            id: id,
-            name: name,
-            surname: surname,
-            patronymic: patronymic,
-            fullName: `${surname} ${name} ${patronymic}`.trim(),
-            groupId: groupId,
-            groupName: groupNumber,
-            present: false
+        const groupNameToId = {
+            '231-324': '1',
+            '231-325': '2',
+            '231-326': '3',
+            'ПППП': '4',
+            '666-666': '5',
+            'Нани': '6'
         };
-    });
-}
+        return groups.map((group, index) => {
+            let fixedId = group.id;
+            if (!fixedId || fixedId === 'undefined') {
+                fixedId = groupNameToId[group.number] || `group-${index + 1}`;
+            }
+            return {
+                ...group,
+                id: fixedId
+            };
+        });
+    }
     generateTempId() {
         return 'temp_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
     }
@@ -129,8 +150,23 @@ fixGroupIds(groups) {
             option.value = group.id;
             option.textContent = group.number;
             select.appendChild(option);
-        });        
-        console.log(`Загружено групп с бэкенда: ${this.groups.length}`);
+        });
+        console.log(`Загружено групп: ${this.groups.length}`);
+    }
+    populateSubjectSelector() {
+        const select = document.getElementById('subject-select');
+        if (!select) {
+            console.error('Элемент subject-select не найден');
+            return;
+        }
+        select.innerHTML = '<option value="all">Все предметы</option>';
+        this.subjects.forEach(subject => {
+            const option = document.createElement('option');
+            option.value = subject.id;
+            option.textContent = subject.name;
+            select.appendChild(option);
+        });
+        console.log(`Загружено предметов: ${this.subjects.length}`);
     }
     renderStudents() {
         const container = document.getElementById('students-list');
@@ -149,7 +185,7 @@ fixGroupIds(groups) {
             <div class="student-item">
                 <div class="student-info">
                     <div class="student-name">${student.surname} ${student.name} ${student.patronymic || ''}</div>
-                    <div class="student-group">Группа: ${student.groupNumber || 'Не указана'}</div>
+                    <div class="student-group">Группа: ${student.groupName || 'Не указана'}</div>
                 </div>
                 <div class="attendance-toggle">
                     <input type="checkbox" id="student-${student.id}" onchange="teacherApp.toggleStudent('${student.id}', this.checked)">
@@ -161,18 +197,6 @@ fixGroupIds(groups) {
         `).join('');
         this.updateStats();
     }
-    updateStudentsHeader() {
-        const studentsHeader = document.querySelector('.students-header h4');
-        if (studentsHeader) {
-            if (this.currentGroupId === 'all') {
-                studentsHeader.textContent = `Список всех студентов (${this.students.length})`;
-            } else {
-                const group = this.groups.find(g => g.id === this.currentGroupId);
-                const groupName = group ? group.number : 'Неизвестная группа';
-                studentsHeader.textContent = `Список студентов группы ${groupName}`;
-            }
-        }
-    }
     toggleStudent(studentId, isPresent) {
         const student = this.students.find(s => s.id === studentId);
         if (student) {
@@ -182,25 +206,23 @@ fixGroupIds(groups) {
     }
     updateStats() {
         const presentCount = this.students.filter(s => s.present).length;
-        const totalCount = this.students.length;        
+        const totalCount = this.students.length;
         const presentElement = document.getElementById('present-count');
-        const totalElement = document.getElementById('total-count');        
+        const totalElement = document.getElementById('total-count');
         if (presentElement) presentElement.textContent = presentCount;
         if (totalElement) totalElement.textContent = totalCount;
     }
     async saveAttendance() {
         const presentStudents = this.students.filter(s => s.present);
-        
         try {
             const result = await apiClient.markAttendance({
                 date: new Date().toISOString(),
-                subject: 'Выбранный предмет', // TODO: получить выбранный предмет
-                group: 'Выбранная группа', // TODO: получить выбранную группу
+                subject: this.getCurrentSubject(),
+                group: this.getCurrentGroupName(),
                 presentStudents: presentStudents,
                 presentCount: presentStudents.length,
                 totalCount: this.students.length
             });
-            
             alert(`Посещаемость сохранена: ${presentStudents.length} из ${this.students.length} студентов`);
         } catch (error) {
             alert('Ошибка при сохранении посещаемости');
@@ -214,37 +236,22 @@ fixGroupIds(groups) {
                 return subjectElement.textContent;
             }
         }
-        
         return this.subjects.length > 0 ? this.subjects[0].name : 'Неизвестный предмет';
     }
     getCurrentGroupName() {
         if (this.currentGroupId === 'all') {
             return 'Все группы';
         }
-        
         const group = this.groups.find(g => g.id === this.currentGroupId);
         return group ? group.number : 'Неизвестная группа';
     }
-    async loadSubjects() {
-        try {
-            return await apiClient.getAllSubjects();
-        } catch (error) {
-            console.warn('Не удалось загрузить предметы:', error);
-            return [
-                { id: 1, name: 'Системы инженерного анализа', type: 'Лаб. работа' },
-                { id: 2, name: 'Нормативное регулирование', type: 'Лекция' }
-            ];
-        }
-    }
     setupNavigation() {
         const navItems = document.querySelectorAll('.nav-item');
-        
         navItems.forEach(item => {
             item.addEventListener('click', (e) => {
                 e.preventDefault();
                 const view = item.dataset.view;
                 this.switchView(view);
-                
                 navItems.forEach(nav => nav.classList.remove('active'));
                 item.classList.add('active');
             });
@@ -280,7 +287,7 @@ fixGroupIds(groups) {
                         <div class="attendance-stats">
                             <span>Присутствуют: <strong id="present-count">0</strong>/<strong id="total-count">0</strong></span>
                         </div>
-                    </div>                            
+                    </div>
                     <div class="students-list" id="students-list">
                         <p style="text-align: center; color: #666; padding: 20px;">
                             Загрузка студентов...
@@ -323,7 +330,6 @@ fixGroupIds(groups) {
         try {
             const history = await apiClient.getAttendanceHistory();
             const contentArea = document.getElementById('content-area');
-            
             if (history.length === 0) {
                 contentArea.innerHTML = `
                     <div class="history-view">
@@ -353,21 +359,6 @@ fixGroupIds(groups) {
         } catch (error) {
             console.error('Ошибка загрузки истории:', error);
         }
-    }
-    populateSubjectSelector() {
-        const select = document.getElementById('subject-select');
-        if (!select) {
-            console.error('Элемент subject-select не найден');
-            return;
-        }
-        select.innerHTML = '<option value="all">Все предметы</option>';
-        this.subjects.forEach(subject => {
-            const option = document.createElement('option');
-            option.value = subject.id;
-            option.textContent = subject.name;
-            select.appendChild(option);
-        });        
-        console.log(`Загружено предметов с бэкенда: ${this.subjects.length}`);
     }
     setupEventListeners() {
         const groupSelect = document.getElementById('group-select');
@@ -405,12 +396,11 @@ fixGroupIds(groups) {
     }
     async loadStudentsForAttendance() {
         console.log('Загрузка студентов для текущего занятия');
-        
         const saveButton = document.getElementById('save-attendance-btn');
         if (saveButton) {
             saveButton.style.display = 'block';
-        }        
-        await this.loadInitialData();        
+        }
+        await this.loadInitialData();
         alert(`Студенты загружены: ${this.students.length} человек`);
     }
     displayCurrentDate() {
@@ -427,31 +417,19 @@ fixGroupIds(groups) {
     }
     generateCalendar() {
         const container = document.querySelector('.calendar-days');
-        if (!container) return;        
+        if (!container) return;
         const today = new Date();
-        const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();        
+        const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
         let calendarHTML = '';
         for (let i = 1; i <= daysInMonth; i++) {
             const isToday = i === today.getDate();
             const dayClass = isToday ? 'calendar-day today' : 'calendar-day';
             calendarHTML += `<div class="${dayClass}">${i}</div>`;
-        }        
+        }
         container.innerHTML = calendarHTML;
     }
-    showErrorMessage(message) {
-        const container = document.getElementById('students-list');
-        if (container) {
-            container.innerHTML = `
-                <div class="error-message">
-                    <h3>Ошибка загрузки</h3>
-                    <p>${message}</p>
-                    <button onclick="teacherApp.loadInitialData()" class="btn-primary">Повторить попытку</button>
-                </div>
-            `;
-        }
-    }
     useDemoData() {
-        console.log('Используем демо-данные...');        
+        console.log('Используем демо-данные...');
         this.students = [
             {
                 id: '1',
@@ -492,7 +470,6 @@ fixGroupIds(groups) {
         this.populateGroupSelector();
         this.renderStudents();
         this.updateStats();
-        
         alert('Демо-данные загружены!');
     }
 }

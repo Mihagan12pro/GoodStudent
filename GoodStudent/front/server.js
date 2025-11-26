@@ -41,85 +41,38 @@ app.get('/api/students', async (req, res) => {
     client = await pool.connect();
     const result = await client.query(`
       SELECT 
-        "Id",
-        "name",
-        "surname",
-        "patronymic",
-        "GroupId",
-        "status"
-      FROM students 
+        s."Id",
+        s."name",
+        s."surname", 
+        s."patronymic",
+        s."GroupId",
+        s."status",
+        g."number" as "group_number"
+      FROM students s
+      LEFT JOIN groups g ON s."GroupId" = g."Id"
+      ORDER BY s."surname", s."name"
       LIMIT 50
-    `);
-    console.log(`Найдено студентов: ${result.rows.length}`);
-    const studentsWithGroups = await Promise.all(
-      result.rows.map(async (student) => {
-        try {
-          const groupResult = await client.query(
-            'SELECT "number" FROM groups WHERE "Id" = $1',
-            [student.GroupId]
-          );
-          
-          return {
-            id: student.Id,
-            name: student.name,
-            surname: student.surname,
-            patronymic: student.patronymic,
-            groupId: student.GroupId,
-            groupNumber: groupResult.rows[0]?.number || 'Неизвестная группа',
-            status: student.status
-          };
-        } catch (error) {
-          return {
-            id: student.Id,
-            name: student.name,
-            surname: student.surname,
-            patronymic: student.patronymic,
-            groupId: student.GroupId,
-            groupNumber: 'Ошибка загрузки группы',
-            status: student.status
-          };
-        }
-      })
-    );    
-    res.json(studentsWithGroups);    
+    `);    
+    console.log(`Найдено студентов: ${result.rows.length}`);    
+    const students = result.rows.map(student => ({
+  id: student.Id,
+  name: student.name,
+  surname: student.surname,
+  patronymic: student.patronymic,
+  groupId: student.GroupId,
+  groupName: student.group_number || 'Не указана', 
+  status: student.status
+}));
+    res.json(students);    
   } catch (error) {
     console.error('Ошибка загрузки студентов:', error);
-    res.json([
-      {
-        id: '1',
-        name: 'Иван',
-        surname: 'Иванов',
-        patronymic: 'Иванович',
-        groupId: '1',
-        groupNumber: '231-324',
-        status: 0
-      },
-      {
-        id: '2', 
-        name: 'Мария',
-        surname: 'Петрова',
-        patronymic: 'Сергеевна',
-        groupId: '1',
-        groupNumber: '231-324',
-        status: 0
-      },
-      {
-        id: '3',
-        name: 'Сергей',
-        surname: 'Сидоров',
-        patronymic: 'Алексеевич',
-        groupId: '2', 
-        groupNumber: '231-325',
-        status: 0
-      }
-    ]);
+    res.json(getFallbackStudents());
   } finally {
     if (client) client.release();
   }
 });
 app.get('/api/groups', async (req, res) => {
-  console.log('Запрос групп...');
-  
+  console.log('Запрос групп...');  
   let client;
   try {
     client = await pool.connect();
@@ -131,8 +84,7 @@ app.get('/api/groups', async (req, res) => {
       FROM groups 
       ORDER BY "number"
       LIMIT 50
-    `);
-    
+    `);    
     console.log(`Найдено групп: ${result.rows.length}`);    
     const groups = result.rows.map(row => ({
       id: row.Id,
@@ -229,7 +181,7 @@ app.post('/api/students', async (req, res) => {
   let client;
   try {
     const { name, surname, patronymic, groupId, status } = req.body;
-    console.log('➕ Создание студента:', { name, surname, groupId });
+    console.log('Создание студента:', { name, surname, groupId });
     client = await pool.connect();    
     const query = `
       INSERT INTO students ("name", "surname", "patronymic", "GroupId", "status")
@@ -308,8 +260,7 @@ app.get('/api/attendance', async (req, res) => {
   let client;
   try {
     console.log('Запрос истории посещаемости...');
-    client = await pool.connect();
-    
+    client = await pool.connect();    
     const tableExists = await client.query(`
       SELECT EXISTS (
         SELECT FROM information_schema.tables 
@@ -417,42 +368,31 @@ app.get('/form.html', (req, res) => {
 app.get('*', (req, res) => {
   res.redirect('/');
 });
-// 🗑️ ПОЛНАЯ ОЧИСТКА БАЗЫ
 app.delete('/api/debug/clear-database', async (req, res) => {
   let client;
   try {
-    client = await pool.connect();
-    
-    console.log('🧹 Начинаем очистку базы...');
-    
-    // 1. Удаляем всех студентов
+    client = await pool.connect();    
+    console.log('Начинаем очистку базы...');
     await client.query('DELETE FROM students');
-    console.log('✅ Студенты удалены');
-    
-    // 2. Удаляем все группы
+    console.log('Студенты удалены');
     await client.query('DELETE FROM groups');
-    console.log('✅ Группы удалены');
-    
-    // 3. Удаляем всю посещаемость
+    console.log('Группы удалены');
     await client.query('DELETE FROM attendance');
-    console.log('✅ Посещаемость удалена');
-    
-    // 4. Создаем чистые группы заново
+    console.log('Посещаемость удалена');
     await client.query(`
       INSERT INTO groups ("Id", "number", "profession_id") VALUES 
       ('1', '231-324', '3fa85f64-5717-4562-b3fc-2c963f66afa6'),
       ('2', '231-325', '3fa85f64-5717-4562-b3fc-2c963f66afa6'),
       ('3', '231-326', '3fa85f64-5717-4562-b3fc-2c963f66afa6')
     `);
-    console.log('✅ Чистые группы созданы');
-    
+    console.log('Чистые группы созданы');    
     res.json({
       success: true,
       message: 'База полностью очищена! Созданы группы 231-324, 231-325, 231-326'
     });
     
   } catch (error) {
-    console.error('❌ Ошибка очистки:', error);
+    console.error('Ошибка очистки:', error);
     res.status(500).json({ error: error.message });
   } finally {
     if (client) client.release();

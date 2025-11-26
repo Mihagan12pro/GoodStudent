@@ -3,49 +3,136 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Главная - МосПолитех</title>
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="manifest" href="manifest.json">
+    <title>Панель заведующего - GoodStudent</title>
+    <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-    <nav class="navbar">
-        <div class="nav-brand">
-            <img src="images/logo.png" alt="МосПолитех" class="logo">
-            <span>Учет посещаемости</span>
-        </div>
-        <div class="nav-controls">
-            <select id="group-selector" class="group-selector">
-                <option value="">Выберите группу</option>
-            </select>
-            <div class="user-menu">
-                <span id="user-name">Преподаватель</span>
-                <button id="logout-btn" class="logout-btn">Выйти</button>
+    <div class="app-container">
+        <header class="header">
+            <div class="header-left">
+                <div class="logo">
+                    <div class="logo-icon"></div>
+                    <h1 class="logo-text">GoodStudent</h1>
+                </div>
+                <div class="group-selector">
+                    <select id="group-select">
+                        <option value="all">Все группы</option>
+                    </select>
+                </div>
             </div>
-        </div>
-    </nav>
-    <main class="main-content">
-        <div class="dashboard-header">
-            <h1>Расписание на сегодня</h1>
-            <div class="date-display" id="current-date"></div>
-        </div>
-        <div class="schedule-container" id="schedule-container">
-        </div>
-    </main>
-    <nav class="bottom-nav">
-        <button class="nav-btn active" onclick="app.showPage('dashboard')">
-            <span class="nav-icon"></span>
-            <span class="nav-text">Расписание</span>
-        </button>
-        <button class="nav-btn" onclick="app.showPage('history')">
-            <span class="nav-icon"></span>
-            <span class="nav-text">История</span>
-        </button>
-        <button class="nav-btn" onclick="app.showPage('profile')">
-            <span class="nav-icon"></span>
-            <span class="nav-text">Профиль</span>
-        </button>
-    </nav>
-    <script src="js/api.js"></script>
-    <script src="js/app.js"></script>
+            <div class="header-right">
+                <div class="user-info">
+                    <span id="admin-name">Заведующий кафедрой</span>
+                    <button class="btn-logout" id="admin-logout">Выйти</button>
+                </div>
+            </div>
+        </header>
+        <main class="main-content">
+            <aside class="schedule-sidebar">
+                <div class="schedule-header">
+                    <h2>Управление</h2>
+                </div>
+                <div class="upload-section">
+                    <div class="schedule-item current">
+                        <div class="item-details">
+                            <div class="item-title">Загрузка расписания</div>
+                            <div class="item-teachers">Загрузите Excel файл со студентами</div>
+                        </div>
+                        <div class="upload-area" id="upload-area" style="margin: 10px 0; padding: 15px; border: 2px dashed #667eea; border-radius: 8px; text-align: center;">
+                            <div class="upload-placeholder">
+                                <p>Перетащите Excel файл сюда</p>
+                                <small>или нажмите для выбора</small>
+                            </div>
+                            <input type="file" id="excel-file" accept=".xlsx,.xls" hidden>
+                        </div>
+                        <button class="btn-mark-attendance" id="upload-btn">
+                            Загрузить файл
+                        </button>
+                    </div>
+                </div>
+                <div class="assignment-section">
+                    <div class="schedule-item">
+                        <div class="item-details">
+                            <div class="item-title">Назначение предметов преподавателям</div>
+                            <div class="assignment-form">
+                                <div class="form-row">
+                                    <select id="instructor-select" class="form-select">
+                                        <option value="">Выберите преподавателя</option>
+                                    </select>
+                                    <select id="subject-assign-select" class="form-select">
+                                        <option value="">Выберите предмет</option>
+                                    </select>
+                                    <select id="group-assign-select" class="form-select">
+                                        <option value="">Выберите группу</option>
+                                    </select>
+                                </div>
+                                <button class="btn-primary" id="assign-subject-btn">
+                                    Назначить предмет
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="schedule-item">
+                    <div class="item-details">
+                        <div class="item-title">Статистика</div>
+                        <div class="stats-grid" style="display: grid; gap: 10px; margin-top: 10px;">
+                            <div style="display: flex; justify-content: space-between;">
+                                <span>Студентов:</span>
+                                <strong id="total-students">0</strong>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span>Групп:</span>
+                                <strong id="total-groups">0</strong>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span>Преподавателей:</span>
+                                <strong id="total-instructors">0</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+            <section class="attendance-main">
+                <div class="attendance-header">
+                    <h3>Список студентов</h3>
+                    <div class="date-info" id="current-date"></div>
+                </div>
+                <div class="content-area" id="content-area">
+                    <div class="manual-attendance-view">
+                        <div class="students-list-container">
+                            <div class="students-header">
+                                <h4>Загруженные студенты</h4>
+                                <div class="attendance-stats">
+                                    <span>Всего: <strong id="students-count">0</strong> студентов</span>
+                                </div>
+                            </div>
+                            <div class="students-list" id="students-list">
+                                <p style="text-align: center; color: #666; padding: 20px;">
+                                    Загрузите Excel файл для отображения студентов
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+        <nav class="bottom-nav">
+            <button class="nav-item active" data-view="students">
+                <img src="/images/чекбокс.jpg" alt="Студенты" class="nav-icon">
+                <span class="nav-label">Студенты</span>
+            </button>
+            <button class="nav-item" data-view="upload">
+                <img src="/images/qr.png" alt="Загрузка" class="nav-icon">
+                <span class="nav-label">Загрузка</span>
+            </button>
+            <button class="nav-item" data-view="assignment">
+                <img src="/images/assignment.png" alt="Назначение" class="nav-icon">
+                <span class="nav-label">Назначение</span>
+            </button>
+        </nav>
+    </div>
+    <script src="/js/api.js"></script>
+    <script src="/js/admin.js"></script>
 </body>
 </html>
