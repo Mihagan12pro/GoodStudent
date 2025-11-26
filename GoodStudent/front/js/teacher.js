@@ -20,7 +20,6 @@ await this.loadTeacherData();
 this.setupEventListeners();
 this.displayCurrentDate();
 this.setupAttendanceButton();
-this.generateCalendar();
 }
 async loadTeacherData(){
 try{
@@ -39,9 +38,11 @@ this.useDemoData();
 async loadAssignments(){
 try{
 const allAssignments=JSON.parse(localStorage.getItem('instructor_assignments')||'[]');
-this.assignments=allAssignments.filter(assignment=>
-assignment.instructorName&&assignment.instructorName.includes(this.currentUser.name)
-);
+const userName=this.currentUser.name.toLowerCase();
+this.assignments=allAssignments.filter(assignment=>{
+const instructorName=assignment.instructorName.toLowerCase();
+return instructorName.includes(userName);
+});
 console.log('Назначения преподавателя:',this.assignments);
 this.populateSubjectSelector();
 }catch(error){
@@ -139,13 +140,26 @@ console.error('Элемент group-select не найден');
 return;
 }
 select.innerHTML='<option value="all">Все группы</option>';
+const assignedGroups=this.assignments.map(a=>a.groupId);
+const uniqueGroupIds=[...new Set(assignedGroups)];
+uniqueGroupIds.forEach(groupId=>{
+const group=this.groups.find(g=>g.id===groupId);
+if(group){
+const option=document.createElement('option');
+option.value=group.id;
+option.textContent=group.number;
+select.appendChild(option);
+}
+});
+if(uniqueGroupIds.length===0){
 this.groups.forEach(group=>{
 const option=document.createElement('option');
 option.value=group.id;
 option.textContent=group.number;
 select.appendChild(option);
 });
-console.log(`Загружено групп:${this.groups.length}`);
+}
+console.log(`Загружено групп:${select.options.length-1}`);
 }
 renderStudents(){
 const container=document.getElementById('students-list');
@@ -201,10 +215,8 @@ const presentCount=this.students.filter(s=>s.present).length;
 const totalCount=this.students.length;
 const presentElement=document.getElementById('present-count');
 const totalElement=document.getElementById('total-count');
-const assignedSubjectsElement=document.getElementById('assigned-subjects-count');
 if(presentElement)presentElement.textContent=presentCount;
 if(totalElement)totalElement.textContent=totalCount;
-if(assignedSubjectsElement)assignedSubjectsElement.textContent=this.assignments.length;
 }
 async saveAttendance(){
 const presentStudents=this.students.filter(s=>s.present);
@@ -223,14 +235,11 @@ alert('Ошибка при сохранении посещаемости');
 }
 }
 getCurrentSubject(){
-const currentScheduleItem=document.querySelector('.schedule-item.current');
-if(currentScheduleItem){
-const subjectElement=currentScheduleItem.querySelector('.item-title');
-if(subjectElement){
-return subjectElement.textContent;
+if(this.currentSubjectId&&this.currentSubjectId!=='all'){
+const subject=this.subjects.find(s=>s.id==this.currentSubjectId);
+return subject?subject.name:'Неизвестный предмет';
 }
-}
-return this.subjects.length>0?this.subjects[0].name:'Неизвестный предмет';
+return'Неизвестный предмет';
 }
 getCurrentGroupName(){
 if(this.currentGroupId==='all'){
@@ -238,121 +247,6 @@ return'Все группы';
 }
 const group=this.groups.find(g=>g.id===this.currentGroupId);
 return group?group.number:'Неизвестная группа';
-}
-setupNavigation(){
-const navItems=document.querySelectorAll('.nav-item');
-navItems.forEach(item=>{
-item.addEventListener('click',(e)=>{
-e.preventDefault();
-const view=item.dataset.view;
-this.switchView(view);
-navItems.forEach(nav=>nav.classList.remove('active'));
-item.classList.add('active');
-});
-});
-}
-switchView(view){
-this.currentView=view;
-console.log('Переключение на вид:',view);
-const contentArea=document.getElementById('content-area');
-if(!contentArea)return;
-switch(view){
-case'manual':
-contentArea.innerHTML=this.getManualAttendanceView();
-this.renderStudents();
-break;
-case'qr':
-window.location.href='/pages/qr-attendance.html';
-break;
-case'ai':
-this.openCameraModal();
-break;
-case'history':
-this.showAttendanceHistory();
-break;
-}
-}
-getManualAttendanceView(){
-return`
-<div class="manual-attendance-view">
-<div class="students-list-container">
-<div class="students-header">
-<h4>Список студентов</h4>
-<div class="attendance-stats">
-<span>Присутствуют:<strong id="present-count">0</strong>/<strong id="total-count">0</strong></span>
-</div>
-</div>
-<div class="students-list" id="students-list">
-<p style="text-align:center;color:#666;padding:20px;">
-Загрузка студентов...
-</p>
-</div>
-</div>
-<div class="attendance-actions" style="padding:20px;text-align:center;">
-<button class="btn-primary" id="save-attendance-btn"
-style="padding:12px 24px;font-size:16px;">Сохранить посещаемость
-</button>
-</div>
-<div class="attendance-calendar">
-<div class="calendar-header">
-<h4>Отметка посещаемости</h4>
-<div class="calendar-nav">
-<button class="nav-btn">←</button>
-<span class="current-month">Ноябрь 2025</span>
-<button class="nav-btn">→</button>
-</div>
-</div>
-<div class="calendar-days">
-</div>
-<div class="today-marker">
-<div class="today-indicator"></div>
-<span>Сегодня</span>
-</div>
-</div>
-</div>
-`;
-}
-openCameraModal(){
-const modal=document.getElementById('camera-modal');
-if(modal){
-modal.classList.remove('hidden');
-}else{
-alert('AI-камера будет доступна в следующей версии');
-}
-}
-async showAttendanceHistory(){
-try{
-const history=await apiClient.getAttendanceHistory();
-const contentArea=document.getElementById('content-area');
-if(history.length===0){
-contentArea.innerHTML=`
-<div class="history-view">
-<h3>История посещаемости</h3>
-<div class="no-history">
-<p>Нет данных о посещаемости</p>
-</div>
-</div>
-`;
-return;
-}
-contentArea.innerHTML=`
-<div class="history-view">
-<h3>История посещаемости</h3>
-<div class="history-list">
-${history.map(record=>`
-<div class="history-item">
-<div class="history-date">${new Date(record.date).toLocaleDateString('ru-RU')}</div>
-<div class="history-subject">${record.subject}</div>
-<div class="history-group">${record.group_name}</div>
-<div class="history-stats">${record.present_count}/${record.total_count}</div>
-</div>
-`).join('')}
-</div>
-</div>
-`;
-}catch(error){
-console.error('Ошибка загрузки истории:',error);
-}
 }
 setupEventListeners(){
 const groupSelect=document.getElementById('group-select');
@@ -390,10 +284,6 @@ saveButton.addEventListener('click',()=>this.saveAttendance());
 }
 async loadStudentsForAttendance(){
 console.log('Загрузка студентов для текущего занятия');
-const saveButton=document.getElementById('save-attendance-btn');
-if(saveButton){
-saveButton.style.display='block';
-}
 await this.loadTeacherData();
 alert(`Студенты загружены:${this.students.length}человек`);
 }
@@ -408,19 +298,6 @@ month:'long',
 day:'numeric'
 });
 }
-}
-generateCalendar(){
-const container=document.querySelector('.calendar-days');
-if(!container)return;
-const today=new Date();
-const daysInMonth=new Date(today.getFullYear(),today.getMonth()+1,0).getDate();
-let calendarHTML='';
-for(let i=1;i<=daysInMonth;i++){
-const isToday=i===today.getDate();
-const dayClass=isToday?'calendar-day today':'calendar-day';
-calendarHTML+=`<div class="${dayClass}">${i}</div>`;
-}
-container.innerHTML=calendarHTML;
 }
 useDemoData(){
 console.log('Используем демо-данные...');
@@ -444,22 +321,11 @@ fullName:'Петрова Мария Сергеевна',
 groupId:'1',
 groupName:'231-324',
 present:false
-},
-{
-id:'3',
-name:'Сергей',
-surname:'Сидоров',
-patronymic:'Алексеевич',
-fullName:'Сидоров Сергей Алексеевич',
-groupId:'2',
-groupName:'231-325',
-present:false
 }
 ];
 this.groups=[
 {id:'1',number:'231-324'},
-{id:'2',number:'231-325'},
-{id:'3',number:'231-326'}
+{id:'2',number:'231-325'}
 ];
 this.assignments=[
 {
@@ -467,14 +333,14 @@ instructorId:'1',
 subjectId:'1',
 groupId:'1',
 subjectName:'Системы инженерного анализа',
-groupName:'231-324'
+groupName:'231-324',
+instructorName:this.currentUser.name||'Преподаватель'
 }
 ];
 this.populateGroupSelector();
 this.populateSubjectSelector();
 this.renderStudents();
 this.updateStats();
-alert('Демо-данные загружены!');
 }
 generateTempId(){
 return'temp_'+Date.now()+'_'+Math.random().toString(36).substr(2,9);

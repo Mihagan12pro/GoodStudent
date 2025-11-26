@@ -5,114 +5,92 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Панель заведующего - GoodStudent</title>
     <link rel="stylesheet" href="/css/style.css">
-</head>
-<body><!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GoodStudent - Панель заведующего</title>
-    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .table-container {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .table-filters {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+        .filter-group label {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #333;
+        }
+        .filter-select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: white;
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        .data-table th {
+            background: #667eea;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+        .data-table td {
+            padding: 12px;
+            border-bottom: 1px solid #e1e5e9;
+        }
+        .data-table tr:hover {
+            background: #f8f9fa;
+        }
+        .column-filter {
+            background: transparent;
+            border: none;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+            padding: 5px;
+        }
+        .column-filter option {
+            color: #333;
+            background: white;
+        }
+        .status-active { color: #28a745; font-weight: 600; }
+        .status-leave { color: #ffc107; font-weight: 600; }
+        .status-expelled { color: #dc3545; font-weight: 600; }
+        .btn-action {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 0 2px;
+        }
+        .btn-edit { background: #28a745; color: white; }
+        .btn-delete { background: #dc3545; color: white; }
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        .table-responsive {
+            overflow-x: auto;
+        }
+    </style>
 </head>
 <body>
-    <div class="app-container">
-        <header class="header">
-            <div class="header-left">
-                <div class="logo">
-                    <div class="logo-icon"></div>
-                    <h1 class="logo-text">GoodStudent</h1>
-                </div>
-                <div class="group-selector">
-                    <select id="group-select">
-                        <option value="all">Все группы</option>
-                    </select>
-                </div>
-            </div>
-            <div class="header-right">
-                <div class="user-info">
-                    <span id="admin-name">Заведующий кафедрой</span>
-                    <button class="btn-logout" id="admin-logout">Выйти</button>
-                </div>
-            </div>
-        </header>
-        <main class="main-content">     
-            <aside class="schedule-sidebar">
-                <div class="schedule-header">
-                    <h2>Управление</h2>
-                </div>
-                <div class="upload-section">
-                    <div class="schedule-item current">
-                        <div class="item-details">
-                            <div class="item-title">Загрузка расписания</div>
-                            <div class="item-teachers">Загрузите Excel файл со студентами</div>
-                        </div>
-                        <div class="upload-area" id="upload-area" style="margin: 10px 0; padding: 15px; border: 2px dashed #667eea; border-radius: 8px; text-align: center;">
-                            <div class="upload-placeholder">
-                                <p>Перетащите Excel файл сюда</p>
-                                <small>или нажмите для выбора</small>
-                            </div>
-                            <input type="file" id="excel-file" accept=".xlsx,.xls" hidden>
-                        </div>
-                        <button class="btn-mark-attendance" id="upload-btn">
-                            Загрузить файл
-                        </button>
-                    </div>
-                </div>
-                <div class="schedule-item">
-                    <div class="item-details">
-                        <div class="item-title">Статистика</div>
-                        <div class="stats-grid" style="display: grid; gap: 10px; margin-top: 10px;">
-                            <div style="display: flex; justify-content: space-between;">
-                                <span>Студентов:</span>
-                                <strong id="total-students">0</strong>
-                            </div>
-                            <div style="display: flex; justify-content: space-between;">
-                                <span>Групп:</span>
-                                <strong id="total-groups">0</strong>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </aside>
-            <section class="attendance-main">
-                <div class="attendance-header">
-                    <h3>Список студентов</h3>
-                    <div class="date-info" id="current-date"></div>
-                </div>
-                <div class="content-area" id="content-area">
-                    <div class="manual-attendance-view">
-                        <div class="students-list-container">
-                            <div class="students-header">
-                                <h4>Загруженные студенты</h4>
-                                <div class="attendance-stats">
-                                    <span>Всего: <strong id="students-count">0</strong> студентов</span>
-                                </div>
-                            </div>                            
-                            <div class="students-list" id="students-list">
-                                <p style="text-align: center; color: #666; padding: 20px;">
-                                    Загрузите Excel файл для отображения студентов
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-        </main>
-        <nav class="bottom-nav">
-            <button class="nav-item active" data-view="students">
-                <img src="/images/чекбокс.jpg" alt="Студенты" class="nav-icon">
-                <span class="nav-label">Студенты</span>
-            </button>
-            <button class="nav-item" data-view="upload">
-                <img src="/images/qr.png" alt="Загрузка" class="nav-icon">
-                <span class="nav-label">Загрузка</span>
-            </button>
-        </nav>
-    </div>
-    <script src="/js/api.js"></script>
-    <script src="/js/admin.js"></script>
-</body>
-</html>
     <div class="app-container">
         <header class="header">
             <div class="header-left">
@@ -128,16 +106,25 @@
                     <button class="btn-logout" id="admin-logout">Выйти</button>
                 </div>
             </div>
-        </header>
+        </header>       
         <main class="main-content">
             <div class="admin-dashboard">
                 <div class="dashboard-header">
-                    <h2>Управление расписанием и студентами</h2>
-                    <p>Загрузите Excel файл с расписанием для распределения студентов по группам</p>
+                    <h2>Управление студентами и назначениями</h2>
+                    <p>Таблица студентов с фильтрацией по группам и преподавателям</p>
+                </div>
+                <div class="table-container">
+                    <h3>Таблица студентов</h3>
+                    <div id="data-table-container">
+                        <div class="empty-state">
+                            <h4>Загрузите студентов из Excel файла</h4>
+                            <p>Данные появятся здесь после загрузки</p>
+                        </div>
+                    </div>
                 </div>
                 <div class="upload-section">
                     <div class="upload-card">
-                        <h3>Загрузка расписания</h3>
+                        <h3>Загрузка студентов из Excel</h3>
                         <div class="upload-area" id="upload-area">
                             <div class="upload-placeholder">
                                 <div class="upload-icon"></div>
@@ -151,27 +138,57 @@
                         </button>
                     </div>
                 </div>
-                <div class="preview-section hidden" id="preview-section">
-                    <div class="preview-card">
-                        <h3>Предпросмотр данных</h3>
-                        <div class="preview-controls">
-                            <button class="btn-secondary" id="edit-data">Редактировать</button>
-                            <button class="btn-primary" id="save-data">Сохранить в систему</button>
-                        </div>
-                        <div class="data-preview" id="data-preview">
+                <div class="assignment-section">
+                    <div class="assignment-card">
+                        <h3>Назначение предметов преподавателям</h3>
+                        
+                        <div class="assignment-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Преподаватель</label>
+                                    <select id="instructor-select" class="form-select">
+                                        <option value="">Выберите преподавателя</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>Кафедра</label>
+                                    <select id="department-select" class="form-select">
+                                        <option value="">Выберите кафедру</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Предмет</label>
+                                    <select id="subject-assign-select" class="form-select">
+                                        <option value="">Выберите предмет</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>Группа</label>
+                                    <select id="group-assign-select" class="form-select">
+                                        <option value="">Выберите группу</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <button class="btn-primary" id="assign-subject-btn">
+                                Назначить предмет
+                            </button>
                         </div>
                     </div>
                 </div>
                 <div class="assignments-section">
-    <div class="schedule-item">
-        <div class="item-details">
-            <div class="item-title">Текущие назначения</div>
-            <div class="assignments-container" id="assignments-container">
-                <p style="text-align:center;color:#666;padding:20px;">Нет назначенных предметов</p>
-            </div>
-        </div>
-    </div>
-</div>
+                    <div class="assignments-card">
+                        <h3>Текущие назначения</h3>
+                        <div class="assignments-container" id="assignments-container">
+                            <p style="text-align:center;color:#666;padding:20px;">Нет назначенных предметов</p>
+                        </div>
+                    </div>
+                </div>
                 <div class="stats-section">
                     <div class="stats-grid">
                         <div class="stat-card">
@@ -186,26 +203,14 @@
                             <div class="stat-value" id="total-teachers">0</div>
                             <div class="stat-label">Преподавателей</div>
                         </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="total-assignments">0</div>
+                            <div class="stat-label">Назначений</div>
+                        </div>
                     </div>
                 </div>
             </div>
         </main>
-        <div class="modal hidden" id="edit-modal">
-            <div class="modal-content large">
-                <div class="modal-header">
-                    <h3>Редактирование данных</h3>
-                    <button class="modal-close" id="edit-close">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <div class="edit-form" id="edit-form">
-                    </div>
-                    <div class="modal-actions">
-                        <button class="btn-secondary" id="cancel-edit">Отмена</button>
-                        <button class="btn-primary" id="confirm-edit">Сохранить изменения</button>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
     <script src="/js/api.js"></script>
     <script src="/js/admin.js"></script>

@@ -2,11 +2,11 @@ class ApiClient {
     constructor() {
         this.baseUrl = 'https://localhost:7298/api';
         this.fallbackUrl = 'http://localhost:5000/api';
-        this.useFallback = false;
+        this.useFallback = true;
     }
+
     async request(endpoint, options = {}) {
         const url = `${this.baseUrl}${endpoint}`;
-        console.log(`C# API: ${options.method || 'GET'} ${url}`);
         try {
             const config = {
                 headers: {
@@ -22,20 +22,14 @@ class ApiClient {
             if(!response.ok){
                 throw new Error(`HTTP ${response.status}:${response.statusText}`);
             }
-            if(response.status===204){return null;}
             return await response.json();
         }catch(error){
-            console.error(`C# API Error[${endpoint}]:`,error);
-            if(!this.useFallback){
-                console.log('Переключаемся на Node.js fallback');
-                this.useFallback=true;
-            }
             throw error;
         }
     }
+
     async requestFallback(endpoint,options={}){
         const url=`${this.fallbackUrl}${endpoint}`;
-        console.log(`Node.js API:${options.method||'GET'}${url}`);
         try{
             const config={
                 headers:{'Content-Type':'application/json','Accept':'application/json'},
@@ -52,106 +46,99 @@ class ApiClient {
             throw error;
         }
     }
+
     async getAllStudents(){
         try{
-            if(this.useFallback){
-                return await this.requestFallback('/students');
-            }
-            return await this.request('/Students');
+            const response=await fetch(`${this.fallbackUrl}/students`);
+            if(!response.ok)throw new Error('Failed to fetch students');
+            return await response.json();
         }catch(error){
-            return await this.requestFallback('/students');
+            console.log('Using fallback students data');
+            return this.getFallbackStudents();
         }
     }
+
     async getAllGroups(){
         try{
-            if(this.useFallback){
-                return await this.requestFallback('/groups');
-            }
-            return await this.request('/Groups');
+            const response=await fetch(`${this.fallbackUrl}/groups`);
+            if(!response.ok)throw new Error('Failed to fetch groups');
+            return await response.json();
         }catch(error){
-            return await this.requestFallback('/groups');
+            console.log('Using fallback groups data');
+            return this.getFallbackGroups();
         }
     }
+
     async getAllInstructors(){
-        try{
-            if(this.useFallback){
-                return await this.requestFallback('/instructors');
-            }
-            return await this.request('/Instructors');
-        }catch(error){
-            return this.getFallbackInstructors();
-        }
+        return this.getFallbackInstructors();
     }
+
     async getAllDepartments(){
-        try{
-            if(this.useFallback){
-                return await this.requestFallback('/departments');
-            }
-            return await this.request('/sections/Departments');
-        }catch(error){
-            return this.getFallbackDepartments();
-        }
+        return this.getFallbackDepartments();
     }
+
+    getFallbackStudents(){
+        return[
+            {id:'1',name:'Иван',surname:'Иванов',patronymic:'Иванович',groupId:'1',status:0},
+            {id:'2',name:'Мария',surname:'Петрова',patronymic:'Сергеевна',groupId:'1',status:0},
+            {id:'3',name:'Сергей',surname:'Сидоров',patronymic:'Алексеевич',groupId:'2',status:0},
+            {id:'4',name:'Анна',surname:'Козлова',patronymic:'Владимировна',groupId:'2',status:0},
+            {id:'5',name:'Дмитрий',surname:'Фролов',patronymic:'Петрович',groupId:'3',status:0}
+        ];
+    }
+
+    getFallbackGroups(){
+        return[
+            {id:'1',number:'231-324',professionId:'1'},
+            {id:'2',number:'231-325',professionId:'1'},
+            {id:'3',number:'231-326',professionId:'2'},
+            {id:'4',number:'231-327',professionId:'2'}
+        ];
+    }
+
     getFallbackInstructors(){
         return[
-            {id:'1',name:'Иванов',surname:'Петр',patronymic:'Сергеевич'},
-            {id:'2',name:'Петрова',surname:'Мария',patronymic:'Ивановна'}
+            {id:'1',name:'Петр',surname:'Иванов',patronymic:'Сергеевич',departmentId:'1'},
+            {id:'2',name:'Мария',surname:'Петрова',patronymic:'Ивановна',departmentId:'1'},
+            {id:'3',name:'Алексей',surname:'Сидоров',patronymic:'Владимирович',departmentId:'2'},
+            {id:'4',name:'Ольга',surname:'Макарова',patronymic:'Сергеевна',departmentId:'2'}
         ];
     }
+
     getFallbackDepartments(){
         return[
-            {id:'1',tittle:'Информационные системы'},
-            {id:'2',tittle:'Программная инженерия'}
+            {id:'1',tittle:'Информационные системы',description:'Кафедра информационных систем'},
+            {id:'2',tittle:'Программная инженерия',description:'Кафедра программной инженерии'},
+            {id:'3',tittle:'Компьютерная безопасность',description:'Кафедра компьютерной безопасности'}
         ];
     }
+
     async createStudent(studentData){
         try{
-            if(this.useFallback){
-                return await this.requestFallback('/students',{
-                    method:'POST',
-                    body:studentData
-                });
-            }
-            return await this.request('/Students',{
+            const response=await fetch(`${this.fallbackUrl}/students`,{
                 method:'POST',
-                body:{
-                    name:studentData.name,
-                    surname:studentData.surname,
-                    patronymic:studentData.patronymic||'',
-                    startYear:studentData.startYear||new Date().getFullYear(),
-                    groupId:studentData.groupId,
-                    status:studentData.status||0
-                }
+                headers:{'Content-Type':'application/json'},
+                body:JSON.stringify(studentData)
             });
+            return await response.json();
         }catch(error){
-            return await this.requestFallback('/students',{
-                method:'POST',
-                body:studentData
-            });
+            return{id:`student_${Date.now()}`,success:true};
         }
     }
+
     async createGroup(groupData){
         try{
-            if(this.useFallback){
-                return await this.requestFallback('/groups',{
-                    method:'POST',
-                    body:groupData
-                });
-            }
-            return await this.request('/Groups',{
+            const response=await fetch(`${this.fallbackUrl}/groups`,{
                 method:'POST',
-                body:{
-                    number:groupData.number,
-                    professionId:groupData.professionId||"3fa85f64-5717-4562-b3fc-2c963f66afa6"
-                }
+                headers:{'Content-Type':'application/json'},
+                body:JSON.stringify(groupData)
             });
+            return await response.json();
         }catch(error){
-            return await this.requestFallback('/groups',{
-                method:'POST',
-                body:groupData
-            });
+            return{id:`group_${Date.now()}`,success:true};
         }
     }
+
     async uploadExcelToBackend(excelStudents){
         const results=[];
         for(const excelStudent of excelStudents){
@@ -182,6 +169,7 @@ class ApiClient {
         }
         return results;
     }
+
     async findOrCreateGroup(groupNumber){
         try{
             const groups=await this.getAllGroups();
@@ -189,93 +177,60 @@ class ApiClient {
             if(existingGroup){return existingGroup.id;}
             const newGroupId=await this.createGroup({
                 number:groupNumber,
-                professionId:"3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                professionId:"1"
             });
             return newGroupId;
         }catch(error){
-            console.error('Ошибка создания группы:',error);
-            throw error;
+            return`group_${Date.now()}`;
         }
     }
+
     async getAllSubjects(){
         try{
-            return await this.requestFallback('/subjects');
+            const response=await fetch(`${this.fallbackUrl}/subjects`);
+            if(!response.ok)throw new Error('Failed to fetch subjects');
+            return await response.json();
         }catch(error){
             return[
                 {id:1,name:'Системы инженерного анализа',type:'Лаб. работа'},
                 {id:2,name:'Нормативное регулирование',type:'Лекция'},
-                {id:3,name:'Базы данных',type:'Практика'}
+                {id:3,name:'Базы данных',type:'Практика'},
+                {id:4,name:'Веб-программирование',type:'Лаб. работа'},
+                {id:5,name:'Математика',type:'Лекция'},
+                {id:6,name:'Программирование',type:'Лаб. работа'}
             ];
         }
     }
+
     async assignSubjectToInstructor(assignmentData){
-    try{
-        if(this.useFallback){
-            return await this.requestFallback('/assignments',{
-                method:'POST',
-                body:assignmentData
-            });
-        }
-        return await this.request('/Assignments',{
-            method:'POST',
-            body:{
-                instructorId:assignmentData.instructorId,
-                subjectId:assignmentData.subjectId,
-                groupId:assignmentData.groupId,
-                departmentId:assignmentData.departmentId
-            }
-        });
-    }catch(error){
-        // Для Node.js бэкенда сохраняем в localStorage
         return this.saveAssignmentToLocalStorage(assignmentData);
     }
-}
 
-async getInstructorAssignments(instructorId){
-    try{
-        if(this.useFallback){
-            return await this.requestFallback(`/assignments/instructor/${instructorId}`);
+    saveAssignmentToLocalStorage(assignmentData){
+        const assignments=JSON.parse(localStorage.getItem('instructor_assignments')||'[]');
+        const newAssignment={
+            id:`assignment_${Date.now()}_${Math.random().toString(36).substr(2,9)}`,
+            ...assignmentData,
+            createdAt:new Date().toISOString()
+        };
+        assignments.push(newAssignment);
+        localStorage.setItem('instructor_assignments',JSON.stringify(assignments));
+        return{id:newAssignment.id,success:true};
+    }
+
+    async markAttendance(attendanceData){
+        try{
+            const response=await fetch(`${this.fallbackUrl}/attendance`,{
+                method:'POST',
+                headers:{'Content-Type':'application/json'},
+                body:JSON.stringify(attendanceData)
+            });
+            return await response.json();
+        }catch(error){
+            return{success:true,id:`attendance_${Date.now()}`};
         }
-        return await this.request(`/Assignments/instructor/${instructorId}`);
-    }catch(error){
-        return this.getAssignmentsFromLocalStorage(instructorId);
     }
 }
 
-async getSubjectAssignments(subjectId){
-    try{
-        if(this.useFallback){
-            return await this.requestFallback(`/assignments/subject/${subjectId}`);
-        }
-        return await this.request(`/Assignments/subject/${subjectId}`);
-    }catch(error){
-        return this.getAssignmentsBySubjectFromLocalStorage(subjectId);
-    }
-}
-saveAssignmentToLocalStorage(assignmentData){
-    const key=`assignment_${Date.now()}`;
-    const assignment={
-        id:key,
-        ...assignmentData,
-        createdAt:new Date().toISOString()
-    };
-    
-    const assignments=JSON.parse(localStorage.getItem('instructor_assignments')||'[]');
-    assignments.push(assignment);
-    localStorage.setItem('instructor_assignments',JSON.stringify(assignments));
-    
-    return{id:key,success:true};
-}
-
-getAssignmentsFromLocalStorage(instructorId){
-    const assignments=JSON.parse(localStorage.getItem('instructor_assignments')||'[]');
-    return assignments.filter(a=>a.instructorId===instructorId);
-}
-
-getAssignmentsBySubjectFromLocalStorage(subjectId){
-    const assignments=JSON.parse(localStorage.getItem('instructor_assignments')||'[]');
-    return assignments.filter(a=>a.subjectId==subjectId);
-}
-}
 const apiClient=new ApiClient();
 window.apiClient=apiClient;
