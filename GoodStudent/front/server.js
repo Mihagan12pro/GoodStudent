@@ -541,6 +541,53 @@ app.get('/api/instructors/:id/assignments', async (req, res) => {
     console.log('=== ОТЛАДКА НАЗНАЧЕНИЙ ===');
     console.log('ID преподавателя:', instructorId);
     client = await pools.students.connect();
+    
+    // ПРОБУЕМ РАЗНЫЕ ВАРИАНТЫ ТАБЛИЦ ДЛЯ ПРЕДМЕТОВ
+    let subjectsMap = {};
+    
+    try {
+      // Вариант 1: Пробуем таблицу Subjects
+      const subjectsResult = await client.query(`
+        SELECT "Id", "Tittle" as name FROM "Subjects" 
+        WHERE "Id" IN (
+          SELECT DISTINCT subject_id FROM instructor_assignments WHERE instructor_id = $1
+        )
+      `, [instructorId]);
+      
+      subjectsResult.rows.forEach(subject => {
+        subjectsMap[subject.Id] = subject.name;
+      });
+      console.log('Загружено предметов из Subjects:', subjectsResult.rows.length);
+      
+    } catch (subjectsError) {
+      console.log('Таблица Subjects недоступна, пробуем Professions...');
+      
+      try {
+        // Вариант 2: Пробуем таблицу Professions
+        const professionsResult = await client.query(`
+          SELECT "Id", "Tittle" as name FROM "Professions" 
+          WHERE "Id" IN (
+            SELECT DISTINCT subject_id FROM instructor_assignments WHERE instructor_id = $1
+          )
+        `, [instructorId]);
+        
+        professionsResult.rows.forEach(subject => {
+          subjectsMap[subject.Id] = subject.name;
+        });
+        console.log('Загружено предметов из Professions:', professionsResult.rows.length);
+        
+      } catch (professionsError) {
+        console.log('Таблица Professions также недоступна, используем fallback названия');
+        // Используем fallback названия
+        subjectsMap = {
+          'cb88af9f-eae8-4533-ba74-507c04b3ed71': 'Системы инженерного анализа',
+          '0be47cae-ee85-40df-885b-213cfce7532c': 'Базы данных',
+          'df91f611-94f9-4c4f-923e-71c29f8e3ee8': 'Веб-программирование'
+        };
+      }
+    }
+    
+    // Загружаем назначения
     const result = await client.query(`
       SELECT 
         ia.*,
@@ -555,31 +602,30 @@ app.get('/api/instructors/:id/assignments', async (req, res) => {
       WHERE ia.instructor_id = $1
       ORDER BY sd.assignment_date, sd.start_time
     `, [instructorId]);
-    console.log('Результат запроса:', result.rows.length, 'назначений');
-    const getSubjectNameById = (subjectId) => {
-      const subjectNames = {
-        '1': 'Системы инженерного анализа',
-        '2': 'Базы данных', 
-        '3': 'Веб-программирование',
-        '4': 'Математический анализ',
-        '5': 'Нормативное регулирование'
+    
+    console.log('Результат запроса назначений:', result.rows.length);
+    
+    const assignments = result.rows.map(row => {
+      const subjectName = subjectsMap[row.subject_id] || `Предмет ${row.subject_id?.substring(0, 8)}...`;
+      
+      return {
+        id: row.Id,
+        subject_id: row.subject_id,
+        subject_name: subjectName,
+        group_id: row.group_id,
+        group_number: row.group_number,
+        department_id: row.department_id,
+        classroom: row.classroom,
+        assignment_date: row.assignment_date,
+        start_time: row.start_time,
+        end_time: row.end_time,
+        created_at: row.created_at
       };
-      return subjectNames[subjectId] || `Предмет ${subjectId}`;
-    };
-    const assignments = result.rows.map(row => ({
-      id: row.Id,
-      subject_id: row.subject_id,
-      subject_name: getSubjectNameById(row.subject_id),
-      group_id: row.group_id,
-      group_number: row.group_number,
-      department_id: row.department_id,
-      classroom: row.classroom,
-      assignment_date: row.assignment_date,
-      start_time: row.start_time,
-      end_time: row.end_time,
-      created_at: row.created_at
-    }));
+    });
+    
+    console.log('Обработанные назначения:', assignments);
     res.json(assignments);
+    
   } catch (error) {
     console.error('ОШИБКА в endpoint назначений:', error);
     res.json([]);

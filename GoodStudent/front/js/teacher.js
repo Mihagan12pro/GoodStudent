@@ -506,7 +506,6 @@ updateSubjectSelector() {
 renderStudents() {
     const container = document.getElementById('students-list');
     if(!container) return;
-    console.log('=== НАЧАЛО РЕНДЕРА СТУДЕНТОВ ===');
     console.log('Всего студентов доступно:', this.students.length);
     console.log('Текущий предмет:', this.currentSubjectId);
     console.log('Текущая группа:', this.currentGroupId);
@@ -545,24 +544,22 @@ renderStudents() {
         `;
         return;
     }
-    container.innerHTML = studentsToShow.map(student => `
-        <div class="student-item">
-            <div class="student-info">
-                <div class="student-name">${student.surname} ${student.name} ${student.patronymic || ''}</div>
-                <div class="student-group">Группа: ${student.groupName} (ID: ${student.groupId})</div>
-            </div>
-            <div class="attendance-toggle">
-                <input type="checkbox" id="student-${student.id}" 
-                    onchange="teacherApp.toggleStudent('${student.id}', this.checked)">
-                <label for="student-${student.id}">
-                    <span class="toggle-slider"></span>
-                </label>
-            </div>
+   container.innerHTML = studentsToShow.map(student => `
+    <div class="student-item">
+        <div class="student-info">
+            <div class="student-name">${student.surname} ${student.name} ${student.patronymic || ''}</div>
+            <div class="student-group">Группа: ${student.groupName}</div>
         </div>
-    `).join('');
-    
+        <div class="attendance-toggle">
+            <input type="checkbox" id="student-${student.id}" 
+                onchange="teacherApp.toggleStudent('${student.id}', this.checked)">
+            <label for="student-${student.id}">
+                <span class="toggle-slider"></span>
+            </label>
+        </div>
+    </div>
+`).join('');
     this.updateStats();
-    console.log('=== ЗАВЕРШЕНИЕ РЕНДЕРА СТУДЕНТОВ ===');
 }
 updateScheduleDisplay() {
     const scheduleContainer = document.querySelector('.schedule-items');
