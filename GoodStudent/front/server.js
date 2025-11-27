@@ -446,12 +446,8 @@ app.post('/api/attendance', async (req, res) => {
       presentCount,
       totalCount
     });
-    
     client = await pools.students.connect();
-    
-    // Создаем таблицу если не существует
     const tableExists = await client.query(`SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'attendance')`);    
-    
     if (!tableExists.rows[0].exists) {
       await client.query(`
         CREATE TABLE attendance (
@@ -578,16 +574,11 @@ app.get('/api/instructors/:id/assignments', async (req, res) => {
         let instructorId = req.params.id;
         console.log('=== ОТЛАДКА НАЗНАЧЕНИЙ ===');
         console.log('ID преподавателя из запроса:', instructorId);
-        
-        // Если ID null или невалидный, используем fallback
         if (!instructorId || instructorId === 'null' || instructorId === 'undefined') {
             console.log('Невалидный ID преподавателя, используем fallback');
             instructorId = '11111111-1111-1111-1111-111111111111';
-        }
-        
+        }        
         client = await pools.students.connect();
-        
-        // Используем fallback названия предметов
         const subjectsMap = {
             '1': 'Системы инженерного анализа',
             '2': 'Базы данных',
@@ -598,8 +589,6 @@ app.get('/api/instructors/:id/assignments', async (req, res) => {
         };
         
         console.log('Загружаем назначения для преподавателя:', instructorId);
-        
-        // Загружаем назначения
         const result = await client.query(`
             SELECT 
                 ia.*,
@@ -616,8 +605,6 @@ app.get('/api/instructors/:id/assignments', async (req, res) => {
         `, [instructorId]);
         
         console.log('Найдено назначений в БД:', result.rows.length);
-        
-        // Если нет назначений в БД, создаем демо-назначения
         let assignments = result.rows.map(row => {
             const subjectName = subjectsMap[row.subject_id] || `Предмет ${row.subject_id?.substring(0, 8)}...`;
             
@@ -635,8 +622,6 @@ app.get('/api/instructors/:id/assignments', async (req, res) => {
                 created_at: row.created_at
             };
         });
-        
-        // Если назначений нет, создаем демо-назначения
         if (assignments.length === 0) {
             console.log('Создаем демо-назначения');
             assignments = await createDemoAssignments(client, instructorId);
@@ -647,40 +632,31 @@ app.get('/api/instructors/:id/assignments', async (req, res) => {
         
     } catch (error) {
         console.error('ОШИБКА в endpoint назначений:', error);
-        // В случае ошибки возвращаем демо-назначения
         res.json(getFallbackAssignments());
     } finally {
         if (client) client.release();
     }
 });
-
-// Вынесем функции наружу
 async function createDemoAssignments(client, instructorId) {
     try {
         const today = new Date().toISOString().split('T')[0];
-        
-        // Создаем демо-назначение в БД
         const demoAssignment = {
             id: generateUUID(),
             instructor_id: instructorId,
             subject_id: '1',
-            group_id: '0ed1e572-12ce-45f5-87a0-5e6ef8382e15', // 231-320
+            group_id: '0ed1e572-12ce-45f5-87a0-5e6ef8382e15', 
             department_id: '1',
             classroom: 'Пр/06',
             assignment_date: today,
             start_time: '12:20',
             end_time: '13:50'
         };
-        
-        // Сохраняем в БД
         await client.query(
             `INSERT INTO instructor_assignments ("Id", "instructor_id", "subject_id", "group_id", "department_id") 
              VALUES ($1, $2, $3, $4, $5)`,
             [demoAssignment.id, demoAssignment.instructor_id, demoAssignment.subject_id, 
              demoAssignment.group_id, demoAssignment.department_id]
         );
-        
-        // Сохраняем детали расписания
         await client.query(
             `INSERT INTO schedule_details 
              ("id", "assignment_id", "classroom", "assignment_date", "start_time", "end_time") 
@@ -707,8 +683,6 @@ async function createDemoAssignments(client, instructorId) {
         return getFallbackAssignments();
     }
 }
-
-// Fallback назначения
 function getFallbackAssignments() {
     const today = new Date().toISOString().split('T')[0];
     const currentHour = new Date().getHours();
@@ -812,12 +786,8 @@ app.post('/api/attendance/qr/:token', async (req, res) => {
     try {
         const { token } = req.params;
         const { studentId, studentName, groupId } = req.body;
-        
         console.log('QR отметка:', { token, studentId, studentName, groupId });
-        
         client = await pools.students.connect();
-        
-        // Check if session is valid
         const sessionResult = await client.query(
             `SELECT * FROM qr_sessions 
              WHERE token = $1 AND is_active = true AND expires_at > NOW()`,
@@ -830,10 +800,7 @@ app.post('/api/attendance/qr/:token', async (req, res) => {
                 code: 'QR_EXPIRED'
             });
         }
-        
         const session = sessionResult.rows[0];
-        
-        // Проверяем, не отметился ли студент уже
         const existingMark = await client.query(
             `SELECT id FROM qr_attendance 
              WHERE session_id = $1 AND student_id = $2`,
@@ -846,8 +813,6 @@ app.post('/api/attendance/qr/:token', async (req, res) => {
                 code: 'ALREADY_MARKED'
             });
         }
-        
-        // Сохраняем отметку
         await client.query(
             `INSERT INTO qr_attendance (session_id, student_id, student_name, group_id, marked_at) 
              VALUES ($1, $2, $3, $4, NOW())`,
@@ -904,8 +869,6 @@ app.get('/api/qr/sessions/:token/stats', async (req, res) => {
         if (client) client.release();
     }
 });
-
-// Refresh QR Token
 app.post('/api/qr/sessions/:token/refresh', async (req, res) => {
     let client;
     try {
@@ -1224,7 +1187,6 @@ async function initializeQRTables() {
         if (client) client.release();
     }
 }
-
 app.listen(PORT, async () =>  {
   await initializeQRTables();
   console.log('='.repeat(60));

@@ -80,7 +80,7 @@ document.addEventListener('DOMContentLoaded', function() {
             name: userType === 'admin' ? 'Заведующий кафедрой' : 'Преподаватель',
             email: email,
             role: userType,
-            instructorId: userType === 'teacher' ? getInstructorIdByEmail(email) : null  // Добавили для регистрации тоже
+            instructorId: userType === 'teacher' ? getInstructorIdByEmail(email) : null  
         }));           
         alert(`Регистрация успешна!\nEmail: ${email}\nТип аккаунта: ${userType === 'admin' ? 'Заведующий кафедрой' : 'Преподаватель'}`);
         if (userType === 'admin') {

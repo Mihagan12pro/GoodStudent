@@ -30,8 +30,6 @@ filterStudentsByCurrentTime() {
         const today = now.toISOString().split('T')[0];
         
         console.log('Фильтрация по времени:', { currentTime, today });
-        
-        // Находим текущие занятия
         const currentAssignments = this.assignments.filter(assignment => {
             if (!assignment.assignment_date) return false;
             
@@ -51,16 +49,12 @@ filterStudentsByCurrentTime() {
         console.log('Текущие занятия:', currentAssignments);
         
         if (currentAssignments.length > 0) {
-            // Показываем студентов только для текущих занятий
             const currentGroupIds = currentAssignments.map(a => a.group_id);
-            this.currentGroupId = currentGroupIds[0]; // Берем первую группу
-            
-            // Обновляем селекторы
+            this.currentGroupId = currentGroupIds[0];
             const groupSelect = document.getElementById('group-select');
             if (groupSelect) {
                 groupSelect.value = this.currentGroupId;
             }
-            
             const subjectSelect = document.getElementById('subject-select');
             if (subjectSelect && currentAssignments[0].subject_id) {
                 subjectSelect.value = currentAssignments[0].subject_id;
@@ -69,13 +63,11 @@ filterStudentsByCurrentTime() {
             
             alert(`Автоматически загружены студенты для текущего занятия: ${currentAssignments[0].subject_name}`);
         } else {
-            // Нет текущих занятий - показываем сообщение
             this.showNoCurrentClassesMessage();
         }
         
         this.renderStudents();
     }
-
     isTimeInRange(currentTime, startTime, endTime) {
         if (!startTime || !endTime) return false;
         
@@ -89,7 +81,6 @@ filterStudentsByCurrentTime() {
         
         return currentTotal >= startTotal && currentTotal <= endTotal;
     }
-
     showNoCurrentClassesMessage() {
         const container = document.getElementById('students-list');
         if (!container) return;
@@ -111,11 +102,8 @@ filterStudentsByCurrentTime() {
     this.currentSubjectId = 'all';
     const groupSelect = document.getElementById('group-select');
     if (groupSelect) groupSelect.value = 'all';
-    
     const subjectSelect = document.getElementById('subject-select');
     if (subjectSelect) subjectSelect.value = 'all';
-    
-    // Убираем уведомления
     const notification = document.querySelector('.current-lesson-notification');
     const message = document.querySelector('.no-lesson-message');
     if (notification) notification.remove();
@@ -141,25 +129,19 @@ filterStudentsByCurrentTime() {
     const currentTime = now.toTimeString().slice(0, 5); // "HH:MM"
     const today = now.toISOString().split('T')[0];
     const currentDayOfWeek = now.getDay(); // 0-воскресенье, 1-понедельник...
-    
     console.log('=== ПОИСК ТЕКУЩЕГО ЗАНЯТИЯ ===');
     console.log('Сегодня:', today, 'Текущее время:', currentTime, 'День недели:', currentDayOfWeek);
-
-    // Находим текущие занятия (в течение +-15 минут от текущего времени)
     const currentAssignments = this.assignments.filter(assignment => {
         if (!assignment.assignment_date) return false;
         
         const assignmentDate = assignment.assignment_date.split('T')[0];
         const isToday = assignmentDate === today;
-        
-        // Проверяем время занятия (с запасом 15 минут до и после)
         const isCurrentTime = this.isTimeInRangeWithMargin(
             currentTime, 
             assignment.start_time, 
             assignment.end_time,
-            15 // минут
+            15 
         );
-        
         console.log(`Проверка занятия: ${assignment.subject_name}, 
             дата: ${assignmentDate}, сегодня: ${isToday}, 
             время: ${assignment.start_time}-${assignment.end_time}, 
@@ -167,15 +149,11 @@ filterStudentsByCurrentTime() {
         
         return isToday && isCurrentTime;
     });
-
     console.log('Текущие занятия:', currentAssignments);
-
     if (currentAssignments.length > 0) {
-        // Берем первое текущее занятие
         const currentAssignment = currentAssignments[0];
         this.currentGroupId = currentAssignment.group_id;
         this.currentSubjectId = currentAssignment.subject_id;
-        
         console.log('Автоматически выбрано занятие:', {
             предмет: currentAssignment.subject_name,
             группа: currentAssignment.group_number,
@@ -278,8 +256,6 @@ showNoCurrentLessonMessage() {
         
         console.log('=== ФИЛЬТРАЦИЯ ПО ТЕКУЩЕМУ ВРЕМЕНИ ===');
         console.log('Сегодня:', today, 'Текущее время:', currentTime, 'День недели:', currentDayOfWeek);
-
-        // Находим текущие занятия (в течение всего дня)
         const todaysAssignments = this.assignments.filter(assignment => {
             if (!assignment.assignment_date) return false;
             
@@ -290,19 +266,13 @@ showNoCurrentLessonMessage() {
             
             return isToday;
         });
-
         console.log('Занятия на сегодня:', todaysAssignments);
 
         if (todaysAssignments.length > 0) {
-            // Показываем студентов только для сегодняшних занятий
             const currentGroupIds = todaysAssignments.map(a => a.group_id);
             const currentSubjectIds = todaysAssignments.map(a => a.subject_id);
-            
-            // Устанавливаем текущие фильтры
             this.currentGroupId = currentGroupIds[0] || 'all';
             this.currentSubjectId = currentSubjectIds[0] || 'all';
-
-            // Обновляем селекторы
             const groupSelect = document.getElementById('group-select');
             if (groupSelect && this.currentGroupId !== 'all') {
                 groupSelect.value = this.currentGroupId;
@@ -319,27 +289,19 @@ showNoCurrentLessonMessage() {
         } else {
             this.showNoClassesTodayMessage();
         }
-        
         this.renderStudents();
     }
-     showCurrentScheduleMessage(assignments) {
+    showCurrentScheduleMessage(assignments) {
         const subjectNames = [...new Set(assignments.map(a => a.subject_name))];
         const groupNames = [...new Set(assignments.map(a => a.group_number))];
-        
         console.log(`Автоматически загружены студенты для: ${subjectNames.join(', ')} - группы: ${groupNames.join(', ')}`);
-        
-        // Можно показать всплывающее сообщение
-        // alert(`Автоматически загружены студенты для:\n${subjectNames.join(', ')}\nГруппы: ${groupNames.join(', ')}`);
     }
-
     showNoClassesTodayMessage() {
         const container = document.getElementById('students-list');
         if (!container) return;
-        
         const now = new Date();
         const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
         const todayString = now.toLocaleDateString('ru-RU', options);
-        
         container.innerHTML = `
             <div style="text-align:center;padding:40px;color:#666;">
                 <h4>Сегодня нет занятий!</h4>
@@ -666,8 +628,6 @@ getCurrentInstructorId() {
         console.log('ID преподавателя из email:', instructorId);
         return instructorId;
     }
-    
-    // Fallback - используем демо ID
     console.log('Используем fallback ID преподавателя');
     return '11111111-1111-1111-1111-111111111111';
 }
@@ -1090,28 +1050,20 @@ if(totalElement)totalElement.textContent=totalCount;
 async saveAttendance() {
     try {
         console.log('=== СОХРАНЕНИЕ ПОСЕЩАЕМОСТИ ===');
-        
-        // Получаем текущие фильтры
         const groupSelect = document.getElementById('group-select');
         const subjectSelect = document.getElementById('subject-select');
-        
         const currentGroupId = this.currentGroupId;
         const currentSubjectId = this.currentSubjectId;
-        
         console.log('Текущие фильтры:', {
             группа: currentGroupId,
             предмет: currentSubjectId
         });
-
-        // Фильтруем студентов только по текущей группе
         let studentsToSave = [...this.students];
         
         if (currentGroupId && currentGroupId !== 'all') {
             studentsToSave = studentsToSave.filter(student => student.groupId === currentGroupId);
             console.log(`Фильтрация по группе: ${this.students.length} -> ${studentsToSave.length}`);
         }
-
-        // Если выбран предмет, дополнительно фильтруем по группам с этим предметом
         if (currentSubjectId && currentSubjectId !== 'all') {
             const subjectGroups = this.assignments
                 .filter(assignment => assignment.subject_id == currentSubjectId)
@@ -1122,7 +1074,6 @@ async saveAttendance() {
             );
             console.log(`Фильтрация по предмету: ${studentsToSave.length} студентов`);
         }
-
         const presentStudents = studentsToSave.filter(s => s.present);
         const absentStudents = studentsToSave.filter(s => !s.present);
         
@@ -1131,13 +1082,10 @@ async saveAttendance() {
             присутствуют: presentStudents.length,
             отсутствуют: absentStudents.length
         });
-
         if (studentsToSave.length === 0) {
             alert('Нет студентов для сохранения. Проверьте фильтры.');
             return;
         }
-
-        // Получаем информацию о текущем занятии
         let currentAssignment = null;
         if (currentSubjectId && currentSubjectId !== 'all' && currentGroupId && currentGroupId !== 'all') {
             currentAssignment = this.assignments.find(assignment => 
@@ -1145,15 +1093,12 @@ async saveAttendance() {
                 assignment.group_id === currentGroupId
             );
         }
-
         const subjectName = currentAssignment ? 
             currentAssignment.subject_name : 
             (subjectSelect ? subjectSelect.options[subjectSelect.selectedIndex].text : 'Неизвестный предмет');
-        
         const groupName = currentAssignment ? 
             currentAssignment.group_number : 
             (groupSelect ? groupSelect.options[groupSelect.selectedIndex].text : 'Неизвестная группа');
-
         const attendanceData = {
             date: new Date().toISOString(),
             subject: subjectName,
@@ -1180,9 +1125,7 @@ async saveAttendance() {
             totalCount: studentsToSave.length,
             assignment_id: currentAssignment ? currentAssignment.id : null
         };
-
         console.log('Данные для сохранения:', attendanceData);
-
         const response = await fetch('http://localhost:5000/api/attendance', {
             method: 'POST',
             headers: {
@@ -1190,17 +1133,13 @@ async saveAttendance() {
             },
             body: JSON.stringify(attendanceData)
         });
-
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-
         const result = await response.json();
         
         if (result.success) {
             alert(`Посещаемость сохранена!\n${subjectName} - ${groupName}\nПрисутствуют: ${presentStudents.length}/${studentsToSave.length}`);
-            
-            // Сбрасываем отметки только для сохраненных студентов
             studentsToSave.forEach(student => student.present = false);
             this.renderStudents();
             this.updateStats();
