@@ -172,22 +172,18 @@ filterStudentsByCurrentTime() {
         this.showCurrentLessonNotification(currentAssignment);
         
     } else {
-
         this.showNoCurrentLessonMessage();
     }
     this.renderStudents();
 }
-isTimeInRangeWithMargin(currentTime, startTime, endTime, marginMinutes = 15) {
-    if (!startTime || !endTime) return false;
-    
+isTimeInRangeWithMargin(currentTime, startTime, endTime, marginMinutes = 60) {
+    if (!startTime || !endTime) true;
     const [currentHours, currentMinutes] = currentTime.split(':').map(Number);
     const [startHours, startMinutes] = startTime.split(':').map(Number);
     const [endHours, endMinutes] = endTime.split(':').map(Number);
-    
     const currentTotal = currentHours * 60 + currentMinutes;
-    const startTotal = startHours * 60 + startMinutes - marginMinutes; // Запас до начала
-    const endTotal = endHours * 60 + endMinutes + marginMinutes; // Запас после окончания
-    
+    const startTotal = startHours * 60 + startMinutes - marginMinutes; 
+    const endTotal = endHours * 60 + endMinutes + marginMinutes; 
     return currentTotal >= startTotal && currentTotal <= endTotal;
 }
 showCurrentLessonNotification(assignment) {

@@ -1,0 +1,298 @@
+{
+  "format": 1,
+  "restore": {
+    "C:\\Users\\molch\\Downloads\\Новая папка (5)\\GoodStudent\\src\\Server\\GoodStudent.Infrastructure.Postgres\\GoodStudent.Infrastracture.Postgres.csproj": {}
+  },
+  "projects": {
+    "C:\\Users\\molch\\Downloads\\Новая папка (5)\\GoodStudent\\src\\Server\\GoodStudent.Application\\GoodStudent.Application.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\molch\\Downloads\\Новая папка (5)\\GoodStudent\\src\\Server\\GoodStudent.Application\\GoodStudent.Application.csproj",
+        "projectName": "GoodStudent.Application",
+        "projectPath": "C:\\Users\\molch\\Downloads\\Новая папка (5)\\GoodStudent\\src\\Server\\GoodStudent.Application\\GoodStudent.Application.csproj",
+        "packagesPath": "C:\\Users\\molch\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\molch\\Downloads\\Новая папка (5)\\GoodStudent\\src\\Server\\GoodStudent.Application\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\molch\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {
+              "C:\\Users\\molch\\Downloads\\Новая папка (5)\\GoodStudent\\src\\Server\\GoodStudent.Contracts\\GoodStudent.Contracts.csproj": {
+                "projectPath": "C:\\Users\\molch\\Downloads\\Новая папка (5)\\GoodStudent\\src\\Server\\GoodStudent.Contracts\\GoodStudent.Contracts.csproj"
+              },
+              "C:\\Users\\molch\\Downloads\\Новая папка (5)\\GoodStudent\\src\\Server\\GoodStudent.Domain\\GoodStudent.Domain.csproj": {
+                "projectPath": "C:\\Users\\molch\\Downloads\\Новая папка (5)\\GoodStudent\\src\\Server\\GoodStudent.Domain\\GoodStudent.Domain.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        }
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "dependencies": {
+            "Dapper": {
+              "target": "Package",
+              "version": "[2.1.66, )"
+            },
+            "Microsoft.AspNetCore.Mvc": {
+              "target": "Package",
+              "version": "[2.3.0, )"
+            },
+            "Microsoft.EntityFrameworkCore.Tools": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[8.0.4, )"
+            },
+            "Npgsql": {
+              "target": "Package",
+              "version": "[8.0.4, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.403/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "C:\\Users\\molch\\Downloads\\Новая папка (5)\\GoodStudent\\src\\Server\\GoodStudent.Contracts\\GoodStudent.Contracts.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\molch\\Downloads\\Новая папка (5)\\GoodStudent\\src\\Server\\GoodStudent.Contracts\\GoodStudent.Contracts.csproj",
+        "projectName": "GoodStudent.Contracts",
+        "projectPath": "C:\\Users\\molch\\Downloads\\Новая папка (5)\\GoodStudent\\src\\Server\\GoodStudent.Contracts\\GoodStudent.Contracts.csproj",
+        "packagesPath": "C:\\Users\\molch\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\molch\\Downloads\\Новая папка (5)\\GoodStudent\\src\\Server\\GoodStudent.Contracts\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\molch\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {
+              "C:\\Users\\molch\\Downloads\\Новая папка (5)\\GoodStudent\\src\\Server\\GoodStudent.Domain\\GoodStudent.Domain.csproj": {
+                "projectPath": "C:\\Users\\molch\\Downloads\\Новая папка (5)\\GoodStudent\\src\\Server\\GoodStudent.Domain\\GoodStudent.Domain.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        }
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.403/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "C:\\Users\\molch\\Downloads\\Новая папка (5)\\GoodStudent\\src\\Server\\GoodStudent.Domain\\GoodStudent.Domain.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\molch\\Downloads\\Новая папка (5)\\GoodStudent\\src\\Server\\GoodStudent.Domain\\GoodStudent.Domain.csproj",
+        "projectName": "GoodStudent.Domain",
+        "projectPath": "C:\\Users\\molch\\Downloads\\Новая папка (5)\\GoodStudent\\src\\Server\\GoodStudent.Domain\\GoodStudent.Domain.csproj",
+        "packagesPath": "C:\\Users\\molch\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\molch\\Downloads\\Новая папка (5)\\GoodStudent\\src\\Server\\GoodStudent.Domain\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\molch\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        }
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.403/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    },
+    "C:\\Users\\molch\\Downloads\\Новая папка (5)\\GoodStudent\\src\\Server\\GoodStudent.Infrastructure.Postgres\\GoodStudent.Infrastracture.Postgres.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\molch\\Downloads\\Новая папка (5)\\GoodStudent\\src\\Server\\GoodStudent.Infrastructure.Postgres\\GoodStudent.Infrastracture.Postgres.csproj",
+        "projectName": "GoodStudent.Infrastracture.Postgres",
+        "projectPath": "C:\\Users\\molch\\Downloads\\Новая папка (5)\\GoodStudent\\src\\Server\\GoodStudent.Infrastructure.Postgres\\GoodStudent.Infrastracture.Postgres.csproj",
+        "packagesPath": "C:\\Users\\molch\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\molch\\Downloads\\Новая папка (5)\\GoodStudent\\src\\Server\\GoodStudent.Infrastructure.Postgres\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\molch\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {
+              "C:\\Users\\molch\\Downloads\\Новая папка (5)\\GoodStudent\\src\\Server\\GoodStudent.Application\\GoodStudent.Application.csproj": {
+                "projectPath": "C:\\Users\\molch\\Downloads\\Новая папка (5)\\GoodStudent\\src\\Server\\GoodStudent.Application\\GoodStudent.Application.csproj"
+              },
+              "C:\\Users\\molch\\Downloads\\Новая папка (5)\\GoodStudent\\src\\Server\\GoodStudent.Domain\\GoodStudent.Domain.csproj": {
+                "projectPath": "C:\\Users\\molch\\Downloads\\Новая папка (5)\\GoodStudent\\src\\Server\\GoodStudent.Domain\\GoodStudent.Domain.csproj"
+              }
+            }
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        }
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "dependencies": {
+            "Microsoft.EntityFrameworkCore.Design": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[8.0.4, )"
+            },
+            "Npgsql.EntityFrameworkCore.PostgreSQL": {
+              "target": "Package",
+              "version": "[8.0.4, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.403/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}

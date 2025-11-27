@@ -640,6 +640,15 @@ app.get('/api/instructors/:id/assignments', async (req, res) => {
 async function createDemoAssignments(client, instructorId) {
     try {
         const today = new Date().toISOString().split('T')[0];
+        const currentHour = new Date().getHours();
+        let startTime, endTime;
+        if (currentHour < 12) {
+            startTime = '10:00'; endTime = '11:30';
+        } else if (currentHour < 14) {
+            startTime = '12:20'; endTime = '13:50';
+        } else {
+            startTime = '14:00'; endTime = '15:30';
+        }
         const demoAssignment = {
             id: generateUUID(),
             instructor_id: instructorId,
@@ -1187,6 +1196,18 @@ async function initializeQRTables() {
         if (client) client.release();
     }
 }
+app.get('/student-qr.html', (req, res) => { 
+    const filePath = path.join(__dirname, 'student-qr.html');
+    console.log('Пытаемся отправить student-qr.html по пути:', filePath);
+    const fs = require('fs');
+    if (fs.existsSync(filePath)) {
+        console.log('Файл существует, отправляем...');
+        res.sendFile(filePath);
+    } else {
+        console.log('ФАЙЛ НЕ СУЩЕСТВУЕТ!');
+        res.status(404).send('Файл не найден');
+    }
+});
 app.listen(PORT, async () =>  {
   await initializeQRTables();
   console.log('='.repeat(60));
