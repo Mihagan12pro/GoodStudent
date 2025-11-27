@@ -14,6 +14,9 @@
                 <div class="logo">
                     <img src="/images/logoo.png" alt="GoodStudent" class="logo-icon">
                     <h1 class="logo-text">GoodStudent</h1>
+                    <button class="btn-qr-header" onclick="openQRGenerator()">
+    Создать QR-код
+</button>
                 </div>
             </div>
             <div class="header-right">
@@ -85,6 +88,16 @@
                                 <option value="all">Все группы</option>
                             </select>
                         </div>
+                        <div class="filter-group">
+                            <button class="btn-secondary" onclick="teacherApp.showStudentsForToday()" 
+                                    style="padding: 8px 12px; font-size: 12px;">
+                                Только сегодня
+                            </button>
+                            <button class="btn-secondary" onclick="teacherApp.showStudentsForAllTime()" 
+                                    style="padding: 8px 12px; font-size: 12px;">
+                                Все время
+                            </button>
+                        </div>
                     </div>
                     <div class="date-info" id="current-date"></div>
                 </div>
@@ -100,23 +113,34 @@
                             <div class="students-list" id="students-list">
                             </div>
                         </div>
-                        <div class="attendance-actions">
-                            <button class="btn-primary" id="save-attendance-btn">Сохранить посещаемость</button>
-                        </div>
                         <div class="attendance-calendar">
-    <div class="calendar-header">
-        <h4>Календарь занятий</h4>
-        <div class="calendar-nav">
-            <button class="nav-btn" onclick="teacherApp.prevMonth()">←</button>
-            <span class="current-month" id="current-month">Ноябрь 2025</span>
-            <button class="nav-btn" onclick="teacherApp.nextMonth()">→</button>
-        </div>
-    </div>
-    <div class="calendar-grid" id="calendar-grid">
+                            <div class="calendar-header">
+                                <h4>Календарь занятий</h4>
+                                <div class="calendar-nav">
+                                    <button class="nav-btn" onclick="teacherApp.prevMonth()">←</button>
+                                    <span class="current-month" id="current-month">Ноябрь 2025</span>
+                                    <button class="nav-btn" onclick="teacherApp.nextMonth()">→</button>
+                                </div>
+                            </div>
+                            <div class="calendar-grid" id="calendar-grid">
+                            </div>
                             <div class="today-marker">
                                 <div class="today-indicator"></div>
                                 <span>Сегодня</span>
                             </div>
+                            <div class="calendar-legend">
+                                <div class="legend-item">
+                                    <span class="legend-color has-class"></span>
+                                    <span>Есть занятия</span>
+                                </div>
+                                <div class="legend-item">
+                                    <span class="legend-color today"></span>
+                                    <span>Сегодня</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="attendance-actions">
+                            <button class="btn-primary" id="save-attendance-btn">Сохранить посещаемость</button>
                         </div>
                     </div>
                 </div>
@@ -145,7 +169,40 @@
             </div>
         </div>
     </div>
+    <style>
+        .btn-qr-header {
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-left: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-qr-header:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+    </style>
 <script src="/js/api.js"></script>
 <script src="/js/teacher.js"></script>
+<script>
+    function openQRGenerator() {
+        window.open('/qr-generator.html', '_blank', 'width=600,height=700');
+    }
+    
+    function generateQRCode(lessonId) {
+        window.open(`/qr-generator.html?lesson=${lessonId}`, '_blank', 'width=600,height=700');
+    }
+</script>
 </body>
 </html>

@@ -988,10 +988,12 @@ body {
     cursor: not-allowed;
 }
 #save-attendance-btn {
-    display: none; 
+    display: block !important; 
     margin: 20px auto;
     padding: 12px 24px;
     font-size: 16px;
+    width: 100%;
+    max-width: 300px;
 }
 .filters-container {
     display: flex;
@@ -2219,9 +2221,50 @@ body {
   border-radius: 4px;
   cursor: pointer;
 }
-
 .hidden {
   display: none !important;
+}
+.attendance-actions {
+    display: flex !important;
+    justify-content: center;
+    margin: 25px 0 15px 0;
+    padding: 20px;
+    background: linear-gradient(135deg, #f8f9ff, #f0f2ff);
+    border-radius: 12px;
+    border: 2px solid #e6f2ff;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.1);
+}
+
+#save-attendance-btn {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 15px 30px;
+    background: linear-gradient(135deg, var(--novsu-blue), var(--novsu-dark-blue));
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 16px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 86, 164, 0.3);
+    min-width: 280px;
+    margin: 0;
+}
+#save-attendance-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 86, 164, 0.4);
+    background: linear-gradient(135deg, var(--novsu-dark-blue), #00264d);
+}
+#save-attendance-btn:active {
+    transform: translateY(0);
+}
+
+#save-attendance-btn::before {
+    content: "Save";
+    font-size: 18px;
 }
 @media (max-width: 768px) {
     .form-row {
@@ -2235,4 +2278,9 @@ body {
     .admin-dashboard {
         padding: 15px;
     }
+.schedule-item .btn-mark-attendance {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
 }

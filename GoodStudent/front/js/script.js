@@ -25,16 +25,17 @@ document.addEventListener('DOMContentLoaded', function() {
             showLoginForm();
         });
     }    
-    function getInstructorIdByEmail(email) {
-        const instructorEmails = {
-            'teacher1@edu.ru': '11111111-1111-1111-1111-111111111111',
-            'teacher2@edu.ru': '22222222-2222-2222-2222-222222222222', 
-            'prepod@edu.ru': '1',
-            'prepod@mospolytech.ru': '1',
-            'teacher@edu.ru': '1'
-        };
-        return instructorEmails[email.toLowerCase()] || null;
-    }   
+   function getInstructorIdByEmail(email) {
+    const instructorEmails = {
+        'teacher1@edu.ru': '11111111-1111-1111-1111-111111111111',
+        'teacher2@edu.ru': '22222222-2222-2222-2222-222222222222', 
+        'prepod@edu.ru': '11111111-1111-1111-1111-111111111111',
+        'prepod@mospolytech.ru': '11111111-1111-1111-1111-111111111111',
+        'teacher@edu.ru': '11111111-1111-1111-1111-111111111111',
+        'test@edu.ru': '11111111-1111-1111-1111-111111111111'
+    };
+    return instructorEmails[email.toLowerCase()] || '11111111-1111-1111-1111-111111111111'; // fallback ID
+} 
     document.getElementById('loginForm').addEventListener('submit', function(e) {
         e.preventDefault();
         const email = document.getElementById('login-email').value;
@@ -79,7 +80,7 @@ document.addEventListener('DOMContentLoaded', function() {
             name: userType === 'admin' ? 'Заведующий кафедрой' : 'Преподаватель',
             email: email,
             role: userType,
-            instructorId: userType === 'teacher' ? getInstructorIdByEmail(email) : null  // Добавили для регистрации тоже
+            instructorId: userType === 'teacher' ? getInstructorIdByEmail(email) : null  
         }));           
         alert(`Регистрация успешна!\nEmail: ${email}\nТип аккаунта: ${userType === 'admin' ? 'Заведующий кафедрой' : 'Преподаватель'}`);
         if (userType === 'admin') {

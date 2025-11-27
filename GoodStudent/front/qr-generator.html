@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Генератор QR-кодов - GoodStudent</title>
+    <link rel="stylesheet" href="/css/style.css">
+       <script src="/js/qrcode.min.js"></script>
+    <style>
+        .qr-generator-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .qr-generator-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .qr-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .lesson-selector {
+            margin-bottom: 30px;
+        }
+        
+        .qr-display {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .lesson-info {
+            margin-bottom: 20px;
+        }
+        
+        .qr-code-container {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        #qr-code {
+            display: flex;
+            justify-content: center;
+        }
+        
+        .qr-stats {
+            background: #e8f5e8;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        .qr-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+        
+        .qr-instructions {
+            background: #f0f8ff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 30px;
+        }
+        
+        .qr-instructions ol {
+            text-align: left;
+            margin: 15px 0;
+        }
+        
+        .qr-instructions li {
+            margin-bottom: 8px;
+        }
+        
+        .btn-primary, .btn-secondary {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #5a6fd8;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        
+        .filter-select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        .lesson-selector label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header class="header">
+            <div class="header-left">
+                <div class="logo">
+                    <img src="/images/logoo.png" alt="GoodStudent" class="logo-icon">
+                    <h1 class="logo-text">GoodStudent</h1>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="user-info">
+                    <span>Преподаватель</span>
+                    <button class="btn-logout" onclick="goBack()">Назад к расписанию</button>
+                </div>
+            </div>
+        </header>
+        <main class="main-content">
+            <div class="qr-generator-container">
+                <div class="qr-header">
+                    <h2>Генератор QR-кода для занятия</h2>
+                    <p>Сгенерируйте QR-код для автоматической отметки посещаемости</p>
+                </div>
+                
+                <div class="lesson-selector">
+                    <label for="lessonSelect">Выберите занятие:</label>
+                    <select id="lessonSelect" class="filter-select">
+                        <option value="">-- Выберите занятие --</option>
+                        <option value="demo-1">Системы инженерного анализа - 231-320 (Сегодня)</option>
+                        <option value="demo-2">Базы данных - 231-323 (Завтра)</option>
+                    </select>
+                </div>
+                
+                <div class="qr-display" id="qr-display" style="display: none;">
+                    <div class="lesson-info">
+                        <h3 id="lesson-title">Название занятия</h3>
+                        <p id="lesson-details">Детали занятия</p>
+                        <p><strong>Действителен до:</strong> <span id="qr-expiry">--:--</span></p>
+                    </div>
+                    
+                    <div class="qr-code-container">
+                        <div id="qr-code"></div>
+                    </div>
+                    
+                    <div class="qr-stats">
+                        <p><strong>Отметилось студентов:</strong> <span id="marked-count">0</span></p>
+                    </div>
+                    
+                    <div class="qr-actions">
+                        <button class="btn-primary" id="generate-btn">Сгенерировать QR-код</button>
+                        <button class="btn-secondary" id="refresh-btn">Обновить QR-код</button>
+                        <button class="btn-secondary" id="share-btn">Поделиться ссылкой</button>
+                    </div>
+                </div>
+                
+                <div class="qr-instructions">
+                    <h4>Инструкция для студентов:</h4>
+                    <ol>
+                        <li>Откройте камеру на телефоне</li>
+                        <li>Наведите на QR-код</li>
+                        <li>Перейдите по ссылке</li>
+                        <li>Введите свои данные для отметки</li>
+                    </ol>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script>
+        function goBack() {
+            window.close();
+        }
+    </script>
+    <script src="/js/qr-generator.js"></script>
+</body>
+</html>
