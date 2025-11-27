@@ -135,89 +135,82 @@ getFallbackAssignments() {
     ];
 }
 renderDataTable(){
-const tableContainer=document.getElementById('data-table-container');
-if(!tableContainer)return;
-if(this.students.length===0){
-tableContainer.innerHTML=`
-<div class="empty-state">
-<h4>Нет данных для отображения</h4>
-<p>Загрузите студентов из Excel файла</p>
-</div>
-`;
-return;
-}
-tableContainer.innerHTML=`
-<div class="table-filters">
-<div class="filter-group">
-<label>Группа:</label>
-<select id="group-filter" class="filter-select">
-<option value="all">Все группы</option>
-${this.groups.map(group=>`<option value="${group.id}">${group.number}</option>`).join('')}
-</select>
-</div>
-<div class="filter-group">
-<label>Преподаватель:</label>
-<select id="instructor-filter" class="filter-select">
-<option value="all">Все преподаватели</option>
-${this.instructors.map(instructor=>`<option value="${instructor.id}">${instructor.surname} ${instructor.name}</option>`).join('')}
-</select>
-</div>
-<div class="filter-group">
-<label>Статус:</label>
-<select id="status-filter" class="filter-select">
-<option value="all">Все статусы</option>
-<option value="0">Активный</option>
-<option value="1">Академический отпуск</option>
-<option value="2">Отчислен</option>
-</select>
-</div>
-</div>
-<div class="table-responsive">
-<table class="data-table">
-<thead>
-<tr>
-<th>ID</th>
-<th>ФИО студента</th>
-<th>
-    <select class="column-filter" onchange="adminApp.filterByColumn('subject',this.value)">
-        <option value="all">Все предметы</option>
-        ${this.subjects.map(subject=>`<option value="${subject.id}">${subject.name}</option>`).join('')}
-    </select>
-</th>
-<th>Статус</th>
-<th>
-<select class="column-filter" onchange="adminApp.filterByColumn('instructor',this.value)">
-<option value="all">Все преподаватели</option>
-${this.instructors.map(instructor=>`<option value="${instructor.id}">${instructor.surname}${instructor.name}</option>`).join('')}
-</select>
-</th>
-<th>Действия</th>
-</tr>
-</thead>
-<tbody>
-${this.filteredStudents.map(student=>{
-const group=this.groups.find(g=>g.id===student.groupId);
-const statusText=this.getStatusText(student.status);
-const assignedInstructor = this.getAssignedInstructors(student.groupId);
-return`
-<tr>
-<td>${student.id}</td>
-<td>${student.surname} ${student.name} ${student.patronymic || ''}</td>
-<td>${group?group.number:'Не указана'}</td>
-<td>${statusText}</td>
-<td>${assignedInstructor}</td>
-<td>
-<button class="btn-action btn-edit" onclick="adminApp.editStudent('${student.id}')">редактировать</button>
-<button class="btn-action btn-delete" onclick="adminApp.deleteStudent('${student.id}')">удалить</button>
-</td>
-</tr>
-`;
-}).join('')}
-</tbody>
-</table>
-</div>
-`;
-this.setupFilterListeners();
+    const tableContainer = document.getElementById('data-table-container');
+    if(!tableContainer) return;    
+    if(this.students.length === 0){
+        tableContainer.innerHTML = `
+            <div class="empty-state">
+                <h4>Нет данных для отображения</h4>
+                <p>Загрузите студентов из Excel файла</p>
+            </div>
+        `;
+        return;
+    }    
+    tableContainer.innerHTML = `
+        <div class="table-filters">
+            <div class="filter-group">
+                <label>Группа:</label>
+                <select id="group-filter" class="filter-select">
+                    <option value="all">Все группы</option>
+                    ${this.groups.map(group => `<option value="${group.id}">${group.number}</option>`).join('')}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Преподаватель:</label>
+                <select id="instructor-filter" class="filter-select">
+                    <option value="all">Все преподаватели</option>
+                    ${this.instructors.map(instructor => `<option value="${instructor.id}">${instructor.surname} ${instructor.name}</option>`).join('')}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Статус:</label>
+                <select id="status-filter" class="filter-select">
+                    <option value="all">Все статусы</option>
+                    <option value="0">Активный</option>
+                    <option value="1">Академический отпуск</option>
+                    <option value="2">Отчислен</option>
+                </select>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>ФИО студента</th>
+                        <th>Группа</th>
+                        <th>Статус</th>
+                        <th>Предмет</th>
+                        <th>Преподаватель</th> 
+                        <th>Аудитория</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${this.filteredStudents.map(student => {
+                        const group = this.groups.find(g => g.id === student.groupId);
+                        const statusText = this.getStatusText(student.status);
+                        return `
+                            <tr>
+                                <td>${student.id}</td>
+                                <td>${student.surname} ${student.name} ${student.patronymic || ''}</td>
+                                <td>${group ? group.number : 'Не указана'}</td>
+                                <td>${statusText}</td>
+                                <td>${this.getAssignedSubjects(student.groupId)}</td>    
+                                <td>${this.getAssignedInstructors(student.groupId)}</td>  
+                                <td>${this.getRandomClassroom()}</td>
+                                <td>
+                                    <button class="btn-action btn-edit" onclick="adminApp.editStudent('${student.id}')">редактировать</button>
+                                    <button class="btn-action btn-delete" onclick="adminApp.deleteStudent('${student.id}')">удалить</button>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('')}
+                </tbody>
+            </table>
+        </div>
+    `; 
+    this.setupFilterListeners();
 }
 setupFilterListeners(){
 const groupFilter=document.getElementById('group-filter');
@@ -261,33 +254,32 @@ default:return'<span class="status-unknown">Неизвестно</span>';
 }
 getAssignedInstructors(groupId) {
     const assignments = this.assignments.filter(a => a.group_id === groupId);
-    if (assignments.length === 0) return 'Не назначены';
+    if (assignments.length === 0) return 'Не назначены';    
     const instructorNames = [];
     assignments.forEach(assignment => {
         const instructor = this.instructors.find(i => i.id === assignment.instructor_id);
-        const subject = this.subjects.find(s => s.id === assignment.subject_id);
-        if (instructor && subject) {
-            instructorNames.push(`${instructor.surname} ${instructor.name} (${subject.name})`);
+        if (instructor) {
+            instructorNames.push(`${instructor.surname} ${instructor.name}`);
         }
     });    
-    return instructorNames.join(', ');
+    return instructorNames.length > 0 ? instructorNames.join(', ') : 'Преподаватели не найдены';
 }
-getAssignedInstructors(groupId) {
-    const assignments = this.assignments.filter(a => a.group_id === groupId);
-    if (assignments.length === 0) return 'Не назначены';
+// getAssignedInstructors(groupId) {
+//     const assignments = this.assignments.filter(a => a.group_id === groupId);
+//     if (assignments.length === 0) return 'Не назначены';
     
-    // Собираем ВСЕХ преподавателей этой группы
-    const instructorNames = [];
-    assignments.forEach(assignment => {
-        const instructor = this.instructors.find(i => i.id === assignment.instructor_id);
-        const subject = this.subjects.find(s => s.id === assignment.subject_id);
-        if (instructor && subject) {
-            instructorNames.push(`${instructor.surname} ${instructor.name} (${subject.name})`);
-        }
-    });
+//     // Собираем ВСЕХ преподавателей этой группы
+//     const instructorNames = [];
+//     assignments.forEach(assignment => {
+//         const instructor = this.instructors.find(i => i.id === assignment.instructor_id);
+//         const subject = this.subjects.find(s => s.id === assignment.subject_id);
+//         if (instructor && subject) {
+//             instructorNames.push(`${instructor.surname} ${instructor.name} (${subject.name})`);
+//         }
+//     });
     
-    return instructorNames.join(', ');
-}
+//     return instructorNames.join(', ');
+// }
 applyFilters(){
 const groupFilter=document.getElementById('group-filter')?.value||'all';
 const instructorFilter=document.getElementById('instructor-filter')?.value||'all';
@@ -675,21 +667,176 @@ this.currentTab=tabName;
 this.loadTabData(tabName);
 }
 }
-loadTabData(tabName){
-switch(tabName){
-case'departments':
-this.renderDepartmentsTab();
-break;
-case'assignments':
-break;
-case'upload':
-break;
-case'students':
-break;
-case'interactive':
-this.renderInteractiveTab();
-break;
+loadTabData(tabName) {
+    switch(tabName) {
+        case 'departments':
+            this.renderDepartmentsTab();
+            break;
+        case 'assignments':
+            break;
+        case 'upload':
+            break;
+        case 'students':
+            break;
+        case 'interactive':
+            this.renderInteractiveTab();
+            break;
+        case 'workload':
+            this.renderWorkloadTab();
+            break;
+        case 'stats':
+            this.renderStatsTab();
+            break;
+    }
 }
+calculateWorkload() {
+    const workload = [];
+    
+    this.instructors.forEach(instructor => {
+        const instructorAssignments = this.assignments.filter(a => a.instructor_id === instructor.id);
+        const department = this.departments.find(d => d.id === instructor.departmentId);
+        
+        if (instructorAssignments.length > 0) {
+            const uniqueSubjects = [...new Set(instructorAssignments.map(a => a.subject_id))];
+            const uniqueGroups = [...new Set(instructorAssignments.map(a => a.group_id))];
+            
+            workload.push({
+                teacher: `${instructor.surname} ${instructor.name}`,
+                department: department ? department.tittle : 'Не указана',
+                subjectCount: uniqueSubjects.length,
+                groupCount: uniqueGroups.length,
+                hoursPerWeek: uniqueGroups.length * 6 
+            });
+        }
+    });
+    
+    return workload;
+}
+renderAnalyticsTab() {
+    const container = document.getElementById('analytics-container');
+    
+    const workload = this.calculateWorkload();
+    const stats = {
+        totalStudents: this.students.length,
+        totalTeachers: this.instructors.length,
+        totalGroups: this.groups.length
+    };
+    
+    container.innerHTML = `
+        <div class="stats-section">
+            <h3>Общая статистика</h3>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value">${stats.totalStudents}</div>
+                    <div class="stat-label">Студентов</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${stats.totalTeachers}</div>
+                    <div class="stat-label">Преподавателей</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${stats.totalGroups}</div>
+                    <div class="stat-label">Групп</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="workload-section">
+            <h3>Нагрузка преподавателей</h3>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Преподаватель</th>
+                        <th>Кафедра</th>
+                        <th>Предметов</th>
+                        <th>Групп</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${workload.map(w => `
+                        <tr>
+                            <td>${w.teacher}</td>
+                            <td>${w.department}</td>
+                            <td>${w.subjectCount}</td>
+                            <td>${w.groupCount}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
+}
+renderWorkloadTab() {
+    const workload = this.calculateWorkload();
+    const container = document.getElementById('workload-container');
+    
+    if (!container) return;
+    
+    container.innerHTML = `
+        <div class="table-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Преподаватель</th>
+                        <th>Кафедра</th>
+                        <th>Предметов</th>
+                        <th>Групп</th>
+                        <th>Часов/неделя</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${workload.map(w => `
+                        <tr>
+                            <td>${w.teacher}</td>
+                            <td>${w.department}</td>
+                            <td>${w.subjectCount}</td>
+                            <td>${w.groupCount}</td>
+                            <td>${w.hoursPerWeek}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
+}
+renderStatsTab() {
+    const container = document.getElementById('stats-container');
+    
+    if (!container) return;
+    
+    // Простая статистика
+    const stats = {
+        totalStudents: this.students.length,
+        totalTeachers: this.instructors.length,
+        totalGroups: this.groups.length,
+        totalDepartments: this.departments.length,
+        totalSubjects: this.subjects.length
+    };
+    
+    container.innerHTML = `
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value">${stats.totalStudents}</div>
+                <div class="stat-label">Студентов</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">${stats.totalTeachers}</div>
+                <div class="stat-label">Преподавателей</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">${stats.totalGroups}</div>
+                <div class="stat-label">Групп</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">${stats.totalDepartments}</div>
+                <div class="stat-label">Кафедр</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">${stats.totalSubjects}</div>
+                <div class="stat-label">Предметов</div>
+            </div>
+        </div>
+    `;
 }
 renderDepartmentsTab(){
 this.renderDepartmentsCards();
@@ -891,6 +1038,10 @@ if(uploadBtn)uploadBtn.disabled=true;
 this.selectedFile=null;
 const saveBtn=document.getElementById('save-excel-data');
 if(saveBtn)saveBtn.style.display='none';
+}
+getRandomClassroom() {
+    const classrooms = ['Пр/06', 'Пр/01', 'Ак/201', 'Пр/04', 'Лк/305', 'Пр/12'];
+    return classrooms[Math.floor(Math.random() * classrooms.length)];
 }
 updateStats(){
     const totalStudents=document.getElementById('total-students');
@@ -1270,6 +1421,26 @@ alert('Ошибка при создании назначения');
 console.error('Ошибка назначения:',error);
 alert('Ошибка при создании назначения');
 }
+}
+renderStatsSection() {
+    const stats = this.calculateStats();    
+    return `
+        <div class="stats-section">
+            <h3>Статистика по факультетам</h3>
+            <div class="stats-grid">
+                ${stats.faculties.map(f => `
+                    <div class="stat-card">
+                        <h4>${f.name}</h4>
+                        <div class="stat-numbers">
+                            <span>Студентов: ${f.studentCount}</span>
+                            <span>Групп: ${f.groupCount}</span>
+                            <span>Преподавателей: ${f.teacherCount}</span>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
 }
 fixEncoding(text) {
     if (!text) return text;
