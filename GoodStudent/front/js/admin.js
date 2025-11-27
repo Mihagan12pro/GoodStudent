@@ -29,54 +29,65 @@ await this.loadAssignments();
 this.renderDataTable();
 }
 async loadAdminData(){
-try{
-console.log('Загружаем данные из Node.js API...');
-const[students,groups,instructors,departments,subjects,faculties]=await Promise.all([
-apiClient.getAllStudents(),
-apiClient.getAllGroups(),
-apiClient.getAllInstructors(),
-// apiClient.getAllDepartments(),
-// apiClient.getAllSubjects(),
-// apiClient.getFullFaculties()
-apiClient.getCSharpDepartments(),   
-apiClient.getAllSubjectsFull(),     
-apiClient.getCSharpFaculties()     
-]);
-console.log('ДАННЫЕ ИЗ C# API:', {
-            students: students.length,
-            groups: groups.length, 
-            instructors: instructors.length,
-            departments: departments.length,
-            subjects: subjects.length,
-            faculties: faculties.length
-});
-console.log('ДАННЫЕ ПРЕПОДАВАТЕЛЕЙ С СЕРВЕРА:',instructors);
-this.students=students||[];
-this.groups=groups||[];
-this.instructors=(instructors||[]).map(instructor=>({
-...instructor,
-name:this.fixEncoding(instructor.name),
-surname:this.fixEncoding(instructor.surname),
-patronymic:this.fixEncoding(instructor.patronymic)
-}));
-this.departments=departments||[];
-this.subjects=subjects||[];
-this.faculties=faculties||[];
-console.log('ДАННЫЕ ДЛЯ НАЗНАЧЕНИЙ:',{
-instructors:this.instructors,
-subjects:this.subjects,
-groups:this.groups,
-departments:this.departments
-});
-this.filteredStudents=[...this.students];
-this.populateAssignmentSelectors();
-this.updateStats();
-this.renderDataTable();
-this.loadTabData(this.currentTab);
-}catch(error){
-console.error('Ошибка загрузки данных из Node.js API:',error);
-this.useDemoData();
+    try{
+        console.log('Загружаем данные из API...');
+        const[students, groups, instructors] = await Promise.all([
+            apiClient.getAllStudents(),
+            apiClient.getAllGroups(),
+            apiClient.getAllInstructors()
+        ]);
+        console.log('=== ПРИНУДИТЕЛЬНАЯ ЗАГРУЗКА C# ДАННЫХ ===');
+        const [departments, faculties] = await Promise.all([
+            fetch('http://localhost:5000/api/csharp/departments').then(r => r.json()),
+            fetch('http://localhost:5000/api/csharp/faculties').then(r => r.json())
+        ]);
+        console.log('ВСЕ ДАННЫЕ:', {
+            students: students?.length || 0,
+            groups: groups?.length || 0,
+            instructors: instructors?.length || 0,
+            departments: departments?.length || 0,
+            faculties: faculties?.length || 0
+        });
+        this.students = students || [];
+        this.groups = groups || [];
+        this.instructors = (instructors || []).map(instructor => ({
+            ...instructor,
+            name: this.fixEncoding(instructor.name),
+            surname: this.fixEncoding(instructor.surname),
+            patronymic: this.fixEncoding(instructor.patronymic)
+        }));
+        this.departments = departments || [];
+        this.subjects = this.getFallbackSubjects(); 
+        this.faculties = faculties || [];        
+        this.filteredStudents = [...this.students];
+        this.populateAssignmentSelectors();
+        this.updateStats();
+        this.renderDataTable();
+        this.loadTabData(this.currentTab);        
+    } catch(error) {
+        console.error('Ошибка загрузки данных:', error);
+        this.useDemoData();
+    }
 }
+getFallbackAssignments() {
+    return [
+        {
+            id: 'demo-1',
+            instructor_id: '11111111-1111-1111-1111-111111111111',
+            subject_id: '1',
+            group_id: 'b8f78604-7d47-4eb0-9389-6b8eaaa1653b', 
+            department_id: '1',
+            created_at: new Date()
+        },
+        {
+            id: 'demo-2',
+            instructor_id: '22222222-2222-2222-2222-222222222222', 
+            subject_id: '2',
+            group_id: '137b8ecb-402d-41fe-979d-3bb5fd02e7c2',
+            department_id: '2',
+            created_at: new Date()
+        }
+    ];
 }
 renderDataTable(){
 const tableContainer=document.getElementById('data-table-container');
@@ -488,24 +499,18 @@ alert('Ошибка при удалении назначения');
 }
 }
 displayAssignments(){
-const assignmentsContainer=document.getElementById('assignments-container');
-if(!assignmentsContainer)return;
-if(this.assignments.length===0){
-assignmentsContainer.innerHTML='<p style="text-align:center;color:#666;padding:20px;">Нет назначенных предметов</p>';
-return;
-}
-assignmentsContainer.innerHTML = this.assignments.map(assignment => {
+    const assignmentsContainer = document.getElementById('assignments-container');
+    if(!assignmentsContainer) return;
+    
+    if(this.assignments.length === 0){
+        assignmentsContainer.innerHTML = '<p style="text-align:center;color:#666;padding:20px;">Нет назначенных предметов</p>';
+        return;
+    }    
+    assignmentsContainer.innerHTML = this.assignments.map(assignment => {
         const instructor = this.instructors.find(i => i.id === assignment.instructor_id);
         const subject = this.subjects.find(s => s.id === assignment.subject_id);
         const group = this.groups.find(g => g.id === assignment.group_id);
         const department = this.departments.find(d => d.id === assignment.department_id);        
-        console.log('Отладка назначения:', {
-            assignment: assignment,
-            instructor: instructor,
-            subject: subject,
-            group: group,
-            department: department
-        });        
         return `
             <div class="assignment-item">
                 <div class="assignment-header">
@@ -515,7 +520,7 @@ assignmentsContainer.innerHTML = this.assignments.map(assignment => {
                 <div class="assignment-details">
                     <p><strong>Преподаватель:</strong> ${instructor ? `${instructor.surname} ${instructor.name}` : 'Неизвестен'}</p>
                     <p><strong>Группа:</strong> ${group ? group.number : 'Неизвестна'}</p>
-                    <p><strong>Кафедра:</strong> ${department ? department.tittle : 'Неизвестна'}</p>
+                    <p><strong>Кафедра:</strong> ${department ? department.tittle : 'Не назначена'}</p>
                     <small>Назначено: ${new Date(assignment.created_at).toLocaleDateString('ru-RU')}</small>
                 </div>
             </div>
@@ -665,30 +670,30 @@ getSubjectsCount(departmentId){
 return this.subjects.filter(subject=>subject.department_id===departmentId).length;
 }
 renderFacultiesCards(){
-const container=document.getElementById('faculties-cards');
-if(!container)return;
-if(this.faculties.length===0){
-container.innerHTML=`
-<div class="empty-state" style="grid-column:1/-1;">
-<h4>Нет данных о факультетах</h4>
-<p>Факультеты не загружены</p>
-</div>
-`;
-return;
-}
-container.innerHTML=this.faculties.map(faculty=>`
-<div class="department-card">
-<div class="card-header">
-<h4>${faculty.tittle||'Без названия'}</h4>
-</div>
-<div class="card-body">
-<p>${this.fixEncoding(faculty.description)||'Описание отсутствует'}</p>
-<div class="department-stats">
-<span>ID:${faculty.id.substring(0,8)}...</span>
-</div>
-</div>
-</div>
-`).join('');
+    const container = document.getElementById('faculties-cards');
+    if(!container) return;    
+    if(!this.faculties || this.faculties.length === 0){
+        container.innerHTML = `
+            <div class="empty-state" style="grid-column:1/-1;">
+                <h4>Нет данных о факультетах</h4>
+                <p>Факультеты временно недоступны</p>
+            </div>
+        `;
+        return;
+    }   
+    container.innerHTML = this.faculties.map(faculty => `
+        <div class="department-card">
+            <div class="card-header">
+                <h4>${faculty.tittle || 'Без названия'}</h4>
+            </div>
+            <div class="card-body">
+                <p>${this.fixEncoding(faculty.description) || 'Описание отсутствует'}</p>
+                <div class="department-stats">
+                    <span>ID: ${faculty.id ? faculty.id.substring(0,8) + '...' : 'Нет ID'}</span>
+                </div>
+            </div>
+        </div>
+    `).join('');
 }
 getInstructorsCount(departmentId){
 return this.instructors.filter(instructor=>instructor.departmentId===departmentId).length;
@@ -824,18 +829,18 @@ const saveBtn=document.getElementById('save-excel-data');
 if(saveBtn)saveBtn.style.display='none';
 }
 updateStats(){
-const totalStudents=document.getElementById('total-students');
-const totalGroups=document.getElementById('total-groups');
-const totalTeachers=document.getElementById('total-teachers');
-const totalAssignments=document.getElementById('total-assignments');
-const totalDepartments=document.getElementById('total-departments');
-const totalFaculties=document.getElementById('total-faculties');
-if(totalStudents)totalStudents.textContent=this.students.length;
-if(totalGroups)totalGroups.textContent=this.groups.length;
-if(totalTeachers)totalTeachers.textContent=this.instructors.length;
-if(totalAssignments)totalAssignments.textContent=this.assignments.length;
-if(totalDepartments)totalDepartments.textContent=this.departments.length;
-if(totalFaculties)totalFaculties.textContent=this.faculties.length;
+    const totalStudents=document.getElementById('total-students');
+    const totalGroups=document.getElementById('total-groups');
+    const totalTeachers=document.getElementById('total-teachers');
+    const totalAssignments=document.getElementById('total-assignments');
+    const totalDepartments=document.getElementById('total-departments');
+    const totalFaculties=document.getElementById('total-faculties');    
+    if(totalStudents)totalStudents.textContent=this.students.length;
+    if(totalGroups)totalGroups.textContent=this.groups.length;
+    if(totalTeachers)totalTeachers.textContent=this.instructors.length;
+    if(totalAssignments)totalAssignments.textContent=this.assignments.length;
+    if(totalDepartments)totalDepartments.textContent=this.departments.length;
+    if(totalFaculties)totalFaculties.textContent=this.faculties.length;
 }
 displayCurrentDate(){
 const now=new Date();
@@ -891,17 +896,18 @@ alert('Студент удален(пока только локально)');
 }
 }
 useDemoData(){
-console.log('Используем демо-данные для админки');
-this.students=this.getFallbackStudents();
-this.groups=this.getFallbackGroups();
-this.instructors=this.getFallbackInstructors();
-this.departments=this.getFallbackDepartments();
-this.subjects=this.getFallbackSubjects();
-this.assignments=this.getFallbackAssignments();
-this.filteredStudents=[...this.students];
-this.populateAssignmentSelectors();
-this.updateStats();
-this.renderDataTable();
+    console.log('Используем демо-данные для админки');
+    this.students = this.getFallbackStudents();
+    this.groups = this.getFallbackGroups();
+    this.instructors = this.getFallbackInstructors();
+    this.departments = this.getFallbackDepartments();
+    this.subjects = this.getFallbackSubjects();
+    this.faculties = this.getFallbackFaculties();
+    this.assignments = this.getFallbackAssignments();    
+    this.filteredStudents = [...this.students];
+    this.populateAssignmentSelectors();
+    this.updateStats();
+    this.renderDataTable();
 }
 getFallbackStudents(){
 return[
@@ -934,6 +940,21 @@ return[
 {id:'2',tittle:'Программная инженерия',description:'Кафедра программной инженерии'},
 {id:'3',tittle:'Компьютерная безопасность',description:'Кафедра компьютерной безопасности'}
 ];
+}
+getFallbackFaculties() {
+    return [
+        { id: '1', tittle: 'Факультет информационных технологий', description: 'ФИТ' },
+        { id: '2', tittle: 'Факультет кибербезопасности', description: 'ФКБ' },
+        { id: '3', tittle: 'Факультет экономики и управления', description: 'ФЭУ' }
+    ];
+}
+getFallbackDepartments() {
+    return [
+        { id: '1', tittle: 'Информационные системы', description: 'Кафедра информационных систем', facultyId: '1' },
+        { id: '2', tittle: 'Программная инженерия', description: 'Кафедра программной инженерии', facultyId: '1' },
+        { id: '3', tittle: 'Компьютерная безопасность', description: 'Кафедра компьютерной безопасности', facultyId: '2' },
+        { id: '4', tittle: 'Экономика и финансы', description: 'Кафедра экономики и финансов', facultyId: '3' }
+    ];
 }
 getFallbackSubjects(){
 return[

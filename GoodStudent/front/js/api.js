@@ -406,7 +406,19 @@ async updateGroup(groupId, groupData) {
     }
 }
 async getAllSubjectsFull() {
-    return await this.request('/sections/Subjects'); 
+    try {
+        const response = await fetch(`${this.fallbackUrl}/csharp/subjects`);
+        if (response.ok) {
+            const subjects = await response.json();
+            console.log('Предметы загружены:', subjects.length);
+            return subjects.length > 0 ? subjects : this.getFallbackSubjects();
+        }
+    console.log('C# Subjects недоступен, используем fallback');
+    return this.getFallbackSubjects();
+    } catch (error) {
+        console.error('Ошибка загрузки предметов из C#:', error);
+        return this.getFallbackSubjects();
+    }
 }
 async getCSharpSubjects() {
     try {
@@ -425,9 +437,10 @@ async getCSharpDepartments() {
         if (response.ok) {
             const departments = await response.json();
             console.log('Кафедры загружены:', departments);
-            return departments;
+            return departments.length > 0 ? departments : this.getFallbackDepartments();
         }
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        console.log('C# Departments недоступен, используем fallback');
+        return this.getFallbackDepartments();
     } catch (error) {
         console.error('Ошибка загрузки кафедр через прокси:', error);
         return this.getFallbackDepartments();
@@ -436,11 +449,16 @@ async getCSharpDepartments() {
 async getCSharpFaculties() {
     try {
         const response = await fetch(`${this.fallbackUrl}/csharp/faculties`);
-        if (response.ok) return await response.json();
-        throw new Error('Failed to fetch faculties');
+        if (response.ok) {
+            const faculties = await response.json();
+            console.log('Факультеты загружены:', faculties.length);
+            return faculties.length > 0 ? faculties : this.getFallbackFaculties();
+        }
+        console.log('C# Faculties недоступен, используем fallback');
+        return this.getFallbackFaculties();
     } catch (error) {
         console.error('Ошибка загрузки факультетов:', error);
-        return [];
+        return this.getFallbackFaculties();
     }
 }
 async getCSharpProfessions() {

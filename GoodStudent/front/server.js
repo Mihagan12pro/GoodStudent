@@ -309,14 +309,35 @@ app.get('/api/assignments', async (req, res) => {
   let client;
   try {
     client = await pools.students.connect();
-    const tableExists = await client.query(`SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'instructor_assignments')`);
-    
+    const tableExists = await client.query(`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = 'instructor_assignments'
+      )
+    `);    
     if (!tableExists.rows[0].exists) {
-      await client.query(`CREATE TABLE instructor_assignments ("Id" UUID PRIMARY KEY DEFAULT gen_random_uuid(), "instructor_id" UUID, "subject_id" UUID, "group_id" UUID, "department_id" UUID, "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`);
-      res.json([]);
-      return;
-    }    
-    const result = await client.query(`SELECT * FROM instructor_assignments ORDER BY "created_at" DESC`);
+      console.log('Создаем таблицу instructor_assignments...');
+      await client.query(`
+        CREATE TABLE instructor_assignments (
+          "Id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          "instructor_id" UUID,
+          "subject_id" UUID, 
+          "group_id" UUID,
+          "department_id" UUID,
+          "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+      await client.query(`
+        INSERT INTO instructor_assignments ("instructor_id", "subject_id", "group_id", "department_id") VALUES
+        ('11111111-1111-1111-1111-111111111111', '1', 'b8f78604-7d47-4eb0-9389-6b8eaaa1653b', '1'),
+        ('22222222-2222-2222-2222-222222222222', '2', '137b8ecb-402d-41fe-979d-3bb5fd02e7c2', '2')
+      `);
+    }   
+    const result = await client.query(`
+      SELECT * FROM instructor_assignments 
+      ORDER BY "created_at" DESC
+    `);    
     const assignments = result.rows.map(row => ({
       id: row.Id, 
       instructor_id: row.instructor_id,
@@ -324,8 +345,10 @@ app.get('/api/assignments', async (req, res) => {
       group_id: row.group_id,
       department_id: row.department_id,
       created_at: row.created_at
-    }));
+    }));    
+    console.log('Назначения загружены:', assignments.length);
     res.json(assignments);
+    
   } catch (error) {
     console.error('Ошибка загрузки назначений:', error);
     res.status(500).json({ error: 'Ошибка загрузки назначений' });
@@ -513,15 +536,135 @@ app.get('/api/schedule-details', async (req, res) => {
 });
 app.get('/api/csharp/subjects', async (req, res) => {
     try {
-        const response = await fetch('https://localhost:7298/api/Subjects');
+        const response = await fetch('https://localhost:7298/api/sections/Subjects', {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json', 
+                'Content-Type': 'application/json'
+            }
+        });        
         if (response.ok) {
             const subjects = await response.json();
+            console.log('Предметы из C#:', subjects.length);
             res.json(subjects);
+        } else {
+            console.log('C# Subjects недоступен (статус:', response.status, ')');
+            res.json([]);
+        }
+    } catch (error) {
+        console.log('C# Subjects: ошибка подключения');
+        res.json([]);
+    }
+});////////
+app.get('/api/csharp/departments', async (req, res) => {
+    let client;
+    try {
+        console.log('Загрузка кафедр напрямую из базы...');
+        client = await pools.sections.connect();
+        
+        const result = await client.query(`
+            SELECT "Id", "Tittle", "Description", "FacultyId" 
+            FROM "Departments" 
+            ORDER BY "Tittle"
+        `);       
+        const departments = result.rows.map(row => ({
+            id: row.Id,
+            tittle: row.Tittle,
+            description: row.Description,
+            facultyId: row.FacultyId
+        }));        
+        console.log('Загружено кафедр:', departments.length);
+        res.json(departments);
+        
+    } catch (error) {
+        console.error('Ошибка загрузки кафедр:', error);
+        res.status(500).json({ error: 'Ошибка загрузки кафедр' });
+    } finally {
+        if (client) client.release();
+    }
+});
+app.get('/api/csharp/faculties', async (req, res) => {
+    let client;
+    try {
+        console.log('Загрузка факультетов напрямую из базы...');
+        client = await pools.sections.connect();
+        
+        const result = await client.query(`
+            SELECT "Id", "Tittle", "Description" 
+            FROM "Faculties" 
+            ORDER BY "Tittle"
+        `);        
+        const faculties = result.rows.map(row => ({
+            id: row.Id,
+            tittle: row.Tittle,
+            description: row.Description
+        }));        
+        console.log('Загружено факультетов:', faculties.length);
+        res.json(faculties);
+        
+    } catch (error) {
+        console.error('Ошибка загрузки факультетов:', error);
+        res.status(500).json({ error: 'Ошибка загрузки факультетов' });
+    } finally {
+        if (client) client.release();
+    }
+});
+// app.get('/api/csharp/departments', async (req, res) => {
+//     try {
+//         const response = await fetch('https://localhost:7298/api/sections/Departments', {
+//             method: 'GET',
+//             headers: {
+//                 'Accept': 'application/json',
+//                 'Content-Type': 'application/json'
+//             }
+//         });        
+//         if (response.ok) {
+//             const departments = await response.json();
+//             console.log('Кафедры из C#:', departments.length);
+//             res.json(departments);
+//         } else {
+//             console.log('C# Departments недоступен (статус:', response.status, ')');
+//             res.json([]); 
+//         }
+//     } catch (error) {
+//         console.log('C# Departments: ошибка подключения');
+//         res.json([]); 
+//     }
+// });
+// app.get('/api/csharp/faculties', async (req, res) => {
+//     try {
+//         const response = await fetch('https://localhost:7298/api/sections/Faculty', {
+//             method: 'GET', 
+//             headers: {
+//                 'Accept': 'application/json',
+//                 'Content-Type': 'application/json'
+//             }
+//         });        
+//         if (response.ok) {
+//             const faculties = await response.json();
+//             console.log('Факультеты из C#:', faculties.length);
+//             res.json(faculties);
+//         } else {
+//             console.log('C# Faculties недоступен (статус:', response.status, ')');
+//             res.json([]);
+//         }
+//     } catch (error) {
+//         console.log('C# Faculties: ошибка подключения');
+//         res.json([]);
+//     }
+// });
+app.get('/api/csharp/professions', async (req, res) => {
+    try {
+        const response = await fetch('https://localhost:7298/api/sections/Professions');
+        if (response.ok) {
+            const professions = await response.json();
+            res.json(professions);
         } else {
             throw new Error('C# API error');
         }
     } catch (error) {
-        res.status(500).json({ error: 'Ошибка загрузки предметов' });
+        console.error('Ошибка загрузки специальностей:', error);
+        res.status(500).json({ error: 'Ошибка загрузки специальностей' });
     }
 });
 app.get('/', (req, res) => { res.sendFile(path.join(__dirname, 'form.html')); });
