@@ -27,11 +27,14 @@ renderCalendar() {
     const monthNames = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
     document.getElementById('current-month').textContent = 
         `${monthNames[this.currentMonth]} ${this.currentYear}`;
+    console.log('=== РЕНДЕРИНГ КАЛЕНДАРЯ ===');
+    console.log('Текущий месяц:', this.currentMonth, 'Год:', this.currentYear);
     const firstDay = new Date(this.currentYear, this.currentMonth, 1);
     const lastDay = new Date(this.currentYear, this.currentMonth + 1, 0);
     const daysInMonth = lastDay.getDate();
     const startingDay = firstDay.getDay();
     const monthAssignments = this.getAssignmentsForMonth(this.currentMonth, this.currentYear);
+    console.log('Занятия в этом месяце:', monthAssignments);
     let calendarHTML = '';
     const dayNames = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
     dayNames.forEach(day => {
@@ -44,15 +47,23 @@ renderCalendar() {
     for (let day = 1; day <= daysInMonth; day++) {
         const date = new Date(this.currentYear, this.currentMonth, day);
         const dateString = date.toISOString().split('T')[0];
-        
-        const isToday = date.toDateString() === today.toDateString();
-        const hasClass = monthAssignments.some(assignment => 
-            assignment.assignment_date && 
-            assignment.assignment_date.split('T')[0] === dateString
-        );
+        const isToday = 
+            date.getFullYear() === today.getFullYear() &&
+            date.getMonth() === today.getMonth() &&
+            date.getDate() === today.getDate();
+        const hasClass = monthAssignments.some(assignment => {
+            if (!assignment.assignment_date) return false;
+            const assignmentDate = new Date(assignment.assignment_date);
+            const isSameDate = 
+                assignmentDate.getFullYear() === date.getFullYear() &&
+                assignmentDate.getMonth() === date.getMonth() &&
+                assignmentDate.getDate() === date.getDate();
+            return isSameDate;
+        });
         let dayClass = 'calendar-day';
         if (isToday) dayClass += ' today';
         if (hasClass) dayClass += ' has-class';
+        console.log(`День ${day}: ${dateString}, сегодня: ${isToday}, есть занятия: ${hasClass}`);
         calendarHTML += `
             <div class="${dayClass}" data-date="${dateString}">
                 <span class="day-number">${day}</span>
@@ -60,16 +71,16 @@ renderCalendar() {
             </div>
         `;
     }
-    
     calendarGrid.innerHTML = calendarHTML;
 }
 getAssignmentsForMonth(month, year) {
     return this.assignments.filter(assignment => {
         if (!assignment.assignment_date) return false;
-        
         const assignmentDate = new Date(assignment.assignment_date);
-        return assignmentDate.getMonth() === month && 
-               assignmentDate.getFullYear() === year;
+        const isSameMonth = assignmentDate.getMonth() === month;
+        const isSameYear = assignmentDate.getFullYear() === year;
+        console.log(`Проверка занятия для календаря: ${assignmentDate.toISOString()}, месяц ${assignmentDate.getMonth()}, год ${assignmentDate.getFullYear()} -> ${isSameMonth && isSameYear}`);
+        return isSameMonth && isSameYear;
     });
 }
 setupCalendarEvents() {
@@ -84,19 +95,50 @@ setupCalendarEvents() {
     });
 }
 showDaySchedule(date) {
-    const dayAssignments = this.assignments.filter(assignment => 
-        assignment.assignment_date && 
-        assignment.assignment_date.split('T')[0] === date
-    );
+    console.log('=== ПОКАЗ ЗАНЯТИЙ НА ДЕНЬ ===');
+    console.log('Выбранная дата:', date);
+    console.log('Все назначения:', this.assignments);
+    const dayAssignments = this.assignments.filter(assignment => {
+        if (!assignment.assignment_date) {
+            console.log('Назначение без даты:', assignment);
+            return false;
+        }
+        const assignmentDate = new Date(assignment.assignment_date);
+        const selectedDate = new Date(date);
+        const isSameDate = 
+            assignmentDate.getFullYear() === selectedDate.getFullYear() &&
+            assignmentDate.getMonth() === selectedDate.getMonth() &&
+            assignmentDate.getDate() === selectedDate.getDate();
+        console.log(`Проверка: ${assignmentDate.toISOString().split('T')[0]} === ${selectedDate.toISOString().split('T')[0]} : ${isSameDate}`);
+        console.log(`Предмет: ${assignment.subject_name}, Дата занятия: ${assignment.assignment_date}`);
+        return isSameDate;
+    });
+    console.log('Найденные занятия на выбранную дату:', dayAssignments);
     if (dayAssignments.length === 0) {
-        alert(`На ${new Date(date).toLocaleDateString('ru-RU')} нет занятий`);
+        const formattedDate = new Date(date).toLocaleDateString('ru-RU', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+        alert(`На ${formattedDate} нет занятий`);
         return;
     }
-    const scheduleText = dayAssignments.map(assignment => 
-        `${assignment.start_time || '--:--'} - ${assignment.subject_name} (${assignment.group_number})`
-    ).join('\n');
+    const scheduleText = dayAssignments.map(assignment => {
+        const timeInfo = assignment.start_time && assignment.end_time 
+            ? `${assignment.start_time} - ${assignment.end_time}`
+            : '--:-- - --:--';
+        return `${timeInfo} - ${assignment.subject_name} (${assignment.group_number}) - ${assignment.classroom || 'Ауд. не указана'}`;
+    }).join('\n');
     
-    alert(`Занятия на ${new Date(date).toLocaleDateString('ru-RU')}:\n\n${scheduleText}`);
+    const formattedDate = new Date(date).toLocaleDateString('ru-RU', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+    
+    alert(`Занятия на ${formattedDate}:\n\n${scheduleText}`);
 }
 prevMonth() {
     this.currentMonth--;
@@ -114,6 +156,25 @@ nextMonth() {
     }
     this.renderCalendar();
 }
+debugAssignmentDates() {
+    console.log('=== ПРОВЕРКА ФОРМАТА ДАТ НАЗНАЧЕНИЙ ===');
+    this.assignments.forEach((assignment, index) => {
+        console.log(`Назначение ${index + 1}:`);
+        console.log('  - ID:', assignment.id);
+        console.log('  - Предмет:', assignment.subject_name);
+        console.log('  - Дата назначения:', assignment.assignment_date);
+        console.log('  - Тип даты:', typeof assignment.assignment_date);
+        if (assignment.assignment_date) {
+            const dateObj = new Date(assignment.assignment_date);
+            console.log('  - Объект Date:', dateObj);
+            console.log('  - Год:', dateObj.getFullYear());
+            console.log('  - Месяц:', dateObj.getMonth());
+            console.log('  - День:', dateObj.getDate());
+            console.log('  - ISO строка:', dateObj.toISOString());
+            console.log('  - Локализованная дата:', dateObj.toLocaleDateString('ru-RU'));
+        }
+    });
+}
 async init() {
     console.log('Инициализация приложения преподавателя');
     setTimeout(() => {
@@ -129,6 +190,8 @@ async init() {
     this.setupGroupSelectorsSync();
     this.displayCurrentDate();
     this.initCalendar();
+    this.debugAssignmentDates();
+    
 }
 setupGroupSelectorsSync() {
     const mainGroupSelect = document.getElementById('group-select');    
@@ -312,6 +375,11 @@ getDemoAssignments() {
         group1: group1.number,
         group2: group2.number
     });
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
     return [
         {
             id: 'demo-1',
@@ -320,7 +388,7 @@ getDemoAssignments() {
             group_id: group1.id, 
             group_number: group1.number,
             classroom: 'Пр/06',
-            assignment_date: new Date().toISOString(),
+            assignment_date: today.toISOString().split('T')[0], 
             start_time: '12:20',
             end_time: '13:50'
         },
@@ -331,9 +399,20 @@ getDemoAssignments() {
             group_id: group2.id, 
             group_number: group2.number,
             classroom: 'Пр/01',
-            assignment_date: new Date(Date.now() + 86400000).toISOString(),
+            assignment_date: tomorrow.toISOString().split('T')[0], // Завтра
             start_time: '14:00',
             end_time: '15:30'
+        },
+        {
+            id: 'demo-3', 
+            subject_id: '3',
+            subject_name: 'Веб-программирование',
+            group_id: group1.id, 
+            group_number: group1.number,
+            classroom: 'Ак/201',
+            assignment_date: yesterday.toISOString().split('T')[0], // Вчера
+            start_time: '10:00',
+            end_time: '11:30'
         }
     ];
 }
