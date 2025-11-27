@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Instructors\GradesContracts\**" />
+    <Compile Remove="People\**" />
+    <EmbeddedResource Remove="Instructors\GradesContracts\**" />
+    <EmbeddedResource Remove="People\**" />
+    <None Remove="Instructors\GradesContracts\**" />
+    <None Remove="People\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\GoodStudent.Domain\GoodStudent.Domain.csproj" />
+  </ItemGroup>
+
+</Project>
