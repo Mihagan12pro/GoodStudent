@@ -28,15 +28,59 @@ await this.loadAdminData();
 await this.loadAssignments();
 this.renderDataTable();
 }
+// async loadAdminData(){
+//     try{
+//         console.log('Загружаем данные из API...');
+//         const[students, groups, instructors] = await Promise.all([
+//             apiClient.getAllStudents(),
+//             apiClient.getAllGroups(),
+//             apiClient.getAllInstructors()
+//         ]);
+//         console.log('=== ПРИНУДИТЕЛЬНАЯ ЗАГРУЗКА C# ДАННЫХ ===');
+//         const [departments, faculties] = await Promise.all([
+//             fetch('http://localhost:5000/api/csharp/departments').then(r => r.json()),
+//             fetch('http://localhost:5000/api/csharp/faculties').then(r => r.json())
+//         ]);
+//         console.log('ВСЕ ДАННЫЕ:', {
+//             students: students?.length || 0,
+//             groups: groups?.length || 0,
+//             instructors: instructors?.length || 0,
+//             departments: departments?.length || 0,
+//             faculties: faculties?.length || 0
+//         });
+//         this.students = students || [];
+//         this.groups = groups || [];
+//         this.instructors = (instructors || []).map(instructor => ({
+//             ...instructor,
+//             name: this.fixEncoding(instructor.name),
+//             surname: this.fixEncoding(instructor.surname),
+//             patronymic: this.fixEncoding(instructor.patronymic)
+//         }));
+//         this.departments = departments || [];
+//         this.subjects = this.getFallbackSubjects(); 
+//         this.faculties = faculties || [];        
+//         this.filteredStudents = [...this.students];
+//         this.populateAssignmentSelectors();
+//         this.updateStats();
+//         this.renderDataTable();
+//         this.loadTabData(this.currentTab);        
+//     } catch(error) {
+//         console.error('Ошибка загрузки данных:', error);
+//         this.useDemoData();
+//     }
+// }
 async loadAdminData(){
     try{
-        console.log('Загружаем данные из API...');
+        console.log('=== ЗАГРУЗКА ВСЕХ ДАННЫХ ===');
         const[students, groups, instructors] = await Promise.all([
             apiClient.getAllStudents(),
             apiClient.getAllGroups(),
             apiClient.getAllInstructors()
         ]);
-        console.log('=== ПРИНУДИТЕЛЬНАЯ ЗАГРУЗКА C# ДАННЫХ ===');
+        console.log('Загружаем Professions как Subjects...');
+        const subjectsResponse = await fetch('http://localhost:5000/api/csharp/subjects');
+        const subjects = await subjectsResponse.json();
+        console.log('Загружено Subjects:', subjects.length, subjects);
         const [departments, faculties] = await Promise.all([
             fetch('http://localhost:5000/api/csharp/departments').then(r => r.json()),
             fetch('http://localhost:5000/api/csharp/faculties').then(r => r.json())
@@ -46,7 +90,8 @@ async loadAdminData(){
             groups: groups?.length || 0,
             instructors: instructors?.length || 0,
             departments: departments?.length || 0,
-            faculties: faculties?.length || 0
+            faculties: faculties?.length || 0,
+            subjects: subjects?.length || 0  
         });
         this.students = students || [];
         this.groups = groups || [];
@@ -55,10 +100,10 @@ async loadAdminData(){
             name: this.fixEncoding(instructor.name),
             surname: this.fixEncoding(instructor.surname),
             patronymic: this.fixEncoding(instructor.patronymic)
-        }));
+        }));        
         this.departments = departments || [];
-        this.subjects = this.getFallbackSubjects(); 
-        this.faculties = faculties || [];        
+        this.subjects = subjects || []; 
+        this.faculties = faculties || [];       
         this.filteredStudents = [...this.students];
         this.populateAssignmentSelectors();
         this.updateStats();
@@ -134,10 +179,10 @@ ${this.instructors.map(instructor=>`<option value="${instructor.id}">${instructo
 <th>ID</th>
 <th>ФИО студента</th>
 <th>
-<select class="column-filter" onchange="adminApp.filterByColumn('group',this.value)">
-<option value="all">Все группы</option>
-${this.groups.map(group=>`<option value="${group.id}">${group.number}</option>`).join('')}
-</select>
+    <select class="column-filter" onchange="adminApp.filterByColumn('subject',this.value)">
+        <option value="all">Все предметы</option>
+        ${this.subjects.map(subject=>`<option value="${subject.id}">${subject.name}</option>`).join('')}
+    </select>
 </th>
 <th>Статус</th>
 <th>
@@ -285,7 +330,7 @@ return`
 <td>${student.surname} ${student.name} ${student.patronymic || ''}</td>
 <td>${group?group.number:'Не указана'}</td>
 <td>${statusText}</td>
-<td>${this.getAssignedInstructors(student.groupId)}</td>
+<td>${this.getAssignedSubjects(student.groupId)}</td>
 <td>
 <button class="btn-action btn-edit" onclick="adminApp.editStudent('${student.id}')">редактировать</button>
 <button class="btn-action btn-delete" onclick="adminApp.deleteStudent('${student.id}')">удалить</button>
@@ -293,6 +338,20 @@ return`
 </tr>
 `;
 }).join('');
+}
+getAssignedSubjects(groupId) {
+    const assignments = this.assignments.filter(a => a.group_id === groupId);
+    if (assignments.length === 0) return 'Не назначены';
+    
+    const subjectNames = [];
+    assignments.forEach(assignment => {
+        const subject = this.subjects.find(s => s.id === assignment.subject_id);
+        if (subject) {
+            subjectNames.push(subject.name);
+        }
+    });
+    
+    return subjectNames.length > 0 ? subjectNames.join(', ') : 'Предмет не найден';
 }
 populateAssignmentSelectors(){
 const instructorSelect=document.getElementById('instructor-select');
@@ -505,16 +564,21 @@ displayAssignments(){
     if(this.assignments.length === 0){
         assignmentsContainer.innerHTML = '<p style="text-align:center;color:#666;padding:20px;">Нет назначенных предметов</p>';
         return;
-    }    
+    }  
     assignmentsContainer.innerHTML = this.assignments.map(assignment => {
         const instructor = this.instructors.find(i => i.id === assignment.instructor_id);
         const subject = this.subjects.find(s => s.id === assignment.subject_id);
         const group = this.groups.find(g => g.id === assignment.group_id);
-        const department = this.departments.find(d => d.id === assignment.department_id);        
+        const department = this.departments.find(d => d.id === assignment.department_id);     
+        console.log('Назначение:', {
+            assignment: assignment,
+            subject: subject,
+            allSubjects: this.subjects
+        });      
         return `
             <div class="assignment-item">
                 <div class="assignment-header">
-                    <h4>${subject ? subject.name : 'Неизвестный предмет'}</h4>
+                    <h4>${subject ? subject.name : 'Предмет не найден (ID: ' + assignment.subject_id + ')'}</h4>
                     <button class="btn-remove" onclick="adminApp.removeAssignment('${assignment.id}')">×</button>
                 </div>
                 <div class="assignment-details">

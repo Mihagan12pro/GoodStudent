@@ -535,27 +535,54 @@ app.get('/api/schedule-details', async (req, res) => {
   }
 });
 app.get('/api/csharp/subjects', async (req, res) => {
+    let client;
     try {
-        const response = await fetch('https://localhost:7298/api/sections/Subjects', {
-            method: 'GET',
-            headers: {
-                'Accept': 'application/json', 
-                'Content-Type': 'application/json'
-            }
-        });        
-        if (response.ok) {
-            const subjects = await response.json();
-            console.log('Предметы из C#:', subjects.length);
-            res.json(subjects);
-        } else {
-            console.log('C# Subjects недоступен (статус:', response.status, ')');
-            res.json([]);
-        }
+        console.log('=== ЗАГРУЗКА PROFESSIONS КАК SUBJECTS ===');
+        client = await pools.sections.connect();        
+        const result = await client.query(`
+            SELECT "Id", "Tittle", "Code", "Profile", "DepartmentId" 
+            FROM "Professions" 
+            ORDER BY "Tittle"
+        `);        
+        console.log('Найдено Professions в базе:', result.rows.length);        
+        const subjects = result.rows.map(row => ({
+            id: row.Id,
+            name: row.Tittle,  
+            description: row.Profile, 
+            departmentId: row.DepartmentId
+        }));        
+        console.log('Преобразовано в Subjects:', subjects);
+        res.json(subjects);
+        
     } catch (error) {
-        console.log('C# Subjects: ошибка подключения');
+        console.error('Ошибка загрузки Professions:', error);
         res.json([]);
+    } finally {
+        if (client) client.release();
     }
-});////////
+});
+// app.get('/api/csharp/subjects', async (req, res) => {
+//     try {
+//         const response = await fetch('https://localhost:7298/api/sections/Subjects', {
+//             method: 'GET',
+//             headers: {
+//                 'Accept': 'application/json', 
+//                 'Content-Type': 'application/json'
+//             }
+//         });        
+//         if (response.ok) {
+//             const subjects = await response.json();
+//             console.log('Предметы из C#:', subjects.length);
+//             res.json(subjects);
+//         } else {
+//             console.log('C# Subjects недоступен (статус:', response.status, ')');
+//             res.json([]);
+//         }
+//     } catch (error) {
+//         console.log('C# Subjects: ошибка подключения');
+//         res.json([]);
+//     }
+// });////////
 app.get('/api/csharp/departments', async (req, res) => {
     let client;
     try {
