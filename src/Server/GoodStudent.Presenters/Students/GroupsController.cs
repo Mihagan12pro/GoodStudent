@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using GoodStudent.Application.Students;
 using GoodStudent.Contracts.Students.GroupsContracts;
+using GoodStudent.Application.Students.Groups;
 
 namespace GoodStudent.Presenters.Students
 {
@@ -24,7 +24,15 @@ namespace GoodStudent.Presenters.Students
             return Ok(result);
         }
 
-        [HttpGet("students/{id}")]
+        [HttpGet("{number}/id")]
+        public async Task<IActionResult> GetIdByNumber([FromRoute] string number, CancellationToken cancellationToken)
+        {
+            var result = await _groupsService.GetIdByNumber(number, cancellationToken);
+
+            return Ok(result);
+        }
+
+        [HttpGet("{id}/students")]
         public async Task<IActionResult> GetStudents([FromRoute] Guid id, CancellationToken cancellationToken)
         {
             var result = await _groupsService.GetStudents(id, cancellationToken);

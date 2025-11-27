@@ -1,4 +1,4 @@
-﻿using GoodStudent.Application.Students;
+﻿using GoodStudent.Application.Students.Students;
 using GoodStudent.Contracts.Students.StudentsContracts;
 using Microsoft.AspNetCore.Mvc;
 

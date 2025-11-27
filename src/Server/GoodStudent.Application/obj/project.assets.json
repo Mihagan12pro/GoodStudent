@@ -4717,11 +4717,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\molch\\Downloads\\Новая папка (5)\\GoodStudent\\src\\Server\\GoodStudent.Application\\GoodStudent.Application.csproj",
+      "projectUniqueName": "C:\\Users\\molch\\Downloads\\Новая папка (7)\\GoodStudent\\src\\Server\\GoodStudent.Application\\GoodStudent.Application.csproj",
       "projectName": "GoodStudent.Application",
-      "projectPath": "C:\\Users\\molch\\Downloads\\Новая папка (5)\\GoodStudent\\src\\Server\\GoodStudent.Application\\GoodStudent.Application.csproj",
+      "projectPath": "C:\\Users\\molch\\Downloads\\Новая папка (7)\\GoodStudent\\src\\Server\\GoodStudent.Application\\GoodStudent.Application.csproj",
       "packagesPath": "C:\\Users\\molch\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\molch\\Downloads\\Новая папка (5)\\GoodStudent\\src\\Server\\GoodStudent.Application\\obj\\",
+      "outputPath": "C:\\Users\\molch\\Downloads\\Новая папка (7)\\GoodStudent\\src\\Server\\GoodStudent.Application\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\molch\\AppData\\Roaming\\NuGet\\NuGet.Config",
@@ -4738,11 +4738,11 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "projectReferences": {
-            "C:\\Users\\molch\\Downloads\\Новая папка (5)\\GoodStudent\\src\\Server\\GoodStudent.Contracts\\GoodStudent.Contracts.csproj": {
-              "projectPath": "C:\\Users\\molch\\Downloads\\Новая папка (5)\\GoodStudent\\src\\Server\\GoodStudent.Contracts\\GoodStudent.Contracts.csproj"
+            "C:\\Users\\molch\\Downloads\\Новая папка (7)\\GoodStudent\\src\\Server\\GoodStudent.Contracts\\GoodStudent.Contracts.csproj": {
+              "projectPath": "C:\\Users\\molch\\Downloads\\Новая папка (7)\\GoodStudent\\src\\Server\\GoodStudent.Contracts\\GoodStudent.Contracts.csproj"
             },
-            "C:\\Users\\molch\\Downloads\\Новая папка (5)\\GoodStudent\\src\\Server\\GoodStudent.Domain\\GoodStudent.Domain.csproj": {
-              "projectPath": "C:\\Users\\molch\\Downloads\\Новая папка (5)\\GoodStudent\\src\\Server\\GoodStudent.Domain\\GoodStudent.Domain.csproj"
+            "C:\\Users\\molch\\Downloads\\Новая папка (7)\\GoodStudent\\src\\Server\\GoodStudent.Domain\\GoodStudent.Domain.csproj": {
+              "projectPath": "C:\\Users\\molch\\Downloads\\Новая папка (7)\\GoodStudent\\src\\Server\\GoodStudent.Domain\\GoodStudent.Domain.csproj"
             }
           }
         }

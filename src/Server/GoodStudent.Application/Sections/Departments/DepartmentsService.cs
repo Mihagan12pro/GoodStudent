@@ -1,7 +1,10 @@
-﻿using GoodStudent.Application.Instructors;
+﻿using GoodStudent.Application.Events.Subjects;
+using GoodStudent.Application.Instructors;
+using GoodStudent.Contracts.Events.Subjects;
 using GoodStudent.Contracts.Instructors;
 using GoodStudent.Contracts.Sections.Departments;
 using GoodStudent.Contracts.Sections.Professions;
+using GoodStudent.Domain.Events.Subjects;
 using GoodStudent.Domain.Instructors;
 using GoodStudent.Domain.Sections;
 
@@ -10,6 +13,8 @@ namespace GoodStudent.Application.Sections.Departments
     internal class DepartmentsService : IDepartmentsService
     {
         private readonly IDepartmentsRepository _departmentsRepository;
+
+        private readonly ISubjectsRepository _subjectsRepository;
 
         private readonly IInstructorsRepository _instructorsRepository;
 
@@ -77,10 +82,32 @@ namespace GoodStudent.Application.Sections.Departments
             return request;
         }
 
-        public DepartmentsService(IDepartmentsRepository departmentsRepository, IInstructorsRepository instructorsRepository)
+        public async Task<IEnumerable<GetSubjectDto>> GetSubjects(Guid id, CancellationToken cancellationToken)
+        {
+            Department? department = await _departmentsRepository.GetByIdAsync(id, cancellationToken);
+
+            if (department == null)
+                throw new NullReferenceException();
+
+            IEnumerable<Subject> subjects = await _subjectsRepository.GetSubjectsByDepartment(id, cancellationToken);
+
+            if (subjects == null)
+                throw new NullReferenceException();
+
+            IEnumerable<GetSubjectDto> response = subjects.Select(s => new GetSubjectDto(s.Tittle, s.Description));
+
+            return response;
+        }
+
+        public DepartmentsService(
+            IDepartmentsRepository departmentsRepository, 
+            IInstructorsRepository instructorsRepository,
+            ISubjectsRepository subjectsRepository
+            )
         {
             _departmentsRepository = departmentsRepository;
             _instructorsRepository = instructorsRepository;
+            _subjectsRepository = subjectsRepository;
         }
     }
 }

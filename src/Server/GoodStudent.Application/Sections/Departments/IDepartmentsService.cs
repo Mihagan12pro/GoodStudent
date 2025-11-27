@@ -1,4 +1,5 @@
-﻿using GoodStudent.Contracts.Instructors;
+﻿using GoodStudent.Contracts.Events.Subjects;
+using GoodStudent.Contracts.Instructors;
 using GoodStudent.Contracts.Sections.Departments;
 using GoodStudent.Contracts.Sections.Professions;
 using Microsoft.AspNetCore.Mvc;
@@ -21,5 +22,7 @@ namespace GoodStudent.Application.Sections.Departments
         Task<GetDepartmentDto> GetById(Guid id, CancellationToken cancellationToken);
 
         Task<GetInstructorDto> UpdateAdmin(Guid DepartmentId, Guid InstructorId, CancellationToken cancellationToken); 
+
+        Task<IEnumerable<GetSubjectDto>> GetSubjects(Guid id, CancellationToken cancellationToken);
     }
 }

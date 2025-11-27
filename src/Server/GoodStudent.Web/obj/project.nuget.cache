@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "LyTKvXV4F+g=",
+  "dgSpecHash": "MTICJY+K8ds=",
   "success": true,
-  "projectFilePath": "C:\\Users\\molch\\Downloads\\Новая папка (5)\\GoodStudent\\src\\Server\\GoodStudent.Web\\GoodStudent.Web.csproj",
+  "projectFilePath": "C:\\Users\\molch\\Downloads\\Новая папка (7)\\GoodStudent\\src\\Server\\GoodStudent.Web\\GoodStudent.Web.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\molch\\.nuget\\packages\\dapper\\2.1.66\\dapper.2.1.66.nupkg.sha512",
     "C:\\Users\\molch\\.nuget\\packages\\humanizer.core\\2.14.1\\humanizer.core.2.14.1.nupkg.sha512",

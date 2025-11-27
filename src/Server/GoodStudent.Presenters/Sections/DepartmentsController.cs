@@ -34,10 +34,18 @@ namespace GoodStudent.Presenters.Sections
             return Ok(result);
         }
 
-        [HttpGet()]
-        public async Task<IActionResult> GetProfessions([FromQuery] Guid id, CancellationToken cancellationToken)
+        [HttpGet("{id}/professions")]
+        public async Task<IActionResult> GetProfessions([FromRoute] Guid id, CancellationToken cancellationToken)
         {
             var result = await _departmentsService.GetProfessions(id, cancellationToken);
+
+            return Ok(result);
+        }
+
+        [HttpGet("{id}/subjects")]
+        public async Task<IActionResult> GetSubjects([FromRoute] Guid id, CancellationToken cancellationToken)
+        {
+            var result = await _departmentsService.GetSubjects(id, cancellationToken);
 
             return Ok(result);
         }
