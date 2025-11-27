@@ -1,0 +1,23 @@
+@baseUrl = https://localhost:7298/api
+
+### ПОЛУЧИТЬ СТУДЕНТОВ С ПРАВИЛЬНЫМИ ДАННЫМИ
+
+### Студент 1: Иванов Иван Иванович
+GET {{baseUrl}}/Students/29883b0c-6b9b-44ab-997e-8113a0a63c21
+Accept: application/json
+
+### Студент 2: Петрова Мария Сергеевна  
+GET {{baseUrl}}/Students/b6ec0b67-b3ac-4c93-becf-22aaa9546b79
+Accept: application/json
+
+### Студент 3: Сидоров Сергей Алексеевич
+GET {{baseUrl}}/Students/928348ec-9ebf-4cfa-bb27-2f6f94276c98
+Accept: application/json
+
+### Студент
+GET {{baseUrl}}/Students/92bb2733-10ab-4735-8c7b-6866646441df
+Accept: application/json
+
+GET {{baseUrl}}/Students
+Accept: application/json
+
