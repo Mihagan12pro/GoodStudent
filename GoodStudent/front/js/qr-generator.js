@@ -2,61 +2,50 @@ class QRGenerator {
     constructor() {
         this.currentToken = null;
         this.currentLessonId = null;
-        this.refreshInterval = null;
-        this.autoRefreshInterval = null;
         this.init();
     }
+
     init() {
-        this.loadLessons();
         this.setupEventListeners();
+        this.loadLessons();
     }
-    async loadLessons() {
-        try {
-            const response = await fetch('/api/instructors/demo-instructor/assignments');
-            const assignments = await response.json();
-            
-            const lessonSelect = document.getElementById('lessonSelect');
-            lessonSelect.innerHTML = '<option value="">-- Выберите занятие --</option>';
-            
-            assignments.forEach(assignment => {
-                const option = document.createElement('option');
-                option.value = assignment.id;
-                option.textContent = `${assignment.subject_name} - ${assignment.group_number} (${new Date(assignment.assignment_date).toLocaleDateString('ru-RU')})`;
-                lessonSelect.appendChild(option);
-            });
-            
-        } catch (error) {
-            console.error('Ошибка загрузки занятий:', error);
-            this.useDemoLessons();
-        }
-    }
-    useDemoLessons() {
-        const lessonSelect = document.getElementById('lessonSelect');
-        lessonSelect.innerHTML = `
-            <option value="">-- Выберите занятие --</option>
-            <option value="demo-1">Системы инженерного анализа - 231-320 (${new Date().toLocaleDateString('ru-RU')})</option>
-            <option value="demo-2">Базы данных - 231-323 (${new Date(Date.now() + 86400000).toLocaleDateString('ru-RU')})</option>
-        `;
-    }
+
     setupEventListeners() {
         document.getElementById('generate-btn').addEventListener('click', () => {
             this.generateQRCode();
         });
+        
         document.getElementById('refresh-btn').addEventListener('click', () => {
-            this.generateQRCode();
+            this.refreshQRCode();
         });
+        
         document.getElementById('share-btn').addEventListener('click', () => {
             this.shareQRCode();
         });
+        
         document.getElementById('lessonSelect').addEventListener('change', (e) => {
             if (e.target.value) {
                 document.getElementById('qr-display').style.display = 'block';
+                this.updateLessonInfo(e.target.value);
             } else {
                 document.getElementById('qr-display').style.display = 'none';
             }
         });
     }
-    async generateQRCode() {
+
+    loadLessons() {
+        // Просто используем демо-занятия
+        const lessonSelect = document.getElementById('lessonSelect');
+        const today = new Date().toLocaleDateString('ru-RU');
+        
+        lessonSelect.innerHTML = `
+            <option value="">-- Выберите занятие --</option>
+            <option value="demo-1">Системы инженерного анализа - 231-320 (${today})</option>
+            <option value="demo-2">Базы данных - 231-323 (${today})</option>
+        `;
+    }
+
+    generateQRCode() {
         const lessonSelect = document.getElementById('lessonSelect');
         const lessonId = lessonSelect.value;
         
@@ -66,71 +55,24 @@ class QRGenerator {
         }
         
         this.currentLessonId = lessonId;
+        this.generateLocalQRCode(lessonId);
+    }
+
+    generateLocalQRCode(lessonId) {
+        const token = this.generateToken();
+        // QR-код ведет на страницу отметки студентов
+        const qrData = `${window.location.origin}/student-qr.html?token=${token}`;
+        this.currentToken = token;
+        this.displayQRCode(qrData);
         
-        try {
-            const response = await fetch('/api/qr/sessions', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    lessonId: lessonId,
-                    instructorId: 'demo-instructor',
-                    duration: 10 
-                })
-            });
-            
-            const result = await response.json();
-            
-            if (result.success) {
-                this.currentToken = result.token;
-                this.displayQRCode(result.qrData);
-                this.updateLessonInfo(lessonId);
-                this.updateExpiryTime(result.expiresAt);
-                this.startAutoRefresh();
-                this.startStatsRefresh();
-            } else {
-                throw new Error(result.error);
-            }
-        } catch (error) {
-            console.error('Ошибка генерации QR:', error);
-            this.generateLocalQRCode(lessonId);
-        }
-    }
-      async refreshQRCode() {
-        if (!this.currentToken) return;
+        const expiresAt = new Date(Date.now() + 2 * 60 * 60 * 1000);
+        this.updateExpiryTime(expiresAt);
+        this.updateLessonInfo(lessonId);
         
-        try {
-            const response = await fetch(`/api/qr/sessions/${this.currentToken}/refresh`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    duration: 10
-                })
-            });
-            
-            const result = await response.json();
-            
-            if (result.success) {
-                this.currentToken = result.token;
-                this.displayQRCode(result.qrData);
-                this.updateExpiryTime(result.expiresAt);
-                console.log('QR-код обновлен');
-            }
-        } catch (error) {
-            console.error('Ошибка обновления QR:', error);
-        }
+        // Показываем уведомление
+        alert('QR-код сгенерирован! Студенты могут сканировать его для отметки.');
     }
-     startAutoRefresh() {
-        if (this.autoRefreshInterval) {
-            clearInterval(this.autoRefreshInterval);
-        }
-        this.autoRefreshInterval = setInterval(() => {
-            this.refreshQRCode();
-        }, 10000);
-    }
+
     displayQRCode(qrData) {
         const qrContainer = document.getElementById('qr-code');
         qrContainer.innerHTML = '';
@@ -143,85 +85,62 @@ class QRGenerator {
             correctLevel: QRCode.CorrectLevel.H
         });
     }
-    generateLocalQRCode(lessonId) {
-        const token = this.generateToken();
-        const qrData = `${window.location.origin}/api/attendance/qr/${token}`;
-        this.currentToken = token;
-        this.displayQRCode(qrData);
-        const expiresAt = new Date(Date.now() + 2 * 60 * 60 * 1000);
-        this.updateExpiryTime(expiresAt);
-        this.startStatsRefresh();
-    }
+
     generateToken() {
         return 'tk_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
     }
-    async updateLessonInfo(lessonId) {
-        try {
-            const response = await fetch('/api/instructors/demo-instructor/assignments');
-            const assignments = await response.json();
-            const assignment = assignments.find(a => a.id === lessonId);
-            
-            if (assignment) {
-                document.getElementById('lesson-title').textContent = assignment.subject_name;
-                document.getElementById('lesson-details').textContent = 
-                    `Группа: ${assignment.group_number} | Аудитория: ${assignment.classroom} | Время: ${assignment.start_time} - ${assignment.end_time}`;
-            }
-        } catch (error) {
-            document.getElementById('lesson-title').textContent = 'Занятие';
-            document.getElementById('lesson-details').textContent = 'Информация о занятии';
+
+    updateLessonInfo(lessonId) {
+        const lessonTitle = document.getElementById('lesson-title');
+        const lessonDetails = document.getElementById('lesson-details');
+        
+        if (lessonId === 'demo-1') {
+            lessonTitle.textContent = 'Системы инженерного анализа';
+            lessonDetails.textContent = 'Группа: 231-320 | Аудитория: Пр/06 | Время: 12:20 - 13:50';
+        } else if (lessonId === 'demo-2') {
+            lessonTitle.textContent = 'Базы данных';
+            lessonDetails.textContent = 'Группа: 231-323 | Аудитория: Пр/01 | Время: 14:00 - 15:30';
         }
     }
+
     updateExpiryTime(expiresAt) {
         const expiryElement = document.getElementById('qr-expiry');
-        const expiryDate = new Date(expiresAt);
-        expiryElement.textContent = expiryDate.toLocaleString('ru-RU');
+        expiryElement.textContent = expiresAt.toLocaleString('ru-RU');
     }
-    async refreshStats() {
-        if (!this.currentToken) return;
-        
-        try {
-            const response = await fetch(`/api/qr/session/${this.currentToken}/stats`);
-            const result = await response.json();
-            
-            if (result.success) {
-                document.getElementById('marked-count').textContent = result.markedCount;
-            }
-        } catch (error) {
-            console.error('Ошибка обновления статистики:', error);
+
+    refreshQRCode() {
+        if (!this.currentLessonId) {
+            alert('Сначала сгенерируйте QR-код');
+            return;
         }
+        this.generateQRCode();
     }
-    startStatsRefresh() {
-        if (this.refreshInterval) {
-            clearInterval(this.refreshInterval);
-        }
-        this.refreshInterval = setInterval(() => {
-            this.refreshStats();
-        }, 5000); // Обновляем каждые 5 секунд
-        this.refreshStats();
-    }
+
     shareQRCode() {
         if (!this.currentToken) {
             alert('Сначала сгенерируйте QR-код');
             return;
         }
-        const shareUrl = `${window.location.origin}/api/attendance/qr/${this.currentToken}`;
         
-        if (navigator.share) {
-            navigator.share({
-                title: 'QR-код для отметки посещаемости',
-                text: 'Отметьте посещаемость по ссылке',
-                url: shareUrl
-            });
-        } else {
-            navigator.clipboard.writeText(shareUrl).then(() => {
-                alert('Ссылка скопирована в буфер обмена');
-            });
-        }
+        const shareUrl = `${window.location.origin}/student-qr.html?token=${this.currentToken}`;
+        
+        // Копируем в буфер обмена
+        navigator.clipboard.writeText(shareUrl).then(() => {
+            alert('Ссылка скопирована в буфер обмена: ' + shareUrl);
+        }).catch(() => {
+            // Fallback
+            const tempInput = document.createElement('input');
+            tempInput.value = shareUrl;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+            alert('Ссылка скопирована в буфер обмена');
+        });
     }
 }
-function goBack() {
-    window.location.href = '/index.html';
-}
+
+// Инициализация при загрузке страницы
 document.addEventListener('DOMContentLoaded', () => {
     new QRGenerator();
 });

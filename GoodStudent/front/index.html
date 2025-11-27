@@ -14,9 +14,9 @@
                 <div class="logo">
                     <img src="/images/logoo.png" alt="GoodStudent" class="logo-icon">
                     <h1 class="logo-text">GoodStudent</h1>
-                    <button class="btn-qr-header" onclick="generateQRCode('demo-1')">
-                        Создать QR-код
-                    </button>
+                    <button class="btn-qr-header" onclick="openQRGenerator()">
+    Создать QR-код
+</button>
                 </div>
             </div>
             <div class="header-right">
@@ -202,8 +202,12 @@
 <script src="/js/api.js"></script>
 <script src="/js/teacher.js"></script>
 <script>
+    function openQRGenerator() {
+        window.open('/qr-generator.html', '_blank', 'width=600,height=700');
+    }
+    
     function generateQRCode(lessonId) {
-        window.open(`/qr-generator.html?lesson=${lessonId}`, '_blank');
+        window.open(`/qr-generator.html?lesson=${lessonId}`, '_blank', 'width=600,height=700');
     }
 </script>
 </body>

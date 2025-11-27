@@ -1089,36 +1089,100 @@ if(totalElement)totalElement.textContent=totalCount;
 }
 async saveAttendance() {
     try {
-        console.log('сохранение посещаемости началась');
-        const presentStudents = this.students.filter(s => s.present);
-        const absentStudents = this.students.filter(s => !s.present);
-        const subjectSelect = document.getElementById('subject-select');
-        const groupSelect = document.getElementById('group-select');
+        console.log('=== СОХРАНЕНИЕ ПОСЕЩАЕМОСТИ ===');
         
-        const subjectName = subjectSelect ? subjectSelect.options[subjectSelect.selectedIndex].text : 'Неизвестный предмет';
-        const groupName = groupSelect ? groupSelect.options[groupSelect.selectedIndex].text : 'Неизвестная группа';
+        // Получаем текущие фильтры
+        const groupSelect = document.getElementById('group-select');
+        const subjectSelect = document.getElementById('subject-select');
+        
+        const currentGroupId = this.currentGroupId;
+        const currentSubjectId = this.currentSubjectId;
+        
+        console.log('Текущие фильтры:', {
+            группа: currentGroupId,
+            предмет: currentSubjectId
+        });
+
+        // Фильтруем студентов только по текущей группе
+        let studentsToSave = [...this.students];
+        
+        if (currentGroupId && currentGroupId !== 'all') {
+            studentsToSave = studentsToSave.filter(student => student.groupId === currentGroupId);
+            console.log(`Фильтрация по группе: ${this.students.length} -> ${studentsToSave.length}`);
+        }
+
+        // Если выбран предмет, дополнительно фильтруем по группам с этим предметом
+        if (currentSubjectId && currentSubjectId !== 'all') {
+            const subjectGroups = this.assignments
+                .filter(assignment => assignment.subject_id == currentSubjectId)
+                .map(assignment => assignment.group_id);
+            
+            studentsToSave = studentsToSave.filter(student => 
+                subjectGroups.includes(student.groupId)
+            );
+            console.log(`Фильтрация по предмету: ${studentsToSave.length} студентов`);
+        }
+
+        const presentStudents = studentsToSave.filter(s => s.present);
+        const absentStudents = studentsToSave.filter(s => !s.present);
+        
+        console.log('Студенты для сохранения:', {
+            всего: studentsToSave.length,
+            присутствуют: presentStudents.length,
+            отсутствуют: absentStudents.length
+        });
+
+        if (studentsToSave.length === 0) {
+            alert('Нет студентов для сохранения. Проверьте фильтры.');
+            return;
+        }
+
+        // Получаем информацию о текущем занятии
+        let currentAssignment = null;
+        if (currentSubjectId && currentSubjectId !== 'all' && currentGroupId && currentGroupId !== 'all') {
+            currentAssignment = this.assignments.find(assignment => 
+                assignment.subject_id == currentSubjectId && 
+                assignment.group_id === currentGroupId
+            );
+        }
+
+        const subjectName = currentAssignment ? 
+            currentAssignment.subject_name : 
+            (subjectSelect ? subjectSelect.options[subjectSelect.selectedIndex].text : 'Неизвестный предмет');
+        
+        const groupName = currentAssignment ? 
+            currentAssignment.group_number : 
+            (groupSelect ? groupSelect.options[groupSelect.selectedIndex].text : 'Неизвестная группа');
+
         const attendanceData = {
             date: new Date().toISOString(),
             subject: subjectName,
             group: groupName,
+            subject_id: currentSubjectId,
+            group_id: currentGroupId,
             presentStudents: presentStudents.map(s => ({
                 id: s.id,
                 name: s.name,
                 surname: s.surname,
                 patronymic: s.patronymic,
-                groupName: s.groupName
+                groupName: s.groupName,
+                groupId: s.groupId
             })),
             absentStudents: absentStudents.map(s => ({
                 id: s.id,
                 name: s.name,
-                surname: s.surname, 
+                surname: s.surname,
                 patronymic: s.patronymic,
-                groupName: s.groupName
+                groupName: s.groupName,
+                groupId: s.groupId
             })),
             presentCount: presentStudents.length,
-            totalCount: this.students.length
+            totalCount: studentsToSave.length,
+            assignment_id: currentAssignment ? currentAssignment.id : null
         };
+
         console.log('Данные для сохранения:', attendanceData);
+
         const response = await fetch('http://localhost:5000/api/attendance', {
             method: 'POST',
             headers: {
@@ -1126,14 +1190,18 @@ async saveAttendance() {
             },
             body: JSON.stringify(attendanceData)
         });
+
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
+
         const result = await response.json();
+        
         if (result.success) {
-            alert(`Посещаемость сохранена!\n${result.message}`);
-            console.log('ID сохраненной записи:', result.id);
-            this.students.forEach(student => student.present = false);
+            alert(`Посещаемость сохранена!\n${subjectName} - ${groupName}\nПрисутствуют: ${presentStudents.length}/${studentsToSave.length}`);
+            
+            // Сбрасываем отметки только для сохраненных студентов
+            studentsToSave.forEach(student => student.present = false);
             this.renderStudents();
             this.updateStats();
             

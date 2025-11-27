@@ -436,22 +436,60 @@ app.post('/api/upload-schedule', upload.single('excelFile'), async (req, res) =>
 app.post('/api/attendance', async (req, res) => {
   let client;
   try {
-    const { date, subject, group, presentStudents, absentStudents, presentCount, totalCount } = req.body;
-    console.log('Сохранение посещаемости в базу...');
+    const { date, subject, group, subject_id, group_id, presentStudents, absentStudents, presentCount, totalCount, assignment_id } = req.body;
+    
+    console.log('Сохранение посещаемости:', {
+      subject,
+      group,
+      subject_id,
+      group_id,
+      presentCount,
+      totalCount
+    });
+    
     client = await pools.students.connect();
+    
+    // Создаем таблицу если не существует
     const tableExists = await client.query(`SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'attendance')`);    
+    
     if (!tableExists.rows[0].exists) {
-      await client.query(`CREATE TABLE attendance ("Id" SERIAL PRIMARY KEY, "Date" TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "Subject" TEXT, "GroupName" TEXT, "PresentStudents" JSONB, "AbsentStudents" JSONB, "PresentCount" INTEGER, "TotalCount" INTEGER, "CreatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`);
-    }    
-    const result = await client.query(`INSERT INTO attendance ("Date", "Subject", "GroupName", "PresentStudents", "AbsentStudents", "PresentCount", "TotalCount") VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING "Id"`, [
+      await client.query(`
+        CREATE TABLE attendance (
+          "Id" SERIAL PRIMARY KEY, 
+          "Date" TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
+          "Subject" TEXT, 
+          "GroupName" TEXT,
+          "SubjectId" TEXT,
+          "GroupId" TEXT,
+          "AssignmentId" TEXT,
+          "PresentStudents" JSONB, 
+          "AbsentStudents" JSONB, 
+          "PresentCount" INTEGER, 
+          "TotalCount" INTEGER, 
+          "CreatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+    }
+    
+    const result = await client.query(`
+      INSERT INTO attendance ("Date", "Subject", "GroupName", "SubjectId", "GroupId", "AssignmentId", "PresentStudents", "AbsentStudents", "PresentCount", "TotalCount") 
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) 
+      RETURNING "Id"
+    `, [
       date || new Date().toISOString(), 
       subject || 'Неизвестный предмет', 
-      group || 'Неизвестная группа', 
+      group || 'Неизвестная группа',
+      subject_id || null,
+      group_id || null,
+      assignment_id || null,
       JSON.stringify(presentStudents || []), 
       JSON.stringify(absentStudents || []), 
       presentCount || 0, 
       totalCount || 0
-    ]);    
+    ]);
+    
+    console.log('Посещаемость сохранена, ID:', result.rows[0].Id);
+    
     res.json({
       success: true, 
       message: `Посещаемость сохранена: ${presentCount} из ${totalCount} студентов`, 
@@ -459,7 +497,7 @@ app.post('/api/attendance', async (req, res) => {
     });
   } catch (error) {
     console.error('Ошибка сохранения посещаемости:', error);
-    res.status(500).json({ error: 'Ошибка сохранения посещаемости' });
+    res.status(500).json({ error: 'Ошибка сохранения посещаемости: ' + error.message });
   } finally {
     if (client) client.release();
   }
@@ -775,6 +813,8 @@ app.post('/api/attendance/qr/:token', async (req, res) => {
         const { token } = req.params;
         const { studentId, studentName, groupId } = req.body;
         
+        console.log('QR отметка:', { token, studentId, studentName, groupId });
+        
         client = await pools.students.connect();
         
         // Check if session is valid
@@ -783,24 +823,31 @@ app.post('/api/attendance/qr/:token', async (req, res) => {
              WHERE token = $1 AND is_active = true AND expires_at > NOW()`,
             [token]
         );
+        
         if (sessionResult.rows.length === 0) {
             return res.status(400).json({ 
                 error: 'QR-код недействителен или истек',
                 code: 'QR_EXPIRED'
             });
         }
+        
         const session = sessionResult.rows[0];
+        
+        // Проверяем, не отметился ли студент уже
         const existingMark = await client.query(
             `SELECT id FROM qr_attendance 
              WHERE session_id = $1 AND student_id = $2`,
             [session.id, studentId]
         );
+        
         if (existingMark.rows.length > 0) {
             return res.status(400).json({
                 error: 'Вы уже отметились на этом занятии',
                 code: 'ALREADY_MARKED'
             });
         }
+        
+        // Сохраняем отметку
         await client.query(
             `INSERT INTO qr_attendance (session_id, student_id, student_name, group_id, marked_at) 
              VALUES ($1, $2, $3, $4, NOW())`,
@@ -809,7 +856,7 @@ app.post('/api/attendance/qr/:token', async (req, res) => {
         
         res.json({
             success: true,
-            message: 'Посещаемость отмечена успешно',
+            message: 'Посещаемость отмечена успешно!',
             lessonId: session.lesson_id,
             timestamp: new Date().toISOString()
         });
@@ -1102,11 +1149,48 @@ app.get('/api/csharp/professions', async (req, res) => {
         res.status(500).json({ error: 'Ошибка загрузки специальностей' });
     }
 });
-app.get('/', (req, res) => { res.sendFile(path.join(__dirname, 'form.html')); });
-app.get('/index.html', (req, res) => { res.sendFile(path.join(__dirname, 'index.html')); });
-app.get('/admin-dashboard.html', (req, res) => { res.sendFile(path.join(__dirname, 'admin-dashboard.html')); });
-app.get('/form.html', (req, res) => { res.sendFile(path.join(__dirname, 'form.html')); });
-app.get('*', (req, res) => { res.redirect('/'); });
+
+// HTML страницы
+app.get('/', (req, res) => { 
+    console.log('Отправляем form.html');
+    res.sendFile(path.join(__dirname, 'form.html')); 
+});
+
+app.get('/index.html', (req, res) => { 
+    console.log('Отправляем index.html');
+    res.sendFile(path.join(__dirname, 'index.html')); 
+});
+
+app.get('/admin-dashboard.html', (req, res) => { 
+    console.log('Отправляем admin-dashboard.html');
+    res.sendFile(path.join(__dirname, 'admin-dashboard.html')); 
+});
+
+app.get('/qr-generator.html', (req, res) => { 
+    console.log('Отправляем qr-generator.html');
+    res.sendFile(path.join(__dirname, 'qr-generator.html')); 
+});
+
+app.get('/student-qr.html', (req, res) => { 
+    console.log('Отправляем student-qr.html');
+    res.sendFile(path.join(__dirname, 'student-qr.html')); 
+});
+
+app.get('/form.html', (req, res) => { 
+    console.log('Отправляем form.html');
+    res.sendFile(path.join(__dirname, 'form.html')); 
+});
+
+// Fallback для неизвестных маршрутов
+app.get('*', (req, res) => {
+    console.log('Неизвестный маршрут:', req.path);
+    if (req.path.startsWith('/api/')) {
+        res.status(404).json({ error: 'API endpoint not found' });
+    } else {
+        res.status(404).send('Page not found');
+    }
+});
+
 async function initializeQRTables() {
     let client;
     try {
@@ -1140,17 +1224,19 @@ async function initializeQRTables() {
         if (client) client.release();
     }
 }
-app.get('/qr-generator.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'qr-generator.html'));
-});
-app.get('/student-qr.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'student-qr.html'));
-});
+
 app.listen(PORT, async () =>  {
   await initializeQRTables();
   console.log('='.repeat(60));
   console.log(`Node.js сервер запущен на http://localhost:${PORT}`);
   console.log('ПОДКЛЮЧЕНИЕ К POSTGRESQL: АКТИВНО');
+  console.log('='.repeat(60));
+  console.log('ДОСТУПНЫЕ СТРАНИЦЫ:');
+  console.log(`GET  /              - Форма входа`);
+  console.log(`GET  /index.html    - Расписание преподавателя`);
+  console.log(`GET  /admin-dashboard.html - Панель администратора`);
+  console.log(`GET  /qr-generator.html - Генератор QR-кодов`);
+  console.log(`GET  /student-qr.html - Страница отметки по QR`);
   console.log('='.repeat(60));
   console.log('ДОСТУПНЫЕ API:');
   console.log(`GET  /api/students - Все студенты`);
