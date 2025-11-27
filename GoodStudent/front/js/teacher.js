@@ -12,18 +12,116 @@ this.assignments=[];
 this.currentGroupId='all';
 this.currentSubjectId='all';
 this.currentView='manual';
+this.currentDate = new Date();
+this.currentMonth = this.currentDate.getMonth();
+this.currentYear = this.currentDate.getFullYear();
 this.init();
 }
+initCalendar() {
+    this.renderCalendar();
+    this.setupCalendarEvents();
+}
+renderCalendar() {
+    const calendarGrid = document.getElementById('calendar-grid');
+    if (!calendarGrid) return;
+    const monthNames = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
+    document.getElementById('current-month').textContent = 
+        `${monthNames[this.currentMonth]} ${this.currentYear}`;
+    const firstDay = new Date(this.currentYear, this.currentMonth, 1);
+    const lastDay = new Date(this.currentYear, this.currentMonth + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    const startingDay = firstDay.getDay();
+    const monthAssignments = this.getAssignmentsForMonth(this.currentMonth, this.currentYear);
+    let calendarHTML = '';
+    const dayNames = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+    dayNames.forEach(day => {
+        calendarHTML += `<div class="calendar-day-header">${day}</div>`;
+    });
+    for (let i = 0; i < (startingDay === 0 ? 6 : startingDay - 1); i++) {
+        calendarHTML += `<div class="calendar-day empty"></div>`;
+    }
+    const today = new Date();
+    for (let day = 1; day <= daysInMonth; day++) {
+        const date = new Date(this.currentYear, this.currentMonth, day);
+        const dateString = date.toISOString().split('T')[0];
+        
+        const isToday = date.toDateString() === today.toDateString();
+        const hasClass = monthAssignments.some(assignment => 
+            assignment.assignment_date && 
+            assignment.assignment_date.split('T')[0] === dateString
+        );
+        let dayClass = 'calendar-day';
+        if (isToday) dayClass += ' today';
+        if (hasClass) dayClass += ' has-class';
+        calendarHTML += `
+            <div class="${dayClass}" data-date="${dateString}">
+                <span class="day-number">${day}</span>
+                ${hasClass ? '<span class="class-dot"></span>' : ''}
+            </div>
+        `;
+    }
+    
+    calendarGrid.innerHTML = calendarHTML;
+}
+getAssignmentsForMonth(month, year) {
+    return this.assignments.filter(assignment => {
+        if (!assignment.assignment_date) return false;
+        
+        const assignmentDate = new Date(assignment.assignment_date);
+        return assignmentDate.getMonth() === month && 
+               assignmentDate.getFullYear() === year;
+    });
+}
+setupCalendarEvents() {
+    const calendarGrid = document.getElementById('calendar-grid');
+    if (!calendarGrid) return;
+    calendarGrid.addEventListener('click', (e) => {
+        const dayElement = e.target.closest('.calendar-day');
+        if (dayElement && !dayElement.classList.contains('empty')) {
+            const date = dayElement.dataset.date;
+            this.showDaySchedule(date);
+        }
+    });
+}
+showDaySchedule(date) {
+    const dayAssignments = this.assignments.filter(assignment => 
+        assignment.assignment_date && 
+        assignment.assignment_date.split('T')[0] === date
+    );
+    if (dayAssignments.length === 0) {
+        alert(`На ${new Date(date).toLocaleDateString('ru-RU')} нет занятий`);
+        return;
+    }
+    const scheduleText = dayAssignments.map(assignment => 
+        `${assignment.start_time || '--:--'} - ${assignment.subject_name} (${assignment.group_number})`
+    ).join('\n');
+    
+    alert(`Занятия на ${new Date(date).toLocaleDateString('ru-RU')}:\n\n${scheduleText}`);
+}
+prevMonth() {
+    this.currentMonth--;
+    if (this.currentMonth < 0) {
+        this.currentMonth = 11;
+        this.currentYear--;
+    }
+    this.renderCalendar();
+}
+nextMonth() {
+    this.currentMonth++;
+    if (this.currentMonth > 11) {
+        this.currentMonth = 0;
+        this.currentYear++;
+    }
+    this.renderCalendar();
+}
 async init() {
-    console.log('ИНИЦИАЛИЗАЦИЯ ПРЕПОДАВАТЕЛЯ!');
-    console.log('Текущий пользователь:', this.currentUser);
-    console.log('Токен аутентификации:', localStorage.getItem('authToken'));
+    console.log('Инициализация приложения преподавателя');
     await this.loadTeacherData();
     await this.loadInstructorAssignments();
     this.setupEventListeners();
     this.setupGroupSelectorsSync();
     this.displayCurrentDate();
-    console.log('ИНИЦИАЛИЗАЦИЯ ЗАВЕРШЕНА!');
+    this.initCalendar();
 }
 setupGroupSelectorsSync() {
     const mainGroupSelect = document.getElementById('group-select');    
@@ -104,12 +202,14 @@ async loadInstructorAssignments() {
             console.log('ID преподавателя не найден, используем демо-данные');
             this.assignments = this.getDemoAssignments();
             this.updateScheduleDisplay();
+            this.updateSubjectSelector(); 
             return;
         }
         const response = await fetch(`http://localhost:5000/api/instructors/${instructorId}/assignments`);
         if (response.ok) {
             const assignments = await response.json();
             console.log('Назначения преподавателя загружены:', assignments);
+            
             this.assignments = assignments.map(assignment => ({
                 ...assignment,
                 group_id: assignment.group_id || this.getRealGroupId(assignment.group_number)
@@ -119,10 +219,12 @@ async loadInstructorAssignments() {
             this.assignments = this.getDemoAssignments();
         }
         this.updateScheduleDisplay();
+        this.updateSubjectSelector(); 
     } catch (error) {
         console.error('Ошибка загрузки назначений:', error);
         this.assignments = this.getDemoAssignments();
         this.updateScheduleDisplay();
+        this.updateSubjectSelector(); 
     }
 }
 getRealGroupId(groupNumber) {
@@ -365,23 +467,57 @@ populateGroupSelector() {
     `;
     console.log(`Загружено групп для преподавателя: ${availableGroups.length}`);
 }
+updateSubjectSelector() {
+    const subjectSelect = document.getElementById('subject-select');
+    if (!subjectSelect) return;
+    const today = new Date().toISOString().split('T')[0];
+    const todayAssignments = this.assignments.filter(assignment => 
+        assignment.assignment_date && 
+        assignment.assignment_date.split('T')[0] === today
+    );
+    const uniqueSubjects = todayAssignments.filter((assignment, index, self) =>
+        index === self.findIndex(a => a.subject_id === assignment.subject_id)
+    );
+    console.log('Сегодняшние предметы для селектора:', uniqueSubjects);
+    subjectSelect.innerHTML = `
+        <option value="all">Все предметы на сегодня</option>
+        ${uniqueSubjects.map(assignment => 
+            `<option value="${assignment.subject_id}">${assignment.subject_name || 'Предмет'}</option>`
+        ).join('')}
+        <option value="all_time">Все предметы (все время)</option>
+    `;
+    subjectSelect.addEventListener('change', (e) => {
+        this.currentSubjectId = e.target.value;
+        if (this.currentSubjectId === 'all_time') {
+            this.currentSubjectId = 'all';
+        }
+        this.renderStudents();
+    });
+}
 renderStudents() {
     const container = document.getElementById('students-list');
     if(!container) return;
-    console.log('Рендерим студентов для преподавателя, текущая группа:', this.currentGroupId);
-    console.log('Всего студентов доступно:', this.students.length);
+    console.log('Рендерим студентов для преподавателя:', {
+        группа: this.currentGroupId,
+        предмет: this.currentSubjectId,
+        всего_студентов: this.students.length
+    });
     let studentsToShow = this.students;
-    if (studentsToShow.length === 0) {
-        container.innerHTML = `
-            <div style="text-align:center;padding:40px;color:#666;">
-                <h4>Нет студентов для отображения</h4>
-                <p>Попробуйте загрузить студентов через панель администратора</p>
-                <button class="btn-primary" onclick="location.href='/admin-dashboard.html'">
-                    Перейти в панель администратора
-                </button>
-            </div>
-        `;
-        return;
+    if (this.currentSubjectId && this.currentSubjectId !== 'all') {
+        console.log('Фильтруем по предмету:', this.currentSubjectId);
+        const today = new Date().toISOString().split('T')[0];
+        const subjectGroups = this.assignments
+            .filter(assignment => 
+                assignment.subject_id == this.currentSubjectId &&
+                assignment.assignment_date &&
+                assignment.assignment_date.split('T')[0] === today
+            )
+            .map(assignment => assignment.group_id);
+        console.log('Группы с выбранным предметом:', subjectGroups);
+        studentsToShow = studentsToShow.filter(student => 
+            subjectGroups.includes(student.groupId)
+        );
+        console.log('После фильтрации по предмету:', studentsToShow.length);
     }
     if(this.currentGroupId && this.currentGroupId !== 'all') {
         console.log('Фильтруем по группе:', this.currentGroupId);
@@ -390,11 +526,23 @@ renderStudents() {
         );
         console.log('После фильтрации по группе:', studentsToShow.length);
     }
+    if (studentsToShow.length === 0) {
+        container.innerHTML = `
+            <div style="text-align:center;padding:40px;color:#666;">
+                <h4>Нет студентов для отображения</h4>
+                <p>Попробуйте изменить фильтры или загрузить студентов через панель администратора</p>
+                <button class="btn-primary" onclick="location.href='/admin-dashboard.html'" style="margin-top:10px;">
+                    Перейти в панель администратора
+                </button>
+            </div>
+        `;
+        return;
+    }
     container.innerHTML = studentsToShow.map(student => `
         <div class="student-item">
             <div class="student-info">
                 <div class="student-name">${student.surname} ${student.name} ${student.patronymic || ''}</div>
-                <div class="student-group">Группа: ${student.groupName} (ID: ${student.groupId})</div>
+                <div class="student-group">Группа: ${student.groupName}</div>
             </div>
             <div class="attendance-toggle">
                 <input type="checkbox" id="student-${student.id}" 
@@ -405,6 +553,7 @@ renderStudents() {
             </div>
         </div>
     `).join('');
+    
     this.updateStats();
 }
 updateScheduleDisplay() {

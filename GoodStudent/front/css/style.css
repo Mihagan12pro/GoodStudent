@@ -1924,8 +1924,139 @@ color:#999;
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
 }
+/* Стили для календаря */
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    margin: 15px 0;
+}
 
-/* Стили для карточек кафедр */
+.calendar-day-header {
+    text-align: center;
+    font-weight: 600;
+    font-size: 12px;
+    color: #667eea;
+    padding: 8px 0;
+}
+
+.calendar-day {
+    border: 1px solid #e1e5e9;
+    border-radius: 6px;
+    padding: 8px;
+    text-align: center;
+    cursor: pointer;
+    min-height: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    transition: all 0.2s ease;
+    background: white;
+}
+
+.calendar-day:hover {
+    background-color: #f8f9fa;
+    border-color: #667eea;
+}
+
+.calendar-day.empty {
+    background-color: transparent;
+    border-color: transparent;
+    cursor: default;
+}
+
+.calendar-day.today {
+    background-color: #667eea;
+    color: white;
+    border-color: #667eea;
+}
+
+.calendar-day.has-class {
+    border-color: #28a745;
+    background-color: #f8fff9;
+}
+
+.calendar-day.has-class .day-number {
+    font-weight: 600;
+    color: #28a745;
+}
+
+.calendar-day.today.has-class {
+    background-color: #28a745;
+    color: white;
+}
+
+.calendar-day.today.has-class .day-number {
+    color: white;
+}
+
+.day-number {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.class-dot {
+    width: 6px;
+    height: 6px;
+    background-color: #28a745;
+    border-radius: 50%;
+    margin-top: 2px;
+}
+
+.calendar-day.today .class-dot {
+    background-color: white;
+}
+
+.calendar-legend {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #e1e5e9;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+}
+
+.legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+}
+
+.legend-color.has-class {
+    background-color: #28a745;
+}
+.legend-color.today {
+    background-color: #667eea;
+}
+.calendar-nav {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.calendar-nav .nav-btn {
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.calendar-nav .nav-btn:hover {
+    background: #5a6fd8;
+}
 .departments-container {
     background: white;
     border-radius: 12px;

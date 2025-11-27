@@ -104,16 +104,15 @@
                             <button class="btn-primary" id="save-attendance-btn">Сохранить посещаемость</button>
                         </div>
                         <div class="attendance-calendar">
-                            <div class="calendar-header">
-                                <h4>Отметка посещаемости</h4>
-                                <div class="calendar-nav">
-                                    <button class="nav-btn">←</button>
-                                    <span class="current-month">Ноябрь 2025</span>
-                                    <button class="nav-btn">→</button>
-                                </div>
-                            </div>
-                            <div class="calendar-days">
-                            </div>
+    <div class="calendar-header">
+        <h4>Календарь занятий</h4>
+        <div class="calendar-nav">
+            <button class="nav-btn" onclick="teacherApp.prevMonth()">←</button>
+            <span class="current-month" id="current-month">Ноябрь 2025</span>
+            <button class="nav-btn" onclick="teacherApp.nextMonth()">→</button>
+        </div>
+    </div>
+    <div class="calendar-grid" id="calendar-grid">
                             <div class="today-marker">
                                 <div class="today-indicator"></div>
                                 <span>Сегодня</span>
