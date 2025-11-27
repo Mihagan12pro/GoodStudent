@@ -538,25 +538,35 @@ app.get('/api/instructors/:id/assignments', async (req, res) => {
   let client;
   try {
     const instructorId = req.params.id;
-    client = await pools.students.connect();    
-    const result = await client.query(`
-      SELECT 
-        ia.*,
-        sd.classroom,
-        sd.assignment_date,
-        sd.start_time,
-        sd.end_time,
-        s."Tittle" as subject_name,
-        g."number" as group_number,
-        d."Tittle" as department_name
-      FROM instructor_assignments ia
-      LEFT JOIN schedule_details sd ON ia."Id" = sd.assignment_id
-      LEFT JOIN "Professions" s ON ia.subject_id::text = s."Id"::text
-      LEFT JOIN groups g ON ia.group_id::text = g."Id"::text
-      LEFT JOIN "Departments" d ON ia.department_id::text = d."Id"::text
-      WHERE ia.instructor_id = $1
-      ORDER BY sd.assignment_date, sd.start_time
-    `, [instructorId]);    
+    console.log('=== ОТЛАДКА НАЗНАЧЕНИЙ ===');
+    console.log('ID преподавателя:', instructorId);
+    client = await pools.students.connect();
+    const checkQuery = await client.query('SELECT COUNT(*) as count FROM instructor_assignments WHERE instructor_id = $1', [instructorId]);
+    console.log('Найдено назначений в базе:', checkQuery.rows[0].count);
+    let result;
+    if (parseInt(checkQuery.rows[0].count) > 0) {
+      result = await client.query(`
+        SELECT 
+          ia.*,
+          sd.classroom,
+          sd.assignment_date,
+          sd.start_time,
+          sd.end_time,
+          s."Tittle" as subject_name,
+          g."number" as group_number,
+          d."Tittle" as department_name
+        FROM instructor_assignments ia
+        LEFT JOIN schedule_details sd ON ia."Id" = sd.assignment_id
+        LEFT JOIN "Professions" s ON ia.subject_id::text = s."Id"::text
+        LEFT JOIN groups g ON ia.group_id::text = g."Id"::text
+        LEFT JOIN "Departments" d ON ia.department_id::text = d."Id"::text
+        WHERE ia.instructor_id = $1
+        ORDER BY sd.assignment_date, sd.start_time
+      `, [instructorId]);
+    } else {
+      result = { rows: [] };
+    }
+    console.log('Результат запроса:', result.rows.length, 'назначений');
     const assignments = result.rows.map(row => ({
       id: row.Id,
       subject_id: row.subject_id,
@@ -570,11 +580,16 @@ app.get('/api/instructors/:id/assignments', async (req, res) => {
       start_time: row.start_time,
       end_time: row.end_time,
       created_at: row.created_at
-    }));    
+    }));
     res.json(assignments);
   } catch (error) {
-    console.error('Ошибка загрузки назначений преподавателя:', error);
-    res.status(500).json({ error: 'Ошибка загрузки назначений' });
+    console.error('ОШИБКА в endpoint назначений:', error);
+    console.error('Stack trace:', error.stack);
+    res.status(500).json({ 
+      error: 'Ошибка загрузки назначений',
+      details: error.message,
+      stack: error.stack
+    });
   } finally {
     if (client) client.release();
   }
