@@ -6,5 +6,6 @@ Server\GoodStudent.Infrastructure.Postgres\BaseContext.cs убедитесь в 
 id	name	group
 1	Иванов Алексей	231-390
 
-
+Бэкенд на C# ASP .NET CORE (база данных с миграциями - основа проекта)
+Фронтент на Node.js
 
