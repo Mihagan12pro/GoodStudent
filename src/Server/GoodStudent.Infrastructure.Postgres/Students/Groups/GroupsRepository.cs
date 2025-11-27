@@ -7,9 +7,11 @@ using Group = GoodStudent.Domain.Students.Group;
 
 namespace GoodStudent.Infrastracture.Postgres.Students.Groups
 {
-    internal class GroupsRepository : IGroupsRepository
+    internal class GroupsRepository : GoodStudentRepository, IGroupsRepository
     {
-        private readonly StudentsContext _studentsContext;
+        public GroupsRepository(GoodStudentContext context) : base(context)
+        {
+        }
 
         public async Task<Guid> AddAsync(Group group, CancellationToken cancellationToken)
         {
@@ -17,20 +19,20 @@ namespace GoodStudent.Infrastracture.Postgres.Students.Groups
             groupEntity.Number = group.Number;
             groupEntity.ProfessionId = group.ProfessionId;
 
-            await _studentsContext.Groups.AddAsync(groupEntity);
-            await _studentsContext.SaveChangesAsync();
+            await context.Groups.AddAsync(groupEntity);
+            await context.SaveChangesAsync();
 
             return groupEntity.Id;
         }
 
         public async Task<(Group, IEnumerable<Student>)?> GetStudentsAsync(Guid groupId, CancellationToken cancellationToken)
         {
-            GroupEntity? groupEntity = await _studentsContext.Groups.FirstOrDefaultAsync(g => g.Id == groupId);
+            GroupEntity? groupEntity = await context.Groups.FirstOrDefaultAsync(g => g.Id == groupId);
 
             if (groupEntity == null)
                 return null;
 
-            List<StudentEntity> studentEntities = await _studentsContext.Students.
+            List<StudentEntity> studentEntities = await context.Students.
                 Select(s => s).
                     Where(s => s.GroupId == groupId).
                         ToListAsync();
@@ -64,7 +66,7 @@ namespace GoodStudent.Infrastracture.Postgres.Students.Groups
 
         public async Task<Group> GetByIdAsync(Guid Id, CancellationToken cancellationToken)
         {
-            GroupEntity? groupEntity = await _studentsContext.Groups.FirstOrDefaultAsync(g => g.Id == Id);
+            GroupEntity? groupEntity = await context.Groups.FirstOrDefaultAsync(g => g.Id == Id);
 
             if (groupEntity == null)
                 return null!;
@@ -83,17 +85,12 @@ namespace GoodStudent.Infrastracture.Postgres.Students.Groups
 
         public async Task<Guid> GetIdByNumberAsync(string number, CancellationToken cancellationToken)
         {
-            GroupEntity? groupEntity = await _studentsContext.Groups.FirstOrDefaultAsync(g => g.Number == number);
+            GroupEntity? groupEntity = await context.Groups.FirstOrDefaultAsync(g => g.Number == number);
 
             if (groupEntity == null)
                 return Guid.Empty;
 
             return groupEntity.Id;
-        }
-
-        public GroupsRepository(StudentsContext studentsContext)
-        {
-            _studentsContext = studentsContext;
         }
     }
 }

@@ -11,9 +11,11 @@ using System.Xml.Linq;
 
 namespace GoodStudent.Infrastracture.Postgres.Students.Students
 {
-    internal class StudentsRepository : IStudentsRepository
+    internal class StudentsRepository : GoodStudentRepository,IStudentsRepository
     {
-        private readonly StudentsContext _studentsContext;
+        public StudentsRepository(GoodStudentContext context) : base(context)
+        {
+        }
 
         public async Task<Guid> AddAsync(Student student, CancellationToken cancellationToken)
         {
@@ -24,18 +26,18 @@ namespace GoodStudent.Infrastracture.Postgres.Students.Students
 
             if (student.GroupId != null)
             {
-                studentEntity.Group = await _studentsContext.Groups.FirstOrDefaultAsync(g => g.Id == student.GroupId);
+                studentEntity.Group = await context.Groups.FirstOrDefaultAsync(g => g.Id == student.GroupId);
             }
 
-            await _studentsContext.Students.AddAsync(studentEntity);
-            await _studentsContext.SaveChangesAsync();
+            await context.Students.AddAsync(studentEntity);
+            await context.SaveChangesAsync();
 
             return studentEntity.Id;
         }
 
         public async Task<Student> GetByIdAsync(Guid id, CancellationToken cancellationToken)
         {
-            StudentEntity? studentEntity = await _studentsContext.Students.
+            StudentEntity? studentEntity = await context.Students.
                 Include(s => s.Group).
                     FirstOrDefaultAsync(s => s.Id == id);/*Students.Where(s => s.Id == id).FirstOrDefaultAsync();*/
 
@@ -68,7 +70,7 @@ namespace GoodStudent.Infrastracture.Postgres.Students.Students
 
         public async Task<Guid> GetStudentIdAsync(Student student, Guid? groupId)
         {
-            StudentEntity? studentEntity = await _studentsContext.Students.FirstOrDefaultAsync(
+            StudentEntity? studentEntity = await context.Students.FirstOrDefaultAsync(
                 s => s.Name == student.Name 
                 && 
                 s.Surname == student.Surname
@@ -82,16 +84,6 @@ namespace GoodStudent.Infrastracture.Postgres.Students.Students
                 return Guid.Empty;
 
             return studentEntity.Id;
-        }
-
-        //public Task<Guid?> GetStudentIdAsync(Student student, Guid? groupId)
-        //{
-        //    throw new NotImplementedException();
-        //}
-
-        public StudentsRepository(StudentsContext studentsContext)
-        {
-            _studentsContext = studentsContext;
         }
     }
 }

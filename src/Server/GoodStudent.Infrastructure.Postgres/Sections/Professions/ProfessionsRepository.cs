@@ -4,9 +4,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace GoodStudent.Infrastracture.Postgres.Sections.Professions
 {
-    internal class ProfessionsRepository : IProfessionsRepository
+    internal class ProfessionsRepository : GoodStudentRepository, IProfessionsRepository
     {
-        private readonly SectionsContext _sectionsContext;
+        public ProfessionsRepository(GoodStudentContext context) : base(context)
+        {
+        }
 
         public async Task<Guid> AddAsync(Profession profession, CancellationToken cancellationToken)
         {
@@ -21,15 +23,15 @@ namespace GoodStudent.Infrastracture.Postgres.Sections.Professions
                 DepartmentId = profession.DepartmentId
             };
 
-            await _sectionsContext.Professions.AddAsync(professionEntity, cancellationToken);
-            await _sectionsContext.SaveChangesAsync();
+            await context.Professions.AddAsync(professionEntity, cancellationToken);
+            await context.SaveChangesAsync();
 
             return professionEntity.Id;
         }
 
         public async Task<Profession> GeByIdAsync(Guid id, CancellationToken cancellationToken)
         {
-            ProfessionEntity? professionEntity = await _sectionsContext.Professions.
+            ProfessionEntity? professionEntity = await context.Professions.
                 FirstOrDefaultAsync(p => p.Id == id);
 
             if (professionEntity == null)
@@ -51,7 +53,7 @@ namespace GoodStudent.Infrastracture.Postgres.Sections.Professions
 
         public async Task<Guid> GetIdByTittleAsync(Profession profession, CancellationToken cancellationToken)
         {
-            Guid id = await _sectionsContext.Professions.
+            Guid id = await context.Professions.
                 Where(p => p.Tittle == profession.Tittle 
                         &&
                         p.Code == profession.Code 
@@ -62,11 +64,6 @@ namespace GoodStudent.Infrastracture.Postgres.Sections.Professions
                         FirstOrDefaultAsync();
 
             return id;
-        }
-
-        public ProfessionsRepository(SectionsContext sectionsContext)
-        {
-            _sectionsContext = sectionsContext;
         }
     }
 }

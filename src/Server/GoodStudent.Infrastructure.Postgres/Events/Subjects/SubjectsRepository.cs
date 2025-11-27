@@ -9,21 +9,25 @@ using System.Threading.Tasks;
 
 namespace GoodStudent.Infrastracture.Postgres.Events.Subjects
 {
-    internal class SubjectsRepository : EventsRepository, ISubjectsRepository
+    internal class SubjectsRepository : GoodStudentRepository, ISubjectsRepository
     {
+        public SubjectsRepository(GoodStudentContext context) : base(context)
+        {
+        }
+
         public async Task<Guid> AddNewAsync(Subject subject, CancellationToken cancellationToken)
         {
             SubjectEntity subjectEntity = new SubjectEntity() { Tittle = subject.Tittle, Description =  subject.Description, DepartmentId = subject.DepartmentId };
 
-            await eventsContext.Subjects.AddAsync(subjectEntity);
-            await eventsContext.SaveChangesAsync();
+            await context.Subjects.AddAsync(subjectEntity);
+            await context.SaveChangesAsync();
 
             return subjectEntity.Id;
         }
 
         public async Task<Subject> GetByIdAsync(Guid id, CancellationToken cancellationToken)
         {
-            SubjectEntity? subjectEntity = await eventsContext.Subjects.FirstOrDefaultAsync(s => s.Id == id);
+            SubjectEntity? subjectEntity = await context.Subjects.FirstOrDefaultAsync(s => s.Id == id);
 
             if (subjectEntity == null)
                 return null!;
@@ -35,7 +39,7 @@ namespace GoodStudent.Infrastracture.Postgres.Events.Subjects
 
         public async Task<Guid> GetIdAsync(string tittle, CancellationToken cancellationToken)
         {
-            Guid id = await eventsContext.Subjects.
+            Guid id = await context.Subjects.
                 Where(s => s.Tittle == tittle).
                     Select(s => s.Id).
                         FirstOrDefaultAsync();
@@ -45,7 +49,7 @@ namespace GoodStudent.Infrastracture.Postgres.Events.Subjects
 
         public async Task<IEnumerable<Subject>> GetSubjectsByDepartment(Guid id, CancellationToken cancellationToken)
         {
-            IEnumerable<SubjectEntity> subjectEntities = await eventsContext.Subjects.
+            IEnumerable<SubjectEntity> subjectEntities = await context.Subjects.
                 Where(s => s.DepartmentId == id).
                     ToListAsync();
 
@@ -55,10 +59,6 @@ namespace GoodStudent.Infrastracture.Postgres.Events.Subjects
             IEnumerable<Subject> subjects = subjectEntities.Select(se => new Subject() { Tittle = se.Tittle, Description = se.Description, DepartmentId = se.DepartmentId});
 
             return subjects;
-        }
-
-        public SubjectsRepository(EventsContext eventsContext) : base(eventsContext)
-        {
         }
     }
 }
