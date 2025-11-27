@@ -11,24 +11,26 @@ using System.Threading.Tasks;
 
 namespace GoodStudent.Infrastracture.Postgres.Instructors
 {
-    internal class InstructorRepository : IInstructorsRepository
+    internal class InstructorRepository : GoodStudentRepository, IInstructorsRepository
     {
-        private readonly InstructorsContext _instructorsContext;
+        public InstructorRepository(GoodStudentContext context) : base(context)
+        {
+        }
 
         public async Task<Guid> AddNewAsync(Instructor instructor, CancellationToken cancellationToken)
         {
             InstructorEntity instructorEntity = new InstructorEntity()
             { Name = instructor.Name, Surname = instructor.Surname, Patronymic = instructor.Patronymic, DepartmentId = instructor.DepartmentId};
 
-            await _instructorsContext.Instructors.AddAsync(instructorEntity, cancellationToken);
-            await _instructorsContext.SaveChangesAsync();
+            await context.Instructors.AddAsync(instructorEntity, cancellationToken);
+            await context.SaveChangesAsync();
 
             return instructorEntity.Id;
         }
 
         public async Task<Instructor?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
         {
-            InstructorEntity? instructorEntity = await _instructorsContext.Instructors.
+            InstructorEntity? instructorEntity = await context.Instructors.
                 FirstOrDefaultAsync(i => i.Id == id);
 
             if (instructorEntity == null)
@@ -50,7 +52,7 @@ namespace GoodStudent.Infrastracture.Postgres.Instructors
 
         public async Task<Guid> GetIdAsync(Instructor instructor, CancellationToken cancellationToken)
         {
-            InstructorEntity? instructorEntity = await _instructorsContext.Instructors.FirstOrDefaultAsync(
+            InstructorEntity? instructorEntity = await context.Instructors.FirstOrDefaultAsync(
                     i => 
                         i.Name == instructor.Name 
                         &&
@@ -69,21 +71,16 @@ namespace GoodStudent.Infrastracture.Postgres.Instructors
 
         public async Task<Instructor> UpdateInstructorAsync(Instructor instructor, CancellationToken cancellationToken)
         {
-            InstructorEntity instructorEntity = await _instructorsContext.Instructors.FirstAsync(i => i.Id == instructor.Id);
+            InstructorEntity instructorEntity = await context.Instructors.FirstAsync(i => i.Id == instructor.Id);
 
             instructorEntity.Name = instructor.Name;
             instructorEntity.Surname = instructor.Surname;
             instructorEntity.Patronymic = instructor.Patronymic;
             instructorEntity.DepartmentId = instructor.DepartmentId;
 
-            await _instructorsContext.SaveChangesAsync();
+            await context.SaveChangesAsync();
 
             return instructor;
-        }
-
-        public InstructorRepository(InstructorsContext instructorsContext)
-        {
-            _instructorsContext = instructorsContext;
         }
     }
 }

@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace GoodStudent.Infrastracture.Postgres
 {
-    internal class BaseContext : DbContext
+    public class BaseContext : DbContext
     {
         private const string _connectionString = "Port=3306;Password=1234567890;Username=postgres;Host=localhost;";
 

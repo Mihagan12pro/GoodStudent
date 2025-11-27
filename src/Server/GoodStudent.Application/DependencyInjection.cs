@@ -22,7 +22,7 @@ namespace GoodStudent.Application
 
             services.AddScoped<IInstructorService, InstructorService>();
 
-            services.AddScoped<ISubjectService, SubjectService>();
+            //services.AddScoped<ISubjectService, SubjectService>();
           
             return services;
         }

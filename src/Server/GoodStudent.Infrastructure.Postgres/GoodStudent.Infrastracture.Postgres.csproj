@@ -19,4 +19,9 @@
     <ProjectReference Include="..\GoodStudent.Domain\GoodStudent.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Events\Lessons\" />
+    <Folder Include="Migrations\" />
+  </ItemGroup>
+
 </Project>

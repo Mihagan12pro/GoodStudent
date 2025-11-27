@@ -23,26 +23,14 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddPostgresInfrastructure(this IServiceCollection services)
     {
-        services.AddDbContext<StudentsContext>();
+        services.AddDbContext<GoodStudentContext>();
 
         services.AddScoped<IGroupsRepository, GroupsRepository>();
         services.AddScoped<IStudentsRepository, StudentsRepository>();
-
-
-        services.AddDbContext<SectionsContext>();
-
         services.AddScoped<IFacultiesRepository, FacultiesRepository>();
         services.AddScoped<IDepartmentsRepository, DepartmentsRepository>();
         services.AddScoped<IProfessionsRepository, ProfessionsRepository>();
-
-
-        services.AddDbContext<InstructorsContext>();
-
         services.AddScoped<IInstructorsRepository, InstructorRepository>();
-
-
-        services.AddDbContext<EventsContext>();
-
         services.AddScoped<ISubjectsRepository, SubjectsRepository>();
 
         return services;

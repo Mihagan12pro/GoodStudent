@@ -8,11 +8,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace GoodStudent.Infrastracture.Postgres.Sections.Departments
 {
-    internal class DepartmentsRepository : IDepartmentsRepository
+    internal class DepartmentsRepository : GoodStudentRepository, IDepartmentsRepository
     {
-        private readonly SectionsContext _sectionsContext;
-
-        private readonly InstructorsContext _instructorsContext;
+        public DepartmentsRepository(GoodStudentContext context) : base(context)
+        {
+        }
 
         public async Task<Guid> AddAsync(Department department, CancellationToken cancellationToken)
         {
@@ -25,8 +25,8 @@ namespace GoodStudent.Infrastracture.Postgres.Sections.Departments
                 FacultyId = department.FacultyId
             };
 
-            await _sectionsContext.Departments.AddAsync(departmentEntity, cancellationToken);
-            await _sectionsContext.SaveChangesAsync();
+            await context.Departments.AddAsync(departmentEntity, cancellationToken);
+            await context.SaveChangesAsync();
 
             Guid id = departmentEntity.Id;
 
@@ -35,11 +35,11 @@ namespace GoodStudent.Infrastracture.Postgres.Sections.Departments
 
         public async Task<Department?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
         {
-            DepartmentEntity? departmentEntity = await _sectionsContext.Departments.FirstOrDefaultAsync(d => d.Id == id);
+            DepartmentEntity? departmentEntity = await context.Departments.FirstOrDefaultAsync(d => d.Id == id);
             if (departmentEntity == null)
                 return null;
 
-            FacultyEntity facultyEntity = await _sectionsContext.Faculties.FirstAsync(f => f.Id == departmentEntity.FacultyId);
+            FacultyEntity facultyEntity = await context.Faculties.FirstAsync(f => f.Id == departmentEntity.FacultyId);
 
             Department department = new Department()
             { 
@@ -55,7 +55,7 @@ namespace GoodStudent.Infrastracture.Postgres.Sections.Departments
 
         public async Task<Guid> GetIdAsync(string tittle, CancellationToken cancellationToken)
         {
-            DepartmentEntity? departmentEntity = await _sectionsContext.Departments.
+            DepartmentEntity? departmentEntity = await context.Departments.
                 FirstOrDefaultAsync(d => d.Tittle == tittle);
 
             if (departmentEntity == null)
@@ -66,7 +66,7 @@ namespace GoodStudent.Infrastracture.Postgres.Sections.Departments
 
         public async Task<IEnumerable<Profession>> GetProfessionsAsync(Guid id, CancellationToken cancellationToken)
         {
-            IEnumerable<ProfessionEntity> professionEntities = await _sectionsContext.Professions.Select(p => p).
+            IEnumerable<ProfessionEntity> professionEntities = await context.Professions.Select(p => p).
                 Where(p => p.DepartmentId == id).
                     ToListAsync();
 
@@ -91,7 +91,7 @@ namespace GoodStudent.Infrastracture.Postgres.Sections.Departments
 
         public async Task<bool> UpdateAdminAsync(Guid DepartmentId, Guid InstructorId, CancellationToken cancellationToken)
         {
-            DepartmentEntity? departmentEntity = await _sectionsContext.Departments.
+            DepartmentEntity? departmentEntity = await context.Departments.
                 Select(d => d).
                     Where(d => d.Id == DepartmentId).FirstOrDefaultAsync();
 
@@ -102,15 +102,9 @@ namespace GoodStudent.Infrastracture.Postgres.Sections.Departments
 
             departmentEntity.AdminId = InstructorId;
 
-            await _sectionsContext.SaveChangesAsync();
+            await context.SaveChangesAsync();
 
             return true;
-        }
-
-        public DepartmentsRepository(SectionsContext sectionsContext, InstructorsContext instructorsContext)
-        {
-            _sectionsContext = sectionsContext;
-            _instructorsContext = instructorsContext;
         }
     }
 }
