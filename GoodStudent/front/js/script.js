@@ -2,29 +2,39 @@ document.addEventListener('DOMContentLoaded', function() {
     const showRegisterLink = document.getElementById('show-register');
     const showLoginLink = document.getElementById('show-login');
     const loginForm = document.getElementById('login-form');
-    const registerForm = document.getElementById('register-form');    
+    const registerForm = document.getElementById('register-form');       
     function showRegisterForm() {
         console.log('Показываем форму регистрации');
         loginForm.classList.add('hidden');
         registerForm.classList.remove('hidden');
-    }    
+    }        
     function showLoginForm() {
         console.log('Показываем форму входа');
         registerForm.classList.add('hidden');
         loginForm.classList.remove('hidden');
-    }    
+    }        
     if (showRegisterLink) {
         showRegisterLink.addEventListener('click', function(e) {
             e.preventDefault();
             showRegisterForm();
         });
-    }    
+    }        
     if (showLoginLink) {
         showLoginLink.addEventListener('click', function(e) {
             e.preventDefault();
             showLoginForm();
         });
     }    
+    function getInstructorIdByEmail(email) {
+        const instructorEmails = {
+            'teacher1@edu.ru': '11111111-1111-1111-1111-111111111111',
+            'teacher2@edu.ru': '22222222-2222-2222-2222-222222222222', 
+            'prepod@edu.ru': '1',
+            'prepod@mospolytech.ru': '1',
+            'teacher@edu.ru': '1'
+        };
+        return instructorEmails[email.toLowerCase()] || null;
+    }   
     document.getElementById('loginForm').addEventListener('submit', function(e) {
         e.preventDefault();
         const email = document.getElementById('login-email').value;
@@ -45,14 +55,15 @@ document.addEventListener('DOMContentLoaded', function() {
         localStorage.setItem('user', JSON.stringify({
             name: userRole === 'admin' ? 'Заведующий кафедрой' : 'Преподаватель',
             email: email,
-            role: userRole
+            role: userRole,
+            instructorId: userRole === 'teacher' ? getInstructorIdByEmail(email) : null  // Убрали this.
         }));        
         if (userRole === 'admin') {
             window.location.href = '/admin-dashboard.html';
         } else {
             window.location.href = '/index.html';
         }
-    });
+    });    
     document.getElementById('registerForm').addEventListener('submit', function(e) {
         e.preventDefault();
         const email = document.getElementById('register-email').value;
@@ -67,7 +78,8 @@ document.addEventListener('DOMContentLoaded', function() {
         localStorage.setItem('user', JSON.stringify({
             name: userType === 'admin' ? 'Заведующий кафедрой' : 'Преподаватель',
             email: email,
-            role: userType   
+            role: userType,
+            instructorId: userType === 'teacher' ? getInstructorIdByEmail(email) : null  // Добавили для регистрации тоже
         }));           
         alert(`Регистрация успешна!\nEmail: ${email}\nТип аккаунта: ${userType === 'admin' ? 'Заведующий кафедрой' : 'Преподаватель'}`);
         if (userType === 'admin') {

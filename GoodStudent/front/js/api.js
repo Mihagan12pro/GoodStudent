@@ -405,6 +405,29 @@ async updateGroup(groupId, groupData) {
         return { success: false, error: error.message };
     }
 }
+async getInstructorAssignments(instructorId) {
+  try {
+    const response = await fetch(`${this.fallbackUrl}/instructors/${instructorId}/assignments`);
+    if (response.ok) return await response.json();
+    throw new Error('Failed to fetch instructor assignments');
+  } catch (error) {
+    console.error('Ошибка загрузки назначений преподавателя:', error);
+    return this.getDemoInstructorAssignments();
+  }
+}
+getDemoInstructorAssignments() {
+  return [
+    {
+      id: 'demo-1',
+      subject_name: 'Системы инженерного анализа',
+      group_number: '231-324',
+      classroom: 'Пр/06',
+      assignment_date: new Date().toISOString(),
+      start_time: '12:20',
+      end_time: '13:50'
+    }
+  ];
+}
 async getAllSubjectsFull() {
     try {
         const response = await fetch(`${this.fallbackUrl}/csharp/subjects`);

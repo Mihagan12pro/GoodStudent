@@ -15,11 +15,12 @@ this.currentView='manual';
 this.init();
 }
 async init(){
-console.log('Инициализация приложения преподавателя');
-await this.loadTeacherData();
-this.setupEventListeners();
-this.displayCurrentDate();
-this.setupAttendanceButton();
+  console.log('Инициализация приложения преподавателя');
+  await this.loadTeacherData();
+  await this.loadInstructorAssignments();
+  this.setupEventListeners();
+  this.displayCurrentDate();
+  this.setupAttendanceButton();
 }
 async loadTeacherData(){
 try{
@@ -61,21 +62,117 @@ console.error('Ошибка загрузки назначений:',error);
 this.assignments=[];
 }
 }
+// getCurrentInstructorId(){
+// const user=this.currentUser;
+// if(user&&user.email){
+// const instructor=this.getInstructorByEmail(user.email);
+// return instructor?instructor.id:null;
+// }
+// return null;
+// }
+// getInstructorByEmail(email){
+// return{
+// id:'1',
+// name:'Преподаватель',
+// surname:'Тестовый',
+// email:email
+// };
+// }
+async loadInstructorAssignments() {
+  try {
+    const instructorId = this.getCurrentInstructorId();
+    if (!instructorId) {
+      console.log('ID преподавателя не найден, используем демо-данные');
+      return this.getDemoAssignments();
+    }
+    const response = await fetch(`http://localhost:5000/api/instructors/${instructorId}/assignments`);
+    if (response.ok) {
+      this.assignments = await response.json();
+      console.log('Назначения преподавателя загружены:', this.assignments);
+      this.renderInstructorAssignments();
+    } else {
+      console.log('Не удалось загрузить назначения, используем демо-данные');
+      this.assignments = this.getDemoAssignments();
+      this.renderInstructorAssignments();
+    }
+  } catch (error) {
+    console.error('Ошибка загрузки назначений:', error);
+    this.assignments = this.getDemoAssignments();
+    this.renderInstructorAssignments();
+  }
+}
 getCurrentInstructorId(){
-const user=this.currentUser;
-if(user&&user.email){
-const instructor=this.getInstructorByEmail(user.email);
-return instructor?instructor.id:null;
+  const user = this.currentUser;
+  if (user && user.email) {
+    if (user.instructorId) {
+      return user.instructorId;
+    }
+    const instructor = this.instructors.find(inst => 
+      inst.email === user.email || 
+      `${inst.surname} ${inst.name}`.toLowerCase().includes(user.name.toLowerCase())
+    );
+    return instructor ? instructor.id : null;
+  }
+  return null;
 }
-return null;
+renderInstructorAssignments() {
+  const scheduleContainer = document.querySelector('.schedule-items');
+  if (!scheduleContainer) return;
+  if (this.assignments.length === 0) {
+    scheduleContainer.innerHTML = `
+      <div class="schedule-item">
+        <div class="item-details">
+          <div class="item-title">Нет назначенных предметов</div>
+          <div class="item-teachers">Обратитесь к заведующему кафедрой</div>
+        </div>
+      </div>
+    `;
+    return;
+  }
+  scheduleContainer.innerHTML = this.assignments.map(assignment => `
+    <div class="schedule-item ${this.isCurrentAssignment(assignment) ? 'current' : ''}">
+      <div class="item-time">
+        <span class="time-icon"></span>
+        <span class="time-range">${assignment.start_time || '10:00'} - ${assignment.end_time || '11:30'}</span>
+      </div>
+      <div class="item-details">
+        <div class="item-room">[${assignment.classroom || 'Ауд. не указана'}]</div>
+        <div class="item-title">${assignment.subject_name || 'Предмет не указан'} (Лекция)</div>
+        <div class="item-teachers">Группа: ${assignment.group_number || 'Не указана'}</div>
+        <div class="item-dates">${assignment.assignment_date ? new Date(assignment.assignment_date).toLocaleDateString('ru-RU') : 'Дата не указана'}</div>
+      </div>
+      <button class="btn-mark-attendance" onclick="teacherApp.loadStudentsForAssignment('${assignment.id}')">
+        Отметить посещаемость
+      </button>
+    </div>
+  `).join('');
 }
-getInstructorByEmail(email){
-return{
-id:'1',
-name:'Преподаватель',
-surname:'Тестовый',
-email:email
-};
+isCurrentAssignment(assignment) {
+  const now = new Date();
+  const assignmentDate = new Date(assignment.assignment_date);
+  return assignmentDate.toDateString() === now.toDateString();
+}
+getDemoAssignments() {
+  return [
+    {
+      id: 'demo-1',
+      subject_name: 'Системы инженерного анализа',
+      group_number: '231-324',
+      classroom: 'Пр/06',
+      assignment_date: new Date().toISOString(),
+      start_time: '12:20',
+      end_time: '13:50'
+    },
+    {
+      id: 'demo-2', 
+      subject_name: 'Базы данных',
+      group_number: '231-325',
+      classroom: 'Пр/01',
+      assignment_date: new Date(Date.now() + 86400000).toISOString(),
+      start_time: '14:00',
+      end_time: '15:30'
+    }
+  ];
 }
 async loadAssignedStudents(){
 try{

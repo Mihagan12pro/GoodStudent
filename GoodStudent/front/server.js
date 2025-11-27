@@ -534,6 +534,51 @@ app.get('/api/schedule-details', async (req, res) => {
     if (client) client.release();
   }
 });
+app.get('/api/instructors/:id/assignments', async (req, res) => {
+  let client;
+  try {
+    const instructorId = req.params.id;
+    client = await pools.students.connect();    
+    const result = await client.query(`
+      SELECT 
+        ia.*,
+        sd.classroom,
+        sd.assignment_date,
+        sd.start_time,
+        sd.end_time,
+        s."Tittle" as subject_name,
+        g."number" as group_number,
+        d."Tittle" as department_name
+      FROM instructor_assignments ia
+      LEFT JOIN schedule_details sd ON ia."Id" = sd.assignment_id
+      LEFT JOIN "Professions" s ON ia.subject_id::text = s."Id"::text
+      LEFT JOIN groups g ON ia.group_id::text = g."Id"::text
+      LEFT JOIN "Departments" d ON ia.department_id::text = d."Id"::text
+      WHERE ia.instructor_id = $1
+      ORDER BY sd.assignment_date, sd.start_time
+    `, [instructorId]);    
+    const assignments = result.rows.map(row => ({
+      id: row.Id,
+      subject_id: row.subject_id,
+      subject_name: row.subject_name,
+      group_id: row.group_id,
+      group_number: row.group_number,
+      department_id: row.department_id,
+      department_name: row.department_name,
+      classroom: row.classroom,
+      assignment_date: row.assignment_date,
+      start_time: row.start_time,
+      end_time: row.end_time,
+      created_at: row.created_at
+    }));    
+    res.json(assignments);
+  } catch (error) {
+    console.error('Ошибка загрузки назначений преподавателя:', error);
+    res.status(500).json({ error: 'Ошибка загрузки назначений' });
+  } finally {
+    if (client) client.release();
+  }
+});
 app.get('/api/csharp/subjects', async (req, res) => {
     let client;
     try {
