@@ -14,14 +14,16 @@ this.currentSubjectId='all';
 this.currentView='manual';
 this.init();
 }
-async init(){
-  console.log('Инициализация приложения преподавателя');
-  await this.loadTeacherData();
-  await this.loadInstructorAssignments();
-  this.setupEventListeners();
-  this.setupGroupSelectorsSync();
-  this.displayCurrentDate();
-  this.setupAttendanceButton();
+async init() {
+    console.log('ИНИЦИАЛИЗАЦИЯ ПРЕПОДАВАТЕЛЯ!');
+    console.log('Текущий пользователь:', this.currentUser);
+    console.log('Токен аутентификации:', localStorage.getItem('authToken'));
+    await this.loadTeacherData();
+    await this.loadInstructorAssignments();
+    this.setupEventListeners();
+    this.setupGroupSelectorsSync();
+    this.displayCurrentDate();
+    console.log('ИНИЦИАЛИЗАЦИЯ ЗАВЕРШЕНА!');
 }
 setupGroupSelectorsSync() {
     const mainGroupSelect = document.getElementById('group-select');    
@@ -33,19 +35,22 @@ setupGroupSelectorsSync() {
         console.log('Селектор групп в основном контенте настроен');
     }
 }
-async loadTeacherData(){
-    try{
+async loadTeacherData() {
+    try {
         console.log('Загружаем данные преподавателя...');
-        this.instructors = await apiClient.getAllInstructors();
-        console.log('Преподаватели загружены:', this.instructors);        
-        await this.loadAssignments();
-        if(this.assignments.length>0){
-            await this.loadAssignedStudents();
-        }else{
-            await this.loadAllStudents();
-        }
-    }catch(error){
-        console.error('Ошибка загрузки данных:',error);
+        const students = await apiClient.getAllStudents();
+        const groups = await apiClient.getAllGroups();
+        this.students = this.normalizeStudents(students || [], groups || []);
+        this.groups = groups || [];
+        console.log('Студенты и группы загружены:', {
+            students: this.students.length,
+            groups: this.groups.length
+        });
+        await this.loadInstructorAssignments();
+        await this.loadAssignedStudents();
+        
+    } catch(error) {
+        console.error('Ошибка загрузки данных:', error);
         this.useDemoData();
     }
 }
@@ -92,27 +97,39 @@ this.assignments=[];
 // };
 // }
 async loadInstructorAssignments() {
-  try {
-    const instructorId = this.getCurrentInstructorId();
-    if (!instructorId) {
-      console.log('ID преподавателя не найден, используем демо-данные');
-      return this.getDemoAssignments();
+    try {
+        const instructorId = this.getCurrentInstructorId();
+        console.log('ID преподавателя для загрузки назначений:', instructorId);
+        if (!instructorId) {
+            console.log('ID преподавателя не найден, используем демо-данные');
+            this.assignments = this.getDemoAssignments();
+            this.updateScheduleDisplay();
+            return;
+        }
+        const response = await fetch(`http://localhost:5000/api/instructors/${instructorId}/assignments`);
+        if (response.ok) {
+            const assignments = await response.json();
+            console.log('Назначения преподавателя загружены:', assignments);
+            this.assignments = assignments.map(assignment => ({
+                ...assignment,
+                group_id: assignment.group_id || this.getRealGroupId(assignment.group_number)
+            }));
+        } else {
+            console.log('Не удалось загрузить назначения, используем демо-данные с реальными ID');
+            this.assignments = this.getDemoAssignments();
+        }
+        this.updateScheduleDisplay();
+    } catch (error) {
+        console.error('Ошибка загрузки назначений:', error);
+        this.assignments = this.getDemoAssignments();
+        this.updateScheduleDisplay();
     }
-    const response = await fetch(`http://localhost:5000/api/instructors/${instructorId}/assignments`);
-    if (response.ok) {
-      this.assignments = await response.json();
-      console.log('Назначения преподавателя загружены:', this.assignments);
-      this.renderInstructorAssignments();
-    } else {
-      console.log('Не удалось загрузить назначения, используем демо-данные');
-      this.assignments = this.getDemoAssignments();
-      this.renderInstructorAssignments();
-    }
-  } catch (error) {
-    console.error('Ошибка загрузки назначений:', error);
-    this.assignments = this.getDemoAssignments();
-    this.renderInstructorAssignments();
-  }
+}
+getRealGroupId(groupNumber) {
+    if (!this.groups || !this.groups.length) return null;
+    
+    const group = this.groups.find(g => g.number === groupNumber);
+    return group ? group.id : this.groups[0].id;
 }
 getCurrentInstructorId(){
     const user = this.currentUser;
@@ -163,48 +180,80 @@ renderInstructorAssignments() {
   `).join('');
 }
 isCurrentAssignment(assignment) {
-  const now = new Date();
-  const assignmentDate = new Date(assignment.assignment_date);
-  return assignmentDate.toDateString() === now.toDateString();
+    if (!assignment.assignment_date) return false;
+    const now = new Date();
+    const assignmentDate = new Date(assignment.assignment_date);
+    const isSameDate = assignmentDate.toDateString() === now.toDateString();
+    console.log(`Проверка даты: ${assignmentDate.toDateString()} === ${now.toDateString()} : ${isSameDate}`);
+    return isSameDate;
 }
 getDemoAssignments() {
-  return [
-    {
-      id: 'demo-1',
-      subject_name: 'Системы инженерного анализа',
-      group_number: '231-324',
-      classroom: 'Пр/06',
-      assignment_date: new Date().toISOString(),
-      start_time: '12:20',
-      end_time: '13:50'
-    },
-    {
-      id: 'demo-2', 
-      subject_name: 'Базы данных',
-      group_number: '231-325',
-      classroom: 'Пр/01',
-      assignment_date: new Date(Date.now() + 86400000).toISOString(),
-      start_time: '14:00',
-      end_time: '15:30'
+    const realGroupIds = this.groups && this.groups.length > 0 
+        ? this.groups.map(g => g.id)
+        : ['b8f78604-7d47-4eb0-9389-6b8eaaa1653b', '137b8ecb-402d-41fe-979d-3bb5fd02e7c2'];
+    const realGroupNumbers = this.groups && this.groups.length > 0
+        ? this.groups.map(g => g.number)
+        : ['231-324', '231-325'];
+    return [
+        {
+            id: 'demo-1',
+            subject_name: 'Системы инженерного анализа',
+            group_id: realGroupIds[0], 
+            group_number: realGroupNumbers[0], 
+            classroom: 'Пр/06',
+            assignment_date: new Date().toISOString(),
+            start_time: '12:20',
+            end_time: '13:50'
+        },
+        {
+            id: 'demo-2', 
+            subject_name: 'Базы данных',
+            group_id: realGroupIds[1] || realGroupIds[0], 
+            group_number: realGroupNumbers[1] || realGroupNumbers[0],
+            classroom: 'Пр/01',
+            assignment_date: new Date(Date.now() + 86400000).toISOString(),
+            start_time: '14:00',
+            end_time: '15:30'
+        }
+    ];
+}
+async loadAssignedStudents() {
+    try {
+        console.log('Все студенты:', this.students.length);
+        console.log('Все группы:', this.groups.length);
+        console.log('Назначения преподавателя:', this.assignments);
+        const assignedGroupIds = this.assignments.map(a => a.group_id).filter(id => id);
+        console.log('ID назначенных групп:', assignedGroupIds);
+        if (assignedGroupIds.length === 0) {
+            console.log('Нет назначенных групп, показываем всех студентов');
+            this.populateGroupSelector();
+            this.renderStudents();
+            this.updateStats();
+            return;
+        }
+        const filteredStudents = this.students.filter(student => {
+            const inAssignedGroup = assignedGroupIds.includes(student.groupId);
+            console.log(`Студент ${student.surname} ${student.name}, группа ${student.groupId}, в назначенных: ${inAssignedGroup}`);
+            return inAssignedGroup;
+        });
+        const filteredGroups = this.groups.filter(group => {
+            const inAssignments = assignedGroupIds.includes(group.id);
+            console.log(`Группа ${group.number}, ID: ${group.id}, в назначениях: ${inAssignments}`);
+            return inAssignments;
+        });
+        console.log('Отфильтрованные студенты:', filteredStudents.length);
+        console.log('Отфильтрованные группы:', filteredGroups.length);
+        this.students = filteredStudents;
+        this.groups = filteredGroups;
+        this.populateGroupSelector();
+        this.renderStudents();
+        this.updateStats();
+    } catch(error) {
+        console.error('Ошибка загрузки назначенных студентов:', error);
+        this.populateGroupSelector();
+        this.renderStudents();
+        this.updateStats();
     }
-  ];
-}
-async loadAssignedStudents(){
-try{
-const students=await apiClient.getAllStudents();
-const groups=await apiClient.getAllGroups();
-const assignedGroupIds=this.assignments.map(a=>a.group_id);
-this.students=this.normalizeStudents(students||[],groups||[])
-.filter(student=>assignedGroupIds.includes(student.groupId));
-this.groups=groups||[];
-this.subjects=await apiClient.getAllSubjects();
-this.populateGroupSelector();
-this.renderStudents();
-this.updateStats();
-}catch(error){
-console.error('Ошибка загрузки назначенных студентов:',error);
-this.useDemoData();
-}
 }
 async loadAllStudents(){
 try{
@@ -223,35 +272,40 @@ console.error('Ошибка загрузки всех студентов:',error
 this.useDemoData();
 }
 }
-normalizeStudents(students,groups){
-if(!students||!Array.isArray(students)){
-console.warn('Некорректные данные студентов:',students);
-return[];
-}
-return students.map(student=>{
-const id=student.id||student.Id||this.generateTempId();
-const name=student.name||student.Name||'';
-const surname=student.surname||student.Surname||'';
-const patronymic=student.patronymic||student.Patronymic||'';
-let groupId=student.groupId||student.group_id||student.group?.id;
-let groupName='Не указана';
-if(groupId){
-const foundGroup=groups.find(g=>g.id===groupId||g.Id===groupId);
-if(foundGroup){
-groupName=foundGroup.number||foundGroup.name||'Группа найдена';
-}
-}
-return{
-id:id,
-name:name,
-surname:surname,
-patronymic:patronymic,
-fullName:`${surname}${name}${patronymic}`.trim(),
-groupId:groupId,
-groupName:groupName,
-present:false
-};
-});
+normalizeStudents(students, groups) {
+    if(!students || !Array.isArray(students)) {
+        console.warn('Некорректные данные студентов:', students);
+        return [];
+    }
+    return students.map(student => {
+        const id = student.id || student.Id || this.generateTempId();
+        const name = student.name || student.Name || '';
+        const surname = student.surname || student.Surname || '';
+        const patronymic = student.patronymic || student.Patronymic || '';
+        let groupId = student.groupId || student.group_id || student.group?.id;
+        let groupName = 'Не указана';
+        if(groupId && groups && Array.isArray(groups)) {
+            const foundGroup = groups.find(g => 
+                g.id === groupId || 
+                g.Id === groupId ||
+                (g.number && student.groupName && g.number === student.groupName)
+            );
+            if(foundGroup) {
+                groupName = foundGroup.number || foundGroup.name || 'Группа найдена';
+                groupId = foundGroup.id || foundGroup.Id;
+            }
+        }
+        return {
+            id: id,
+            name: name,
+            surname: surname,
+            patronymic: patronymic,
+            fullName: `${surname} ${name} ${patronymic}`.trim(),
+            groupId: groupId,
+            groupName: groupName,
+            present: false
+        };
+    });
 }
 populateSubjectSelector(){
     const select = document.getElementById('subject-select');
@@ -284,79 +338,67 @@ async loadStudentsForAssignment(assignmentId) {
         return;
     }
     this.currentGroupId = assignment.group_id;
+    console.log('Установлена текущая группа:', this.currentGroupId);
     const groupSelect = document.getElementById('group-select');
     if (groupSelect) {
         groupSelect.value = assignment.group_id;
+        console.log('Селектор групп обновлен на:', assignment.group_id);
     }
-    await this.loadAssignedStudents();
+    this.renderStudents();
     alert(`Загружены студенты группы ${assignment.group_number} для предмета "${assignment.subject_name}"`);
 }
-populateGroupSelector(){
+populateGroupSelector() {
     const mainSelect = document.getElementById('group-select');
-    if(!mainSelect){
+    if(!mainSelect) {
         console.error('Элемент group-select не найден');
         return;
     }
-    const isAdmin = this.currentUser.role === 'admin';
-    console.log('Роль пользователя:', this.currentUser.role, 'isAdmin:', isAdmin);
-    let availableGroups = [];
-    if (isAdmin) {
-        availableGroups = this.groups.map(group => ({
-            group_id: group.id,
-            group_number: group.number
-        }));
-    } else {
-        if (this.currentSubjectId && this.currentSubjectId !== 'all' && this.currentSubjectId !== 'all_time') {
-            availableGroups = this.assignments.filter(assignment => 
-                assignment.subject_id == this.currentSubjectId
-            );
-            console.log('Фильтр по предмету:', this.currentSubjectId, 'групп:', availableGroups.length);
-        } else {
-            availableGroups = this.assignments && this.assignments.length > 0 ? 
-                this.assignments : 
-                [];
-        }
-    }
+    const availableGroups = this.groups.map(group => ({
+        group_id: group.id,
+        group_number: group.number
+    }));
     mainSelect.innerHTML = `
-        <option value="all">Все группы</option>
+        <option value="all">Все мои группы</option>
         ${availableGroups.map(item => 
             `<option value="${item.group_id}">${item.group_number}</option>`
         ).join('')}
     `;
-    
-    console.log(`Загружено групп для селектора: ${availableGroups.length}`);
+    console.log(`Загружено групп для преподавателя: ${availableGroups.length}`);
 }
-renderStudents(){
+renderStudents() {
     const container = document.getElementById('students-list');
     if(!container) return;
     console.log('Рендерим студентов для преподавателя, текущая группа:', this.currentGroupId);
-    if(this.students.length === 0){
+    console.log('Всего студентов доступно:', this.students.length);
+    let studentsToShow = this.students;
+    if (studentsToShow.length === 0) {
         container.innerHTML = `
             <div style="text-align:center;padding:40px;color:#666;">
                 <h4>Нет студентов для отображения</h4>
-                <p>Вам не назначены предметы или нет студентов в назначенных группах</p>
+                <p>Попробуйте загрузить студентов через панель администратора</p>
+                <button class="btn-primary" onclick="location.href='/admin-dashboard.html'">
+                    Перейти в панель администратора
+                </button>
             </div>
         `;
         return;
     }
-    let filteredStudents = this.students;
-    if(this.currentGroupId && this.currentGroupId !== 'all'){
+    if(this.currentGroupId && this.currentGroupId !== 'all') {
         console.log('Фильтруем по группе:', this.currentGroupId);
-        filteredStudents = filteredStudents.filter(student => {
-            const match = student.groupId === this.currentGroupId;
-            console.log(`Студент ${student.surname} ${student.name}, группа: ${student.groupId}, совпадение: ${match}`);
-            return match;
-        });
+        studentsToShow = studentsToShow.filter(student => 
+            student.groupId === this.currentGroupId
+        );
+        console.log('После фильтрации по группе:', studentsToShow.length);
     }
-    console.log('После фильтрации осталось студентов:', filteredStudents.length);
-    container.innerHTML = filteredStudents.map(student => `
+    container.innerHTML = studentsToShow.map(student => `
         <div class="student-item">
             <div class="student-info">
                 <div class="student-name">${student.surname} ${student.name} ${student.patronymic || ''}</div>
-                <div class="student-group">Группа: ${student.groupName}</div>
+                <div class="student-group">Группа: ${student.groupName} (ID: ${student.groupId})</div>
             </div>
             <div class="attendance-toggle">
-                <input type="checkbox" id="student-${student.id}" onchange="teacherApp.toggleStudent('${student.id}',this.checked)">
+                <input type="checkbox" id="student-${student.id}" 
+                    onchange="teacherApp.toggleStudent('${student.id}', this.checked)">
                 <label for="student-${student.id}">
                     <span class="toggle-slider"></span>
                 </label>
@@ -364,6 +406,52 @@ renderStudents(){
         </div>
     `).join('');
     this.updateStats();
+}
+updateScheduleDisplay() {
+    const scheduleContainer = document.querySelector('.schedule-items');
+    if (!scheduleContainer) {
+        console.error('Контейнер расписания не найден');
+        return;
+    }
+    console.log('Обновление расписания, назначений:', this.assignments.length);
+    if (this.assignments.length === 0) {
+        scheduleContainer.innerHTML = `
+            <div class="schedule-item">
+                <div class="item-details">
+                    <div class="item-title">Нет назначенных предметов</div>
+                    <div class="item-teachers">Обратитесь к заведующему кафедрой</div>
+                </div>
+            </div>
+        `;
+        return;
+    }
+    const sortedAssignments = [...this.assignments].sort((a, b) => {
+        const timeA = a.start_time || '00:00';
+        const timeB = b.start_time || '00:00';
+        return timeA.localeCompare(timeB);
+    });
+    scheduleContainer.innerHTML = sortedAssignments.map(assignment => {
+        const isCurrent = this.isCurrentAssignment(assignment);
+        console.log(`Назначение ${assignment.subject_name}, текущее: ${isCurrent}`);
+        return `
+            <div class="schedule-item ${isCurrent ? 'current' : ''}">
+                <div class="item-time">
+                    <span class="time-icon"></span>
+                    <span class="time-range">${assignment.start_time || '10:00'} - ${assignment.end_time || '11:30'}</span>
+                </div>
+                <div class="item-details">
+                    <div class="item-room">[${assignment.classroom || 'Ауд. не указана'}]</div>
+                    <div class="item-title">${assignment.subject_name || 'Предмет не указан'} (Лекция)</div>
+                    <div class="item-teachers">Группа: ${assignment.group_number || 'Не указана'}</div>
+                    <div class="item-dates">${assignment.assignment_date ? new Date(assignment.assignment_date).toLocaleDateString('ru-RU') : 'Дата не указана'}</div>
+                </div>
+                <button class="btn-mark-attendance" onclick="teacherApp.loadStudentsForAssignment('${assignment.id}')">
+                    Отметить посещаемость
+                </button>
+            </div>
+        `;
+    }).join('');
+    console.log('Расписание обновлено');
 }
 toggleStudent(studentId,isPresent){
 const student=this.students.find(s=>s.id===studentId);
