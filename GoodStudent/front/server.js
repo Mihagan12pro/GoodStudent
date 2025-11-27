@@ -670,6 +670,251 @@ app.get('/api/csharp/subjects', async (req, res) => {
         if (client) client.release();
     }
 });
+//
+app.get('/api/qr/lesson/:lessonId', async (req, res) => {
+    try {
+        const { lessonId } = req.params;
+        const token = generateUUID();
+        const qrData = `${req.protocol}://${req.get('host')}/api/attendance/qr/${token}`;
+        const client = await pools.students.connect();
+        const tableExists = await client.query(`
+            SELECT EXISTS (
+                SELECT FROM information_schema.tables 
+                WHERE table_schema = 'public' 
+                AND table_name = 'qr_sessions'
+            )
+        `);
+        if (!tableExists.rows[0].exists) {
+            await client.query(`
+                CREATE TABLE qr_sessions (
+                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    token TEXT UNIQUE NOT NULL,
+                    lesson_id TEXT NOT NULL,
+                    instructor_id TEXT NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    expires_at TIMESTAMP NOT NULL,
+                    is_active BOOLEAN DEFAULT true
+                )
+            `);
+        }
+        const expiresAt = new Date(Date.now() + 2 * 60 * 60 * 1000);
+        await client.query(
+            `INSERT INTO qr_sessions (token, lesson_id, instructor_id, expires_at) 
+             VALUES ($1, $2, $3, $4)`,
+            [token, lessonId, 'demo-instructor', expiresAt]
+        );        
+        client.release();        
+        res.json({
+            success: true,
+            qrData: qrData,
+            token: token,
+            expiresAt: expiresAt
+        });        
+    } catch (error) {
+        console.error('Ошибка генерации QR:', error);
+        res.status(500).json({ error: 'Ошибка генерации QR-кода' });
+    }
+});
+app.post('/api/attendance/qr/:token', async (req, res) => {
+    let client;
+    try {
+        const { token } = req.params;
+        const { studentId, studentName, groupId } = req.body;
+        
+        client = await pools.students.connect();
+        
+        // Check if session is valid
+        const sessionResult = await client.query(
+            `SELECT * FROM qr_sessions 
+             WHERE token = $1 AND is_active = true AND expires_at > NOW()`,
+            [token]
+        );
+        if (sessionResult.rows.length === 0) {
+            return res.status(400).json({ 
+                error: 'QR-код недействителен или истек',
+                code: 'QR_EXPIRED'
+            });
+        }
+        const session = sessionResult.rows[0];
+        const existingMark = await client.query(
+            `SELECT id FROM qr_attendance 
+             WHERE session_id = $1 AND student_id = $2`,
+            [session.id, studentId]
+        );
+        if (existingMark.rows.length > 0) {
+            return res.status(400).json({
+                error: 'Вы уже отметились на этом занятии',
+                code: 'ALREADY_MARKED'
+            });
+        }
+        await client.query(
+            `INSERT INTO qr_attendance (session_id, student_id, student_name, group_id, marked_at) 
+             VALUES ($1, $2, $3, $4, NOW())`,
+            [session.id, studentId, studentName, groupId]
+        );
+        
+        res.json({
+            success: true,
+            message: 'Посещаемость отмечена успешно',
+            lessonId: session.lesson_id,
+            timestamp: new Date().toISOString()
+        });
+        
+    } catch (error) {
+        console.error('Ошибка отметки по QR:', error);
+        res.status(500).json({ error: 'Ошибка отметки посещаемости' });
+    } finally {
+        if (client) client.release();
+    }
+});
+app.get('/api/qr/sessions/:token/stats', async (req, res) => {
+    let client;
+    try {
+        const { token } = req.params;
+        
+        client = await pools.students.connect();
+        
+        const statsResult = await client.query(`
+            SELECT 
+                COUNT(*) as marked_count,
+                COUNT(DISTINCT group_id) as group_count
+            FROM qr_attendance qa
+            JOIN qr_sessions qs ON qa.session_id = qs.id
+            WHERE qs.token = $1
+        `, [token]);
+        
+        const sessionResult = await client.query(
+            `SELECT expires_at FROM qr_sessions WHERE token = $1`,
+            [token]
+        );
+        
+        res.json({
+            success: true,
+            markedCount: parseInt(statsResult.rows[0].marked_count),
+            groupCount: parseInt(statsResult.rows[0].group_count),
+            expiresAt: sessionResult.rows[0]?.expires_at,
+            isValid: sessionResult.rows[0]?.expires_at > new Date()
+        });
+        
+    } catch (error) {
+        console.error('Ошибка получения статистики:', error);
+        res.status(500).json({ error: 'Ошибка получения статистики' });
+    } finally {
+        if (client) client.release();
+    }
+});
+
+// Refresh QR Token
+app.post('/api/qr/sessions/:token/refresh', async (req, res) => {
+    let client;
+    try {
+        const { token } = req.params;
+        const { duration = 600 } = req.body;
+        
+        client = await pools.students.connect();
+        
+        const newToken = generateUUID();
+        const expiresAt = new Date(Date.now() + duration * 1000);
+        
+        await client.query(
+            `UPDATE qr_sessions 
+             SET token = $1, expires_at = $2, created_at = CURRENT_TIMESTAMP
+             WHERE token = $3 RETURNING id`,
+            [newToken, expiresAt, token]
+        );
+        
+        const qrData = `${req.protocol}://${req.get('host')}/api/attendance/qr/${newToken}`;
+        
+        res.json({
+            success: true,
+            qrData: qrData,
+            token: newToken,
+            expiresAt: expiresAt
+        });
+        
+    } catch (error) {
+        console.error('Ошибка обновления QR:', error);
+        res.status(500).json({ error: 'Ошибка обновления QR-кода' });
+    } finally {
+        if (client) client.release();
+    }
+});
+app.post('/api/qr/sessions', async (req, res) => {
+    let client;
+    try {
+        const { lessonId, instructorId, duration = 600 } = req.body; // duration in seconds
+        
+        client = await pools.students.connect();
+        
+        // Check if table exists
+        const tableExists = await client.query(`
+            SELECT EXISTS (
+                SELECT FROM information_schema.tables 
+                WHERE table_schema = 'public' 
+                AND table_name = 'qr_sessions'
+            )
+        `);
+        
+        if (!tableExists.rows[0].exists) {
+            await client.query(`
+                CREATE TABLE qr_sessions (
+                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    token TEXT UNIQUE NOT NULL,
+                    lesson_id TEXT NOT NULL,
+                    instructor_id TEXT NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    expires_at TIMESTAMP NOT NULL,
+                    is_active BOOLEAN DEFAULT true
+                )
+            `);
+        }
+        
+        const token = generateUUID();
+        const expiresAt = new Date(Date.now() + duration * 1000);
+        
+        await client.query(
+            `INSERT INTO qr_sessions (token, lesson_id, instructor_id, expires_at) 
+             VALUES ($1, $2, $3, $4) RETURNING id`,
+            [token, lessonId, instructorId, expiresAt]
+        );
+        
+        const qrData = `${req.protocol}://${req.get('host')}/api/attendance/qr/${token}`;
+        
+        res.json({
+            success: true,
+            qrData: qrData,
+            token: token,
+            expiresAt: expiresAt,
+            duration: duration
+        });
+        
+    } catch (error) {
+        console.error('Ошибка создания QR сессии:', error);
+        res.status(500).json({ error: 'Ошибка создания QR сессии' });
+    } finally {
+        if (client) client.release();
+    }
+});
+app.get('/api/qr/session/:token/stats', async (req, res) => {
+    try {
+        const { token } = req.params;
+        const client = await pools.students.connect();
+        const statsResult = await client.query(`
+            SELECT COUNT(*) as marked_count 
+            FROM qr_attendance qa
+            JOIN qr_sessions qs ON qa.session_id = qs.id
+            WHERE qs.token = $1
+        `, [token]);
+        client.release();
+        res.json({
+            success: true,
+            markedCount: parseInt(statsResult.rows[0].marked_count)
+        });
+    } catch (error) {
+        console.error('Ошибка получения статистики:', error);
+        res.status(500).json({ error: 'Ошибка получения статистики' });
+    }
+});
 // app.get('/api/csharp/subjects', async (req, res) => {
 //     try {
 //         const response = await fetch('https://localhost:7298/api/sections/Subjects', {
@@ -808,7 +1053,47 @@ app.get('/index.html', (req, res) => { res.sendFile(path.join(__dirname, 'index.
 app.get('/admin-dashboard.html', (req, res) => { res.sendFile(path.join(__dirname, 'admin-dashboard.html')); });
 app.get('/form.html', (req, res) => { res.sendFile(path.join(__dirname, 'form.html')); });
 app.get('*', (req, res) => { res.redirect('/'); });
-app.listen(PORT, () => {
+async function initializeQRTables() {
+    let client;
+    try {
+        client = await pools.students.connect();
+        console.log('Инициализация таблиц для QR-системы...');
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS qr_sessions (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                token TEXT UNIQUE NOT NULL,
+                lesson_id TEXT NOT NULL,
+                instructor_id TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                expires_at TIMESTAMP NOT NULL,
+                is_active BOOLEAN DEFAULT true
+            )
+        `);
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS qr_attendance (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                session_id UUID REFERENCES qr_sessions(id),
+                student_id TEXT NOT NULL,
+                student_name TEXT NOT NULL,
+                group_id TEXT,
+                marked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+        console.log('QR таблицы успешно инициализированы');
+    } catch (error) {
+        console.error('Ошибка инициализации QR таблиц:', error);
+    } finally {
+        if (client) client.release();
+    }
+}
+app.get('/qr-generator.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'qr-generator.html'));
+});
+app.get('/student-qr.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'student-qr.html'));
+});
+app.listen(PORT, async () =>  {
+  await initializeQRTables();
   console.log('='.repeat(60));
   console.log(`Node.js сервер запущен на http://localhost:${PORT}`);
   console.log('ПОДКЛЮЧЕНИЕ К POSTGRESQL: АКТИВНО');

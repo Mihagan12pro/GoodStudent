@@ -21,17 +21,211 @@ initCalendar() {
     this.renderCalendar();
     this.setupCalendarEvents();
 }
+// function generateQRCode(lessonId) {
+//     window.open(`/qr-generator.html?lesson=${lessonId}`, '_blank');
+// }
+filterStudentsByCurrentTime() {
+        const now = new Date();
+        const currentTime = now.toTimeString().slice(0, 5); // "HH:MM"
+        const today = now.toISOString().split('T')[0];
+        
+        console.log('Фильтрация по времени:', { currentTime, today });
+        
+        // Находим текущие занятия
+        const currentAssignments = this.assignments.filter(assignment => {
+            if (!assignment.assignment_date) return false;
+            
+            const assignmentDate = assignment.assignment_date.split('T')[0];
+            const isToday = assignmentDate === today;
+            const isCurrentTime = this.isTimeInRange(
+                currentTime, 
+                assignment.start_time, 
+                assignment.end_time
+            );
+            
+            console.log(`Проверка занятия: ${assignment.subject_name}, дата: ${assignmentDate}, сегодня: ${isToday}, время: ${assignment.start_time}-${assignment.end_time}, текущее: ${isCurrentTime}`);
+            
+            return isToday && isCurrentTime;
+        });
+        
+        console.log('Текущие занятия:', currentAssignments);
+        
+        if (currentAssignments.length > 0) {
+            // Показываем студентов только для текущих занятий
+            const currentGroupIds = currentAssignments.map(a => a.group_id);
+            this.currentGroupId = currentGroupIds[0]; // Берем первую группу
+            
+            // Обновляем селекторы
+            const groupSelect = document.getElementById('group-select');
+            if (groupSelect) {
+                groupSelect.value = this.currentGroupId;
+            }
+            
+            const subjectSelect = document.getElementById('subject-select');
+            if (subjectSelect && currentAssignments[0].subject_id) {
+                subjectSelect.value = currentAssignments[0].subject_id;
+                this.currentSubjectId = currentAssignments[0].subject_id;
+            }
+            
+            alert(`Автоматически загружены студенты для текущего занятия: ${currentAssignments[0].subject_name}`);
+        } else {
+            // Нет текущих занятий - показываем сообщение
+            this.showNoCurrentClassesMessage();
+        }
+        
+        this.renderStudents();
+    }
+
+    isTimeInRange(currentTime, startTime, endTime) {
+        if (!startTime || !endTime) return false;
+        
+        const [currentHours, currentMinutes] = currentTime.split(':').map(Number);
+        const [startHours, startMinutes] = startTime.split(':').map(Number);
+        const [endHours, endMinutes] = endTime.split(':').map(Number);
+        
+        const currentTotal = currentHours * 60 + currentMinutes;
+        const startTotal = startHours * 60 + startMinutes;
+        const endTotal = endHours * 60 + endMinutes;
+        
+        return currentTotal >= startTotal && currentTotal <= endTotal;
+    }
+
+    showNoCurrentClassesMessage() {
+        const container = document.getElementById('students-list');
+        if (!container) return;
+        
+        container.innerHTML = `
+            <div style="text-align:center;padding:40px;color:#666;">
+                <h4>Сейчас нет активных занятий</h4>
+                <p>Вы можете вручную выбрать группу и предмет для отметки посещаемости</p>
+                <div style="margin-top:20px;">
+                    <button class="btn-primary" onclick="teacherApp.showAllStudents()">
+                        Показать всех студентов
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+    showAllStudents() {
+       this.currentGroupId = 'all';
+        this.currentSubjectId = 'all';
+        const groupSelect = document.getElementById('group-select');
+        if (groupSelect) groupSelect.value = 'all';
+        const subjectSelect = document.getElementById('subject-select');
+        if (subjectSelect) subjectSelect.value = 'all';
+        this.renderStudents();
+    }
+   async init() {
+        console.log('Инициализация приложения преподавателя');
+        
+        await this.loadTeacherData();
+        await this.loadInstructorAssignments();
+        this.setupEventListeners();
+        this.setupGroupSelectorsSync();
+        this.displayCurrentDate();
+        this.initCalendar();
+        this.debugAssignmentDates();
+        setTimeout(() => {
+            this.filterStudentsByCurrentTime();
+        }, 1000);
+    }
+    filterStudentsByCurrentTime() {
+        const now = new Date();
+        const currentTime = now.toTimeString().slice(0, 5); // "HH:MM"
+        const today = now.toISOString().split('T')[0];
+        const currentDayOfWeek = now.getDay(); // 0-воскресенье, 1-понедельник...
+        
+        console.log('=== ФИЛЬТРАЦИЯ ПО ТЕКУЩЕМУ ВРЕМЕНИ ===');
+        console.log('Сегодня:', today, 'Текущее время:', currentTime, 'День недели:', currentDayOfWeek);
+
+        // Находим текущие занятия (в течение всего дня)
+        const todaysAssignments = this.assignments.filter(assignment => {
+            if (!assignment.assignment_date) return false;
+            
+            const assignmentDate = assignment.assignment_date.split('T')[0];
+            const isToday = assignmentDate === today;
+            
+            console.log(`Проверка занятия: ${assignment.subject_name}, дата: ${assignmentDate}, сегодня: ${isToday}`);
+            
+            return isToday;
+        });
+
+        console.log('Занятия на сегодня:', todaysAssignments);
+
+        if (todaysAssignments.length > 0) {
+            // Показываем студентов только для сегодняшних занятий
+            const currentGroupIds = todaysAssignments.map(a => a.group_id);
+            const currentSubjectIds = todaysAssignments.map(a => a.subject_id);
+            
+            // Устанавливаем текущие фильтры
+            this.currentGroupId = currentGroupIds[0] || 'all';
+            this.currentSubjectId = currentSubjectIds[0] || 'all';
+
+            // Обновляем селекторы
+            const groupSelect = document.getElementById('group-select');
+            if (groupSelect && this.currentGroupId !== 'all') {
+                groupSelect.value = this.currentGroupId;
+            }
+            const subjectSelect = document.getElementById('subject-select');
+            if (subjectSelect && this.currentSubjectId !== 'all') {
+                subjectSelect.value = this.currentSubjectId;
+            }
+            console.log('Автоматически установлены фильтры:', {
+                группа: this.currentGroupId,
+                предмет: this.currentSubjectId
+            });
+            this.showCurrentScheduleMessage(todaysAssignments);
+        } else {
+            this.showNoClassesTodayMessage();
+        }
+        
+        this.renderStudents();
+    }
+     showCurrentScheduleMessage(assignments) {
+        const subjectNames = [...new Set(assignments.map(a => a.subject_name))];
+        const groupNames = [...new Set(assignments.map(a => a.group_number))];
+        
+        console.log(`Автоматически загружены студенты для: ${subjectNames.join(', ')} - группы: ${groupNames.join(', ')}`);
+        
+        // Можно показать всплывающее сообщение
+        // alert(`Автоматически загружены студенты для:\n${subjectNames.join(', ')}\nГруппы: ${groupNames.join(', ')}`);
+    }
+
+    showNoClassesTodayMessage() {
+        const container = document.getElementById('students-list');
+        if (!container) return;
+        
+        const now = new Date();
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const todayString = now.toLocaleDateString('ru-RU', options);
+        
+        container.innerHTML = `
+            <div style="text-align:center;padding:40px;color:#666;">
+                <h4>Сегодня нет занятий!</h4>
+                <p><strong>${todayString}</strong></p>
+                <p>Отдыхайте или занимайтесь научной работой</p>
+                <div style="margin-top:20px;">
+                    <button class="btn-primary" onclick="teacherApp.showAllStudents()">
+                        Показать всех студентов
+                    </button>
+                </div>
+            </div>
+        `;
+    }
 renderCalendar() {
     const calendarGrid = document.getElementById('calendar-grid');
     if (!calendarGrid) return;
     const monthNames = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
     document.getElementById('current-month').textContent = 
         `${monthNames[this.currentMonth]} ${this.currentYear}`;
+    console.log('=== РЕНДЕРИНГ КАЛЕНДАРЯ ===');
+    console.log('Текущий месяц:', this.currentMonth, 'Год:', this.currentYear);
     const firstDay = new Date(this.currentYear, this.currentMonth, 1);
     const lastDay = new Date(this.currentYear, this.currentMonth + 1, 0);
     const daysInMonth = lastDay.getDate();
     const startingDay = firstDay.getDay();
     const monthAssignments = this.getAssignmentsForMonth(this.currentMonth, this.currentYear);
+    console.log('Занятия в этом месяце:', monthAssignments);
     let calendarHTML = '';
     const dayNames = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
     dayNames.forEach(day => {
@@ -44,15 +238,23 @@ renderCalendar() {
     for (let day = 1; day <= daysInMonth; day++) {
         const date = new Date(this.currentYear, this.currentMonth, day);
         const dateString = date.toISOString().split('T')[0];
-        
-        const isToday = date.toDateString() === today.toDateString();
-        const hasClass = monthAssignments.some(assignment => 
-            assignment.assignment_date && 
-            assignment.assignment_date.split('T')[0] === dateString
-        );
+        const isToday = 
+            date.getFullYear() === today.getFullYear() &&
+            date.getMonth() === today.getMonth() &&
+            date.getDate() === today.getDate();
+        const hasClass = monthAssignments.some(assignment => {
+            if (!assignment.assignment_date) return false;
+            const assignmentDate = new Date(assignment.assignment_date);
+            const isSameDate = 
+                assignmentDate.getFullYear() === date.getFullYear() &&
+                assignmentDate.getMonth() === date.getMonth() &&
+                assignmentDate.getDate() === date.getDate();
+            return isSameDate;
+        });
         let dayClass = 'calendar-day';
         if (isToday) dayClass += ' today';
         if (hasClass) dayClass += ' has-class';
+        console.log(`День ${day}: ${dateString}, сегодня: ${isToday}, есть занятия: ${hasClass}`);
         calendarHTML += `
             <div class="${dayClass}" data-date="${dateString}">
                 <span class="day-number">${day}</span>
@@ -60,16 +262,16 @@ renderCalendar() {
             </div>
         `;
     }
-    
     calendarGrid.innerHTML = calendarHTML;
 }
 getAssignmentsForMonth(month, year) {
     return this.assignments.filter(assignment => {
         if (!assignment.assignment_date) return false;
-        
         const assignmentDate = new Date(assignment.assignment_date);
-        return assignmentDate.getMonth() === month && 
-               assignmentDate.getFullYear() === year;
+        const isSameMonth = assignmentDate.getMonth() === month;
+        const isSameYear = assignmentDate.getFullYear() === year;
+        console.log(`Проверка занятия для календаря: ${assignmentDate.toISOString()}, месяц ${assignmentDate.getMonth()}, год ${assignmentDate.getFullYear()} -> ${isSameMonth && isSameYear}`);
+        return isSameMonth && isSameYear;
     });
 }
 setupCalendarEvents() {
@@ -84,19 +286,50 @@ setupCalendarEvents() {
     });
 }
 showDaySchedule(date) {
-    const dayAssignments = this.assignments.filter(assignment => 
-        assignment.assignment_date && 
-        assignment.assignment_date.split('T')[0] === date
-    );
+    console.log('=== ПОКАЗ ЗАНЯТИЙ НА ДЕНЬ ===');
+    console.log('Выбранная дата:', date);
+    console.log('Все назначения:', this.assignments);
+    const dayAssignments = this.assignments.filter(assignment => {
+        if (!assignment.assignment_date) {
+            console.log('Назначение без даты:', assignment);
+            return false;
+        }
+        const assignmentDate = new Date(assignment.assignment_date);
+        const selectedDate = new Date(date);
+        const isSameDate = 
+            assignmentDate.getFullYear() === selectedDate.getFullYear() &&
+            assignmentDate.getMonth() === selectedDate.getMonth() &&
+            assignmentDate.getDate() === selectedDate.getDate();
+        console.log(`Проверка: ${assignmentDate.toISOString().split('T')[0]} === ${selectedDate.toISOString().split('T')[0]} : ${isSameDate}`);
+        console.log(`Предмет: ${assignment.subject_name}, Дата занятия: ${assignment.assignment_date}`);
+        return isSameDate;
+    });
+    console.log('Найденные занятия на выбранную дату:', dayAssignments);
     if (dayAssignments.length === 0) {
-        alert(`На ${new Date(date).toLocaleDateString('ru-RU')} нет занятий`);
+        const formattedDate = new Date(date).toLocaleDateString('ru-RU', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+        alert(`На ${formattedDate} нет занятий`);
         return;
     }
-    const scheduleText = dayAssignments.map(assignment => 
-        `${assignment.start_time || '--:--'} - ${assignment.subject_name} (${assignment.group_number})`
-    ).join('\n');
+    const scheduleText = dayAssignments.map(assignment => {
+        const timeInfo = assignment.start_time && assignment.end_time 
+            ? `${assignment.start_time} - ${assignment.end_time}`
+            : '--:-- - --:--';
+        return `${timeInfo} - ${assignment.subject_name} (${assignment.group_number}) - ${assignment.classroom || 'Ауд. не указана'}`;
+    }).join('\n');
     
-    alert(`Занятия на ${new Date(date).toLocaleDateString('ru-RU')}:\n\n${scheduleText}`);
+    const formattedDate = new Date(date).toLocaleDateString('ru-RU', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+    
+    alert(`Занятия на ${formattedDate}:\n\n${scheduleText}`);
 }
 prevMonth() {
     this.currentMonth--;
@@ -114,6 +347,25 @@ nextMonth() {
     }
     this.renderCalendar();
 }
+debugAssignmentDates() {
+    console.log('ПРОВЕРКА ФОРМАТА ДАТ НАЗНАЧЕНИЙ ');
+    this.assignments.forEach((assignment, index) => {
+        console.log(`Назначение ${index + 1}:`);
+        console.log('  - ID:', assignment.id);
+        console.log('  - Предмет:', assignment.subject_name);
+        console.log('  - Дата назначения:', assignment.assignment_date);
+        console.log('  - Тип даты:', typeof assignment.assignment_date);
+        if (assignment.assignment_date) {
+            const dateObj = new Date(assignment.assignment_date);
+            console.log('  - Объект Date:', dateObj);
+            console.log('  - Год:', dateObj.getFullYear());
+            console.log('  - Месяц:', dateObj.getMonth());
+            console.log('  - День:', dateObj.getDate());
+            console.log('  - ISO строка:', dateObj.toISOString());
+            console.log('  - Локализованная дата:', dateObj.toLocaleDateString('ru-RU'));
+        }
+    });
+}
 async init() {
     console.log('Инициализация приложения преподавателя');
     setTimeout(() => {
@@ -129,6 +381,8 @@ async init() {
     this.setupGroupSelectorsSync();
     this.displayCurrentDate();
     this.initCalendar();
+    this.debugAssignmentDates();
+    
 }
 setupGroupSelectorsSync() {
     const mainGroupSelect = document.getElementById('group-select');    
@@ -304,14 +558,16 @@ isCurrentAssignment(assignment) {
 getDemoAssignments() {
     const realGroups = this.groups || [];
     console.log('Доступные реальные группы:', realGroups);
+    
     const group231_320 = realGroups.find(g => g.number === '231-320');
     const group231_323 = realGroups.find(g => g.number === '231-323');
+    
     const group1 = group231_320 || (realGroups[0] || { id: '0ed1e572-12ce-45f5-87a0-5e6ef8382e15', number: '231-320' });
     const group2 = group231_323 || (realGroups[1] || { id: '982b70c9-a16e-41d5-bc88-005a1175fe66', number: '231-323' });
-    console.log('Используемые группы для демо-данных:', {
-        group1: group1.number,
-        group2: group2.number
-    });
+
+    const today = new Date();
+    const todayString = today.toISOString().split('T')[0];
+
     return [
         {
             id: 'demo-1',
@@ -320,7 +576,7 @@ getDemoAssignments() {
             group_id: group1.id, 
             group_number: group1.number,
             classroom: 'Пр/06',
-            assignment_date: new Date().toISOString(),
+            assignment_date: todayString, 
             start_time: '12:20',
             end_time: '13:50'
         },
@@ -331,11 +587,30 @@ getDemoAssignments() {
             group_id: group2.id, 
             group_number: group2.number,
             classroom: 'Пр/01',
-            assignment_date: new Date(Date.now() + 86400000).toISOString(),
+            assignment_date: todayString, 
             start_time: '14:00',
             end_time: '15:30'
+        },
+        {
+            id: 'demo-3', 
+            subject_id: '3',
+            subject_name: 'Веб-программирование',
+            group_id: group1.id, 
+            group_number: group1.number,
+            classroom: 'Ак/201',
+            assignment_date: todayString, 
+            start_time: '18:00',
+            end_time: '19:30'
         }
     ];
+}
+showStudentsForToday() {
+    this.filterStudentsByCurrentTime();
+}
+showStudentsForAllTime() {
+    this.currentGroupId = 'all';
+    this.currentSubjectId = 'all';
+    this.renderStudents();
 }
 async loadAssignedStudents() {
     try {
@@ -829,5 +1104,9 @@ generateTempId(){
 return'temp_'+Date.now()+'_'+Math.random().toString(36).substr(2,9);
 }
 }
+function generateQRCode(lessonId) {
+    window.open(`/qr-generator.html?lesson=${lessonId}`, '_blank');
+}
+
 const teacherApp=new TeacherApp();
 window.teacherApp=teacherApp;

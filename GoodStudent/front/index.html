@@ -14,6 +14,9 @@
                 <div class="logo">
                     <img src="/images/logoo.png" alt="GoodStudent" class="logo-icon">
                     <h1 class="logo-text">GoodStudent</h1>
+                    <button class="btn-qr-header" onclick="generateQRCode('demo-1')">
+                        Создать QR-код
+                    </button>
                 </div>
             </div>
             <div class="header-right">
@@ -84,6 +87,16 @@
                             <select id="group-select" class="filter-select">
                                 <option value="all">Все группы</option>
                             </select>
+                        </div>
+                        <div class="filter-group">
+                            <button class="btn-secondary" onclick="teacherApp.showStudentsForToday()" 
+                                    style="padding: 8px 12px; font-size: 12px;">
+                                Только сегодня
+                            </button>
+                            <button class="btn-secondary" onclick="teacherApp.showStudentsForAllTime()" 
+                                    style="padding: 8px 12px; font-size: 12px;">
+                                Все время
+                            </button>
                         </div>
                     </div>
                     <div class="date-info" id="current-date"></div>
@@ -160,7 +173,38 @@
             </div>
         </div>
     </div>
+
+    <style>
+        .btn-qr-header {
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-left: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-qr-header:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+    </style>
+
 <script src="/js/api.js"></script>
 <script src="/js/teacher.js"></script>
+<script>
+    function generateQRCode(lessonId) {
+        window.open(`/qr-generator.html?lesson=${lessonId}`, '_blank');
+    }
+</script>
 </body>
 </html>
