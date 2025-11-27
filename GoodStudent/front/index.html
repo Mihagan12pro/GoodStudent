@@ -100,23 +100,38 @@
                             <div class="students-list" id="students-list">
                             </div>
                         </div>
-                        <div class="attendance-actions">
-                            <button class="btn-primary" id="save-attendance-btn">Сохранить посещаемость</button>
-                        </div>
+                        
+                        <!-- КАЛЕНДАРЬ ПЕРЕМЕЩЕН СЮДА -->
                         <div class="attendance-calendar">
-    <div class="calendar-header">
-        <h4>Календарь занятий</h4>
-        <div class="calendar-nav">
-            <button class="nav-btn" onclick="teacherApp.prevMonth()">←</button>
-            <span class="current-month" id="current-month">Ноябрь 2025</span>
-            <button class="nav-btn" onclick="teacherApp.nextMonth()">→</button>
-        </div>
-    </div>
-    <div class="calendar-grid" id="calendar-grid">
+                            <div class="calendar-header">
+                                <h4>Календарь занятий</h4>
+                                <div class="calendar-nav">
+                                    <button class="nav-btn" onclick="teacherApp.prevMonth()">←</button>
+                                    <span class="current-month" id="current-month">Ноябрь 2025</span>
+                                    <button class="nav-btn" onclick="teacherApp.nextMonth()">→</button>
+                                </div>
+                            </div>
+                            <div class="calendar-grid" id="calendar-grid">
+                                <!-- Календарь будет генерироваться JavaScript -->
+                            </div>
                             <div class="today-marker">
                                 <div class="today-indicator"></div>
                                 <span>Сегодня</span>
                             </div>
+                            <div class="calendar-legend">
+                                <div class="legend-item">
+                                    <span class="legend-color has-class"></span>
+                                    <span>Есть занятия</span>
+                                </div>
+                                <div class="legend-item">
+                                    <span class="legend-color today"></span>
+                                    <span>Сегодня</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="attendance-actions">
+                            <button class="btn-primary" id="save-attendance-btn">Сохранить посещаемость</button>
                         </div>
                     </div>
                 </div>
