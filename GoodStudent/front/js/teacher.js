@@ -106,29 +106,170 @@ filterStudentsByCurrentTime() {
             </div>
         `;
     }
-    showAllStudents() {
-       this.currentGroupId = 'all';
-        this.currentSubjectId = 'all';
-        const groupSelect = document.getElementById('group-select');
-        if (groupSelect) groupSelect.value = 'all';
-        const subjectSelect = document.getElementById('subject-select');
-        if (subjectSelect) subjectSelect.value = 'all';
-        this.renderStudents();
-    }
+   showAllStudents() {
+    this.currentGroupId = 'all';
+    this.currentSubjectId = 'all';
+    const groupSelect = document.getElementById('group-select');
+    if (groupSelect) groupSelect.value = 'all';
+    
+    const subjectSelect = document.getElementById('subject-select');
+    if (subjectSelect) subjectSelect.value = 'all';
+    
+    // Убираем уведомления
+    const notification = document.querySelector('.current-lesson-notification');
+    const message = document.querySelector('.no-lesson-message');
+    if (notification) notification.remove();
+    if (message) message.remove();
+    
+    this.renderStudents();
+}
    async init() {
-        console.log('Инициализация приложения преподавателя');
-        
-        await this.loadTeacherData();
-        await this.loadInstructorAssignments();
-        this.setupEventListeners();
-        this.setupGroupSelectorsSync();
-        this.displayCurrentDate();
-        this.initCalendar();
-        this.debugAssignmentDates();
-        setTimeout(() => {
-            this.filterStudentsByCurrentTime();
-        }, 1000);
+       onsole.log('Инициализация приложения преподавателя');
+    await this.loadTeacherData();
+    await this.loadInstructorAssignments();
+    this.setupEventListeners();
+    this.setupGroupSelectorsSync();
+    this.displayCurrentDate();
+    this.initCalendar();
+    this.debugAssignmentDates();
+    setTimeout(() => {
+        this.loadStudentsForCurrentLesson();
+    }, 1000);
     }
+    loadStudentsForCurrentLesson() {
+    const now = new Date();
+    const currentTime = now.toTimeString().slice(0, 5); // "HH:MM"
+    const today = now.toISOString().split('T')[0];
+    const currentDayOfWeek = now.getDay(); // 0-воскресенье, 1-понедельник...
+    
+    console.log('=== ПОИСК ТЕКУЩЕГО ЗАНЯТИЯ ===');
+    console.log('Сегодня:', today, 'Текущее время:', currentTime, 'День недели:', currentDayOfWeek);
+
+    // Находим текущие занятия (в течение +-15 минут от текущего времени)
+    const currentAssignments = this.assignments.filter(assignment => {
+        if (!assignment.assignment_date) return false;
+        
+        const assignmentDate = assignment.assignment_date.split('T')[0];
+        const isToday = assignmentDate === today;
+        
+        // Проверяем время занятия (с запасом 15 минут до и после)
+        const isCurrentTime = this.isTimeInRangeWithMargin(
+            currentTime, 
+            assignment.start_time, 
+            assignment.end_time,
+            15 // минут
+        );
+        
+        console.log(`Проверка занятия: ${assignment.subject_name}, 
+            дата: ${assignmentDate}, сегодня: ${isToday}, 
+            время: ${assignment.start_time}-${assignment.end_time}, 
+            текущее: ${isCurrentTime}`);
+        
+        return isToday && isCurrentTime;
+    });
+
+    console.log('Текущие занятия:', currentAssignments);
+
+    if (currentAssignments.length > 0) {
+        // Берем первое текущее занятие
+        const currentAssignment = currentAssignments[0];
+        this.currentGroupId = currentAssignment.group_id;
+        this.currentSubjectId = currentAssignment.subject_id;
+        
+        console.log('Автоматически выбрано занятие:', {
+            предмет: currentAssignment.subject_name,
+            группа: currentAssignment.group_number,
+            группаId: this.currentGroupId,
+            предметId: this.currentSubjectId
+        });
+        const groupSelect = document.getElementById('group-select');
+        if (groupSelect && this.currentGroupId) {
+            groupSelect.value = this.currentGroupId;
+        }
+        
+        const subjectSelect = document.getElementById('subject-select');
+        if (subjectSelect && this.currentSubjectId) {
+            subjectSelect.value = this.currentSubjectId;
+        }
+        this.showCurrentLessonNotification(currentAssignment);
+        
+    } else {
+
+        this.showNoCurrentLessonMessage();
+    }
+    this.renderStudents();
+}
+isTimeInRangeWithMargin(currentTime, startTime, endTime, marginMinutes = 15) {
+    if (!startTime || !endTime) return false;
+    
+    const [currentHours, currentMinutes] = currentTime.split(':').map(Number);
+    const [startHours, startMinutes] = startTime.split(':').map(Number);
+    const [endHours, endMinutes] = endTime.split(':').map(Number);
+    
+    const currentTotal = currentHours * 60 + currentMinutes;
+    const startTotal = startHours * 60 + startMinutes - marginMinutes; // Запас до начала
+    const endTotal = endHours * 60 + endMinutes + marginMinutes; // Запас после окончания
+    
+    return currentTotal >= startTotal && currentTotal <= endTotal;
+}
+showCurrentLessonNotification(assignment) {
+    const notification = `
+        <div class="current-lesson-notification" style="
+            background: #e8f5e8;
+            border: 1px solid #28a745;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            text-align: center;
+        ">
+            <h4 style="margin: 0 0 8px 0; color: #155724;">
+                Автоматически загружено текущее занятие
+            </h4>
+            <p style="margin: 0; color: #155724;">
+                <strong>${assignment.subject_name}</strong> - 
+                Группа ${assignment.group_number} - 
+                ${assignment.start_time} - ${assignment.end_time}
+            </p>
+            <small style="color: #28a745;">
+                Студенты группы автоматически загружены для отметки посещаемости
+            </small>
+        </div>
+    `;
+    
+    // Вставляем уведомление перед списком студентов
+    const studentsList = document.getElementById('students-list');
+    if (studentsList) {
+        studentsList.insertAdjacentHTML('beforebegin', notification);
+    }
+}
+showNoCurrentLessonMessage() {
+    const message = `
+        <div class="no-lesson-message" style="
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 10px 0;
+            text-align: center;
+        ">
+            <h4 style="margin: 0 0 10px 0; color: #856404;">
+                Сейчас нет активных занятий
+            </h4>
+            <p style="margin: 0 0 15px 0; color: #856404;">
+                Выберите группу и предмет вручную для отметки посещаемости
+            </p>
+            <button class="btn-primary" onclick="teacherApp.showAllStudents()" 
+                    style="padding: 8px 16px; font-size: 14px;">
+                Показать всех студентов
+            </button>
+        </div>
+    `;
+    
+    const studentsList = document.getElementById('students-list');
+    if (studentsList) {
+        studentsList.insertAdjacentHTML('beforebegin', message);
+    }
+}
     filterStudentsByCurrentTime() {
         const now = new Date();
         const currentTime = now.toTimeString().slice(0, 5); // "HH:MM"
@@ -458,39 +599,51 @@ this.assignments=[];
 async loadInstructorAssignments() {
     try {
         const instructorId = this.getCurrentInstructorId();
-        console.log('ID преподавателя для загрузки назначений:', instructorId);
-        if (!instructorId) {
-            console.log('ID преподавателя не найден, используем демо-данные');
-            this.assignments = this.getDemoAssignments();
-            this.updateScheduleDisplay();
-            this.updateSubjectSelector();
-            this.renderStudents(); 
-            return;
+        console.log('Загрузка назначений для преподавателя:', instructorId);
+        
+        let assignments = [];
+        
+        // Пробуем загрузить с сервера
+        try {
+            const response = await fetch(`http://localhost:5000/api/instructors/${instructorId}/assignments`);
+            if (response.ok) {
+                assignments = await response.json();
+                console.log('Назначения с сервера:', assignments);
+            } else {
+                console.log('Ошибка ответа сервера:', response.status);
+                throw new Error('Server response error');
+            }
+        } catch (serverError) {
+            console.log('Сервер недоступен, используем демо-данные:', serverError);
+            assignments = this.getDemoAssignments();
         }
         
-        const response = await fetch(`http://localhost:5000/api/instructors/${instructorId}/assignments`);
-        if (response.ok) {
-            const assignments = await response.json();
-            console.log('Назначения преподавателя загружены:', assignments);
-            if (assignments.length === 0) {
-                console.log('Нет назначений от сервера, используем демо-данные');
-                this.assignments = this.getDemoAssignments();
-            } else {
-                this.assignments = assignments;
-            }
-        } else {
-            console.log('Ошибка загрузки назначений, используем демо-данные');
-            this.assignments = this.getDemoAssignments();
+        // Если все еще нет назначений, используем демо-данные
+        if (assignments.length === 0) {
+            console.log('Нет назначений, используем демо-данные');
+            assignments = this.getDemoAssignments();
         }
+        
+        this.assignments = assignments;
+        console.log('Итоговые назначения:', this.assignments);
+        
         this.updateScheduleDisplay();
         this.updateSubjectSelector();
-        this.renderStudents(); 
+        
+        // Автоматически загружаем студентов для текущего занятия
+        setTimeout(() => {
+            this.loadStudentsForCurrentLesson();
+        }, 500);
+        
     } catch (error) {
         console.error('Ошибка загрузки назначений:', error);
         this.assignments = this.getDemoAssignments();
         this.updateScheduleDisplay();
         this.updateSubjectSelector();
-        this.renderStudents();
+        
+        setTimeout(() => {
+            this.loadStudentsForCurrentLesson();
+        }, 500);
     }
 }
 getRealGroupId(groupNumber) {
@@ -499,21 +652,36 @@ getRealGroupId(groupNumber) {
     const group = this.groups.find(g => g.number === groupNumber);
     return group ? group.id : this.groups[0].id;
 }
-getCurrentInstructorId(){
+getCurrentInstructorId() {
     const user = this.currentUser;
-    if (user && user.email) {
-        if (user.instructorId) {
-            return user.instructorId;
-        }
-        if (this.instructors && Array.isArray(this.instructors)) {
-            const instructor = this.instructors.find(inst => 
-                inst.email === user.email || 
-                `${inst.surname} ${inst.name}`.toLowerCase().includes(user.name.toLowerCase())
-            );
-            return instructor ? instructor.id : null;
-        }
+    console.log('Текущий пользователь:', user);
+    
+    if (user && user.instructorId) {
+        console.log('ID преподавателя из пользователя:', user.instructorId);
+        return user.instructorId;
     }
-    return null;
+    
+    if (user && user.email) {
+        const instructorId = this.getInstructorIdByEmail(user.email);
+        console.log('ID преподавателя из email:', instructorId);
+        return instructorId;
+    }
+    
+    // Fallback - используем демо ID
+    console.log('Используем fallback ID преподавателя');
+    return '11111111-1111-1111-1111-111111111111';
+}
+
+getInstructorIdByEmail(email) {
+    const instructorEmails = {
+        'teacher1@edu.ru': '11111111-1111-1111-1111-111111111111',
+        'teacher2@edu.ru': '22222222-2222-2222-2222-222222222222', 
+        'prepod@edu.ru': '11111111-1111-1111-1111-111111111111',
+        'prepod@mospolytech.ru': '11111111-1111-1111-1111-111111111111',
+        'teacher@edu.ru': '11111111-1111-1111-1111-111111111111',
+        'test@edu.ru': '11111111-1111-1111-1111-111111111111'
+    };
+    return instructorEmails[email.toLowerCase()] || '11111111-1111-1111-1111-111111111111';
 }
 renderInstructorAssignments() {
   const scheduleContainer = document.querySelector('.schedule-items');
@@ -556,51 +724,35 @@ isCurrentAssignment(assignment) {
     return isSameDate;
 }
 getDemoAssignments() {
-    const realGroups = this.groups || [];
-    console.log('Доступные реальные группы:', realGroups);
-    
-    const group231_320 = realGroups.find(g => g.number === '231-320');
-    const group231_323 = realGroups.find(g => g.number === '231-323');
-    
-    const group1 = group231_320 || (realGroups[0] || { id: '0ed1e572-12ce-45f5-87a0-5e6ef8382e15', number: '231-320' });
-    const group2 = group231_323 || (realGroups[1] || { id: '982b70c9-a16e-41d5-bc88-005a1175fe66', number: '231-323' });
-
     const today = new Date();
     const todayString = today.toISOString().split('T')[0];
+    
+    // Время для демо-занятия (ближайшее к текущему)
+    const currentHour = today.getHours();
+    let demoStartTime, demoEndTime;
+    
+    if (currentHour < 12) {
+        demoStartTime = '10:00';
+        demoEndTime = '11:30';
+    } else if (currentHour < 14) {
+        demoStartTime = '12:20';
+        demoEndTime = '13:50';
+    } else {
+        demoStartTime = '14:00';
+        demoEndTime = '15:30';
+    }
 
     return [
         {
-            id: 'demo-1',
+            id: 'demo-current',
             subject_id: '1',
             subject_name: 'Системы инженерного анализа',
-            group_id: group1.id, 
-            group_number: group1.number,
+            group_id: '0ed1e572-12ce-45f5-87a0-5e6ef8382e15', // 231-320
+            group_number: '231-320',
             classroom: 'Пр/06',
-            assignment_date: todayString, 
-            start_time: '12:20',
-            end_time: '13:50'
-        },
-        {
-            id: 'demo-2', 
-            subject_id: '2',
-            subject_name: 'Базы данных',
-            group_id: group2.id, 
-            group_number: group2.number,
-            classroom: 'Пр/01',
-            assignment_date: todayString, 
-            start_time: '14:00',
-            end_time: '15:30'
-        },
-        {
-            id: 'demo-3', 
-            subject_id: '3',
-            subject_name: 'Веб-программирование',
-            group_id: group1.id, 
-            group_number: group1.number,
-            classroom: 'Ак/201',
-            assignment_date: todayString, 
-            start_time: '18:00',
-            end_time: '19:30'
+            assignment_date: todayString,
+            start_time: demoStartTime,
+            end_time: demoEndTime
         }
     ];
 }
@@ -796,23 +948,37 @@ updateSubjectSelector() {
 }
 renderStudents() {
     const container = document.getElementById('students-list');
-    if(!container) {
+    if (!container) {
         console.error('Контейнер students-list не найден!');
         return;
     }
+    
     console.log('=== РЕНДЕРИНГ СТУДЕНТОВ ===');
     console.log('Всего студентов доступно:', this.students.length);
     console.log('Текущий предмет ID:', this.currentSubjectId);
     console.log('Текущая группа ID:', this.currentGroupId);
-    let studentsToShow = [...this.students]; 
+
+    let studentsToShow = [...this.students];
+
+    // Фильтрация по группе (если выбрана конкретная группа)
+    if (this.currentGroupId && this.currentGroupId !== 'all') {
+        console.log('Фильтруем по группе:', this.currentGroupId);
+        const beforeFilter = studentsToShow.length;
+        studentsToShow = studentsToShow.filter(student => {
+            const inGroup = student.groupId === this.currentGroupId;
+            console.log(`Студент ${student.surname} ${student.name}, группа ${student.groupId}, в выбранной: ${inGroup}`);
+            return inGroup;
+        });
+        console.log(`После фильтрации по группе: ${beforeFilter} -> ${studentsToShow.length}`);
+    }
+
+    // Фильтрация по предмету (если выбран конкретный предмет)
     if (this.currentSubjectId && this.currentSubjectId !== 'all') {
         console.log('Фильтруем по предмету:', this.currentSubjectId);
+        
+        // Находим группы, которые имеют этот предмет
         const subjectGroups = this.assignments
-            .filter(assignment => {
-                const matches = assignment.subject_id == this.currentSubjectId;
-                console.log(`Назначение: subject=${assignment.subject_id}, group=${assignment.group_id}, matches=${matches}`);
-                return matches;
-            })
+            .filter(assignment => assignment.subject_id == this.currentSubjectId)
             .map(assignment => assignment.group_id);
             
         console.log('Группы с выбранным предметом:', subjectGroups);
@@ -823,26 +989,19 @@ renderStudents() {
             console.log(`Студент ${student.surname} группа ${student.groupId} в предметных группах: ${inSubjectGroup}`);
             return inSubjectGroup;
         });
-        console.log(`Фильтрация по предмету: ${beforeFilter} -> ${studentsToShow.length} студентов`);
+        console.log(`После фильтрации по предмету: ${beforeFilter} -> ${studentsToShow.length}`);
     }
-    if(this.currentGroupId && this.currentGroupId !== 'all') {
-        console.log('Фильтруем по группе:', this.currentGroupId);
-        const beforeFilter = studentsToShow.length;
-        studentsToShow = studentsToShow.filter(student => {
-            const inGroup = student.groupId === this.currentGroupId;
-            console.log(`Студент ${student.surname} группа ${student.groupId} в выбранной группе: ${inGroup}`);
-            return inGroup;
-        });
-        console.log(`Фильтрация по группе: ${beforeFilter} -> ${studentsToShow.length} студентов`);
-    }
+
     console.log('Итоговое количество студентов для отображения:', studentsToShow.length);
+
     if (studentsToShow.length === 0) {
         container.innerHTML = `
             <div style="text-align:center;padding:40px;color:#666;">
                 <h4>Нет студентов для отображения</h4>
-                <p>Попробуйте изменить фильтры или загрузить студентов через панель администратора</p>
-                <button class="btn-primary" onclick="location.href='/admin-dashboard.html'" style="margin-top:10px;">
-                    Перейти в панель администратора
+                <p>Попробуйте изменить фильтры или проверить назначения</p>
+                <button class="btn-primary" onclick="teacherApp.showAllStudents()" 
+                        style="margin-top:10px;">
+                    Показать всех студентов
                 </button>
             </div>
         `;
