@@ -202,29 +202,31 @@ async loadInstructorAssignments() {
             console.log('ID преподавателя не найден, используем демо-данные');
             this.assignments = this.getDemoAssignments();
             this.updateScheduleDisplay();
-            this.updateSubjectSelector(); 
+            this.updateSubjectSelector();
             return;
         }
         const response = await fetch(`http://localhost:5000/api/instructors/${instructorId}/assignments`);
         if (response.ok) {
             const assignments = await response.json();
             console.log('Назначения преподавателя загружены:', assignments);
-            
-            this.assignments = assignments.map(assignment => ({
-                ...assignment,
-                group_id: assignment.group_id || this.getRealGroupId(assignment.group_number)
-            }));
+            if (assignments.length === 0) {
+                console.log('Нет назначений от сервера, используем демо-данные');
+                this.assignments = this.getDemoAssignments();
+            } else {
+                this.assignments = assignments;
+            }
         } else {
-            console.log('Не удалось загрузить назначения, используем демо-данные с реальными ID');
+            console.log('Ошибка загрузки назначений, используем демо-данные');
             this.assignments = this.getDemoAssignments();
         }
         this.updateScheduleDisplay();
-        this.updateSubjectSelector(); 
+        this.updateSubjectSelector();
+        
     } catch (error) {
         console.error('Ошибка загрузки назначений:', error);
         this.assignments = this.getDemoAssignments();
         this.updateScheduleDisplay();
-        this.updateSubjectSelector(); 
+        this.updateSubjectSelector();
     }
 }
 getRealGroupId(groupNumber) {
@@ -290,18 +292,23 @@ isCurrentAssignment(assignment) {
     return isSameDate;
 }
 getDemoAssignments() {
-    const realGroupIds = this.groups && this.groups.length > 0 
-        ? this.groups.map(g => g.id)
-        : ['b8f78604-7d47-4eb0-9389-6b8eaaa1653b', '137b8ecb-402d-41fe-979d-3bb5fd02e7c2'];
-    const realGroupNumbers = this.groups && this.groups.length > 0
-        ? this.groups.map(g => g.number)
-        : ['231-324', '231-325'];
+    const realGroups = this.groups || [];
+    console.log('Доступные реальные группы:', realGroups);
+    const group231_320 = realGroups.find(g => g.number === '231-320');
+    const group231_323 = realGroups.find(g => g.number === '231-323');
+    const group1 = group231_320 || (realGroups[0] || { id: '0ed1e572-12ce-45f5-87a0-5e6ef8382e15', number: '231-320' });
+    const group2 = group231_323 || (realGroups[1] || { id: '982b70c9-a16e-41d5-bc88-005a1175fe66', number: '231-323' });
+    console.log('Используемые группы для демо-данных:', {
+        group1: group1.number,
+        group2: group2.number
+    });
     return [
         {
             id: 'demo-1',
+            subject_id: '1',
             subject_name: 'Системы инженерного анализа',
-            group_id: realGroupIds[0], 
-            group_number: realGroupNumbers[0], 
+            group_id: group1.id, 
+            group_number: group1.number,
             classroom: 'Пр/06',
             assignment_date: new Date().toISOString(),
             start_time: '12:20',
@@ -309,9 +316,10 @@ getDemoAssignments() {
         },
         {
             id: 'demo-2', 
+            subject_id: '2',
             subject_name: 'Базы данных',
-            group_id: realGroupIds[1] || realGroupIds[0], 
-            group_number: realGroupNumbers[1] || realGroupNumbers[0],
+            group_id: group2.id, 
+            group_number: group2.number,
             classroom: 'Пр/01',
             assignment_date: new Date(Date.now() + 86400000).toISOString(),
             start_time: '14:00',
@@ -321,40 +329,34 @@ getDemoAssignments() {
 }
 async loadAssignedStudents() {
     try {
-        console.log('Все студенты:', this.students.length);
-        console.log('Все группы:', this.groups.length);
+        const students = await apiClient.getAllStudents();
+        const groups = await apiClient.getAllGroups();
+        console.log('Все студенты:', students?.length);
+        console.log('Все группы:', groups?.length);
         console.log('Назначения преподавателя:', this.assignments);
         const assignedGroupIds = this.assignments.map(a => a.group_id).filter(id => id);
-        console.log('ID назначенных групп:', assignedGroupIds);
-        if (assignedGroupIds.length === 0) {
-            console.log('Нет назначенных групп, показываем всех студентов');
-            this.populateGroupSelector();
-            this.renderStudents();
-            this.updateStats();
-            return;
-        }
-        const filteredStudents = this.students.filter(student => {
+        console.log('ID всех назначенных групп:', assignedGroupIds);
+        const allStudents = this.normalizeStudents(students || [], groups || []);
+        console.log('Все нормализованные студенты:', allStudents.length);
+        this.students = allStudents.filter(student => {
             const inAssignedGroup = assignedGroupIds.includes(student.groupId);
             console.log(`Студент ${student.surname} ${student.name}, группа ${student.groupId}, в назначенных: ${inAssignedGroup}`);
             return inAssignedGroup;
         });
-        const filteredGroups = this.groups.filter(group => {
+        this.groups = (groups || []).filter(group => {
             const inAssignments = assignedGroupIds.includes(group.id);
             console.log(`Группа ${group.number}, ID: ${group.id}, в назначениях: ${inAssignments}`);
             return inAssignments;
         });
-        console.log('Отфильтрованные студенты:', filteredStudents.length);
-        console.log('Отфильтрованные группы:', filteredGroups.length);
-        this.students = filteredStudents;
-        this.groups = filteredGroups;
+        console.log('Отфильтрованные студенты:', this.students.length);
+        console.log('Отфильтрованные группы:', this.groups.length);
         this.populateGroupSelector();
         this.renderStudents();
         this.updateStats();
+        
     } catch(error) {
         console.error('Ошибка загрузки назначенных студентов:', error);
-        this.populateGroupSelector();
-        this.renderStudents();
-        this.updateStats();
+        this.useDemoData();
     }
 }
 async loadAllStudents(){
@@ -455,16 +457,27 @@ populateGroupSelector() {
         console.error('Элемент group-select не найден');
         return;
     }
-    const availableGroups = this.groups.map(group => ({
-        group_id: group.id,
-        group_number: group.number
-    }));
+    let availableGroups = this.groups;
+    if (this.currentSubjectId && this.currentSubjectId !== 'all') {
+        const today = new Date().toISOString().split('T')[0];
+        const subjectGroups = this.assignments
+            .filter(assignment => 
+                assignment.subject_id == this.currentSubjectId &&
+                assignment.assignment_date &&
+                assignment.assignment_date.split('T')[0] === today
+            )
+            .map(assignment => assignment.group_id);
+        availableGroups = this.groups.filter(group => 
+            subjectGroups.includes(group.id)
+        );
+    }
     mainSelect.innerHTML = `
-        <option value="all">Все мои группы</option>
-        ${availableGroups.map(item => 
-            `<option value="${item.group_id}">${item.group_number}</option>`
+        <option value="all">Все группы</option>
+        ${availableGroups.map(group => 
+            `<option value="${group.id}">${group.number}</option>`
         ).join('')}
     `;
+    
     console.log(`Загружено групп для преподавателя: ${availableGroups.length}`);
 }
 updateSubjectSelector() {
@@ -484,48 +497,42 @@ updateSubjectSelector() {
         ${uniqueSubjects.map(assignment => 
             `<option value="${assignment.subject_id}">${assignment.subject_name || 'Предмет'}</option>`
         ).join('')}
-        <option value="all_time">Все предметы (все время)</option>
     `;
-    subjectSelect.addEventListener('change', (e) => {
+    subjectSelect.onchange = (e) => {
         this.currentSubjectId = e.target.value;
-        if (this.currentSubjectId === 'all_time') {
-            this.currentSubjectId = 'all';
-        }
         this.renderStudents();
-    });
+    };
 }
 renderStudents() {
     const container = document.getElementById('students-list');
     if(!container) return;
-    console.log('Рендерим студентов для преподавателя:', {
-        группа: this.currentGroupId,
-        предмет: this.currentSubjectId,
-        всего_студентов: this.students.length
-    });
+    console.log('=== НАЧАЛО РЕНДЕРА СТУДЕНТОВ ===');
+    console.log('Всего студентов доступно:', this.students.length);
+    console.log('Текущий предмет:', this.currentSubjectId);
+    console.log('Текущая группа:', this.currentGroupId);
     let studentsToShow = this.students;
     if (this.currentSubjectId && this.currentSubjectId !== 'all') {
         console.log('Фильтруем по предмету:', this.currentSubjectId);
-        const today = new Date().toISOString().split('T')[0];
         const subjectGroups = this.assignments
-            .filter(assignment => 
-                assignment.subject_id == this.currentSubjectId &&
-                assignment.assignment_date &&
-                assignment.assignment_date.split('T')[0] === today
-            )
+            .filter(assignment => assignment.subject_id == this.currentSubjectId)
             .map(assignment => assignment.group_id);
         console.log('Группы с выбранным предметом:', subjectGroups);
+        const beforeFilter = studentsToShow.length;
         studentsToShow = studentsToShow.filter(student => 
             subjectGroups.includes(student.groupId)
         );
-        console.log('После фильтрации по предмету:', studentsToShow.length);
+        console.log(`Фильтрация по предмету: ${beforeFilter} -> ${studentsToShow.length} студентов`);
     }
     if(this.currentGroupId && this.currentGroupId !== 'all') {
         console.log('Фильтруем по группе:', this.currentGroupId);
+        
+        const beforeFilter = studentsToShow.length;
         studentsToShow = studentsToShow.filter(student => 
             student.groupId === this.currentGroupId
         );
-        console.log('После фильтрации по группе:', studentsToShow.length);
+        console.log(`Фильтрация по группе: ${beforeFilter} -> ${studentsToShow.length} студентов`);
     }
+    console.log('Итоговое количество студентов для отображения:', studentsToShow.length);
     if (studentsToShow.length === 0) {
         container.innerHTML = `
             <div style="text-align:center;padding:40px;color:#666;">
@@ -542,7 +549,7 @@ renderStudents() {
         <div class="student-item">
             <div class="student-info">
                 <div class="student-name">${student.surname} ${student.name} ${student.patronymic || ''}</div>
-                <div class="student-group">Группа: ${student.groupName}</div>
+                <div class="student-group">Группа: ${student.groupName} (ID: ${student.groupId})</div>
             </div>
             <div class="attendance-toggle">
                 <input type="checkbox" id="student-${student.id}" 
@@ -555,6 +562,7 @@ renderStudents() {
     `).join('');
     
     this.updateStats();
+    console.log('=== ЗАВЕРШЕНИЕ РЕНДЕРА СТУДЕНТОВ ===');
 }
 updateScheduleDisplay() {
     const scheduleContainer = document.querySelector('.schedule-items');
